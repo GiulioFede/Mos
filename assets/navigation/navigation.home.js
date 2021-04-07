@@ -6,6 +6,7 @@ import ChatScreen from '../screen/chat.screen';
 import AroundYou from '../screen/aroundYou.screen';
 import Profile from '../screen/profile.screen';
 import {Ionicons,AntDesign} from '@expo/vector-icons'
+import { MosCeleste, MosViola } from '../resources/colors';
 
 const Tab = createBottomTabNavigator();
 
@@ -30,7 +31,7 @@ export default function HomeNavigator(){
                         },
                     })}
                         tabBarOptions={{
-                            activeTintColor:"red",
+                            activeTintColor:MosCeleste,
                             inactiveTintColor: 'gray'
                         }}
                     >
