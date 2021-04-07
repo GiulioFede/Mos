@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, Text, StyleSheet, ScrollView, Image, Dimensions, Platform} from 'react-native';
 import {MaterialIcons, Fontisto, Ionicons} from "@expo/vector-icons";
-import { MosCeleste, MosPurple, MosViola } from '../../resources/colors';
+import { MosCeleste } from '../../resources/colors';
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import { FAB } from 'react-native-paper';
 
@@ -27,7 +27,7 @@ export default function ProfileComponent(){
                     <View style={styles.contenitoreMediaProfilo}>
                         {/* immagine */}
                         <View style={styles.contenitoreImmagineProfilo}>
-                            <Image source={require("../../resources/images/profilePicture.jpg")} resizeMode="center"  style={styles.immagineProfilo}></Image>
+                            <Image source={require("../../resources/images/profilePicture.jpg")} resizeMode="cover"  style={styles.immagineProfilo}></Image>
                         </View>
                         {/* pallino online */}
                         <View style={styles.onlineCircle} />

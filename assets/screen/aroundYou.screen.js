@@ -1,10 +1,11 @@
 import React from 'react';
 import {Text, View, StyleSheet } from 'react-native';
+import AroundYouComponent from '../component/aroundYou/aroundYou.component';
 
 export default function AroundYou(){
     return (
         <View style={styles.container}>
-            <Text>AroundYou</Text>
+            <AroundYouComponent />
         </View>
     )
 }
