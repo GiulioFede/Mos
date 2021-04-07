@@ -4,9 +4,9 @@
     "slug": "Mos",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon/logoMos.jpg",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/icon/splashlogoMos.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
