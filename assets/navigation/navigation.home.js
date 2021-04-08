@@ -2,11 +2,11 @@ import React from 'react';
 import {Text, View, StyleSheet } from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import ChatScreen from '../screen/chat.screen';
 import AroundYou from '../screen/aroundYou.screen';
 import Profile from '../screen/profile.screen';
 import {Ionicons,AntDesign} from '@expo/vector-icons'
 import { MosCeleste, MosViola } from '../resources/colors';
+import ChatNavigator from './navigation.chat';
 
 const Tab = createBottomTabNavigator();
 
@@ -35,7 +35,7 @@ export default function HomeNavigator(){
                             inactiveTintColor: 'gray'
                         }}
                     >
-                    <Tab.Screen name="Chat" component={ChatScreen} />
+                    <Tab.Screen name="Chat" component={ChatNavigator} />
                     <Tab.Screen name="Around You" component={AroundYou} />
                     <Tab.Screen name="Profile" component={Profile} />
                 </Tab.Navigator>

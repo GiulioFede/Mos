@@ -4,6 +4,9 @@ import {MiniaturaImmagineProfilo} from "./feature/miniaturaProfiloUtente.feature
 import MaskedView from '@react-native-community/masked-view';
 import Svg, {Line, Rect} from 'react-native-svg';
 import {LinearGradient} from "expo-linear-gradient";
+import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
+import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
+import {MaterialIcons, Fontisto, Ionicons} from "@expo/vector-icons";
 
 /*
 IMPORTANTE: l'array da dare alla flat list deve cominciare con id:1!
@@ -61,6 +64,10 @@ export default function AroundYouComponent(){
 
     return (
         <View style={styles.container}>
+            {/* BARRA SUPERIORE */}
+            <View style={styles.barraSuperiore}>
+                        <Text style={styles.titolo}>Around You</Text>
+            </View>
                 {/* LISTA UTENTI:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/}
                 <MostraListaUtenti utenti={utenti} scrollX={scrollX}/> 
        </View>
@@ -70,6 +77,12 @@ export default function AroundYouComponent(){
 
 
 const MostraListaUtenti = ({utenti, scrollX}) =>{
+
+        //carico font
+        let [Raleway] = useFonts({Raleway_200ExtraLight});
+        let [Raleway2] = useFonts2({Raleway_400Regular});
+        if(!Raleway || !Raleway2)
+            return <View></View>
 
     return (
 
@@ -204,5 +217,20 @@ const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor:"#fff"
-    }
+    },   
+    titolo:{
+        fontSize:25,
+        fontFamily: "Raleway_400Regular",
+        color: "#52575D",
+    },
+    barraSuperiore:{
+        flexDirection:"row",
+        justifyContent:"center",
+        paddingTop:24,
+        paddingBottom: 24,
+        marginHorizontal:16,
+        alignItems:"center",
+        borderBottomColor:"#e6e6e6",
+        borderBottomWidth:0.7,
+    },
 })

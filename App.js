@@ -12,9 +12,9 @@ export default function App() {
       <SafeAreaView style={styles.safeArea}>
         <HomeNavigator />
         <StatusBar
- backgroundColor="#fff"
- barStyle="dark-content" // Here is where you change the font-color
-/>
+          backgroundColor="#fff"
+          barStyle="dark-content" // Here is where you change the font-color
+        />
       </SafeAreaView>
     </View>
   );

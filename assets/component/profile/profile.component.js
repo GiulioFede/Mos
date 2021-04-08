@@ -3,6 +3,7 @@ import {View, Text, StyleSheet, ScrollView, Image, Dimensions, Platform} from 'r
 import {MaterialIcons, Fontisto, Ionicons} from "@expo/vector-icons";
 import { MosCeleste } from '../../resources/colors';
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
+import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { FAB } from 'react-native-paper';
 
 
@@ -10,7 +11,8 @@ export default function ProfileComponent(){
 
     //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
-    if(!Raleway)
+    let [Raleway2] = useFonts2({Raleway_400Regular});
+    if(!Raleway || !Raleway2)
         return <View></View>
 
     return (
@@ -18,9 +20,10 @@ export default function ProfileComponent(){
             {/* BARRA SUPERIORE */}
             <View style={styles.barraSuperiore}>
                         <MaterialIcons name="arrow-back-ios" size={24} color="#52575D"/>
+                        <Text style={styles.titolo}>Profile</Text>
                         <Fontisto name="more-v" size={24} color="#52575D" />
             </View>
-            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between', flexDirection: 'column' }}style={{ paddingBottom: 40 }}>
+            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between', flexDirection: 'column' }}style={{ paddingTop:10, paddingBottom: 40 }}>
                 <View style={{ flex: 1, justifyContent: 'flex-start' }}>
                     
                     {/* IMMAGINE PROFILO */}
@@ -83,11 +86,21 @@ const styles = StyleSheet.create({
       backgroundColor:"#fff",
       flex:1
     },
+    titolo:{
+        fontSize:25,
+        paddingRight:20,
+        fontFamily: "Raleway_400Regular",
+        color: "#52575D",
+    },
     barraSuperiore:{
         flexDirection:"row",
         justifyContent:"space-between",
-        marginTop:24,
-        marginHorizontal:16
+        paddingTop:24,
+        paddingBottom: 24,
+        marginHorizontal:16,
+        alignItems:"center",
+        borderBottomColor:"#e6e6e6",
+        borderBottomWidth:0.7,
     },
     testo:{
         fontFamily: "Raleway_200ExtraLight",
