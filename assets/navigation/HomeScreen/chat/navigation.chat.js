@@ -1,8 +1,8 @@
 import React from "react";
 import {createStackNavigator, TransitionPresets} from "@react-navigation/stack";
 //1) IMPORTO i modelli di sezioni che voglio compaiano nella sezione “Chat”
-import ChatScreen from "../screen/chat/chat.screen";
-import ChatDetail from "../screen/chat/chat_detail";
+import ChatScreen from "./screen/chat screen/chat.screen";
+import ChatDetail from "./screen/chat detail/chat_detail";
 
 const chatStack = createStackNavigator();
 

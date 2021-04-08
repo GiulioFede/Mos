@@ -1,7 +1,5 @@
 import React from "react";
 import {View, StyleSheet, Image,Text, Dimensions} from "react-native";
-import {Ionicons} from "@expo/vector-icons";
-import { MosCeleste } from "../../resources/colors";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import MessageBubble from "./message_bubble";
@@ -21,7 +19,7 @@ const ChatPreview =({nome, urlImmagineProfilo,dataUltimoMessaggio, ultimoMessagg
             <View style={styles.contenitoreMediaProfilo}>
                         {/* immagine SOSTITUIRE CON QUELLA DELL'UTENTE ma ovviamente non usare require ma (forse) fetch*/}
                         <View style={styles.contenitoreImmagineProfilo}>
-                            <Image source={require('../../resources/images/chat/fotoChat5.jpg')} resizeMode="cover"  style={styles.immagineProfilo}></Image>
+                            <Image source={require('../../../../../../../assets/resources/images/chat/fotoChat4.jpg')} resizeMode="cover"  style={styles.immagineProfilo}></Image>
                         </View>
                         {/* pallino online */}
                         <View style={styles.onlineCircle} />

@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, Text, StyleSheet, ScrollView, Image, Dimensions, Platform} from 'react-native';
 import {MaterialIcons, Fontisto, Ionicons} from "@expo/vector-icons";
-import { MosCeleste } from '../../resources/colors';
+import { MosCeleste } from '../../../../../resources/colors';
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { FAB } from 'react-native-paper';
@@ -30,7 +30,7 @@ export default function ProfileComponent(){
                     <View style={styles.contenitoreMediaProfilo}>
                         {/* immagine */}
                         <View style={styles.contenitoreImmagineProfilo}>
-                            <Image source={require("../../resources/images/profilePicture.jpg")} resizeMode="cover"  style={styles.immagineProfilo}></Image>
+                            <Image source={require("../../../../../../assets/resources/images/profilePicture.jpg")} resizeMode="cover"  style={styles.immagineProfilo}></Image>
                         </View>
                         {/* pallino online */}
                         <View style={styles.onlineCircle} />
@@ -51,19 +51,19 @@ export default function ProfileComponent(){
                         <View>
                             <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
                                 <View style={styles.contenitoreFotoGalleria}>
-                                    <Image source={require("../../resources/images/fotoGalleria1.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
+                                    <Image source={require("../../../../../../assets/resources/images/fotoGalleria1.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
                                 </View>
                                 <View style={styles.contenitoreFotoGalleria}>
-                                    <Image source={require("../../resources/images/fotoGalleria2.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
+                                    <Image source={require("../../../../../../assets/resources/images/fotoGalleria2.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
                                 </View>
                                 <View style={styles.contenitoreFotoGalleria}>
-                                    <Image source={require("../../resources/images/fotoGalleria3.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
+                                    <Image source={require("../../../../../../assets/resources/images/fotoGalleria3.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
                                 </View>
                                 <View style={styles.contenitoreFotoGalleria}>
-                                    <Image source={require("../../resources/images/fotoGalleria5.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
+                                    <Image source={require("../../../../../../assets/resources/images/fotoGalleria4.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
                                 </View>
                                 <View style={styles.contenitoreFotoGalleria}>
-                                    <Image source={require("../../resources/images/fotoGalleria4.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
+                                    <Image source={require("../../../../../../assets/resources/images/fotoGalleria5.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
                                 </View>
                             </ScrollView>
                         </View>

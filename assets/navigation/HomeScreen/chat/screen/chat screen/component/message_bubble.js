@@ -16,7 +16,7 @@ import Svg, { Path } from 'react-native-svg'
 // Import react-native-size-matters
 // from 'https://github.com/nirsky/react-native-size-matters'
 import { moderateScale } from 'react-native-size-matters' //installa con: yarn add react-native-size-matters
-import { MosCeleste } from '../../resources/colors'
+import { MosCeleste } from '../../../../../../resources/colors'
 
 // Props info list
 // 1. mine (bool) => renders blue bubble on right

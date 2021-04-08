@@ -1,8 +1,8 @@
 import React from "react";
 import {View,Text, StyleSheet, Image, Dimensions} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
-import { MosCeleste } from "../../../resources/colors";
 import DettagliUtente from "./dettagli_utente.feature";
+import { MosCeleste } from "../../../../../resources/colors";
 
 const {width,height}= Dimensions.get("window");
 const ITEM_SIZE= width*0.72;
@@ -16,7 +16,7 @@ export const MiniaturaImmagineProfilo =({nome, distanza,urlImmagineProfilo}) => 
             <View style={styles.contenitoreMediaProfilo}>
                         {/* immagine SOSTITUIRE CON QUELLA DELL'UTENTE*/}
                         <View style={styles.contenitoreImmagineProfilo}>
-                            <Image source={require("../../../resources/images/profilePicture2.jpg")} resizeMode="cover"  style={styles.immagineProfilo}></Image>
+                            <Image source={require("../../../../../../assets/resources/images/profilePicture2.jpg")} resizeMode="cover"  style={styles.immagineProfilo}></Image>
                         </View>
                         {/* pallino online */}
                         <View style={styles.onlineCircle} />

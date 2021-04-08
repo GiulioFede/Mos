@@ -2,8 +2,7 @@ import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import React from 'react';
 import { StyleSheet, Text, View, SafeAreaView, StatusBar, Platform, Dimensions } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
-import HomeNavigator from './assets/navigation/navigation.home';
-import { MosCeleste, MosPurple, MosViola } from './assets/resources/colors';
+import HomeNavigator from "./assets/navigation/navigation.home"
 
 export default function App() {
 

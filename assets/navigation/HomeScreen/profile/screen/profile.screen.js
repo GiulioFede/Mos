@@ -1,6 +1,7 @@
 import React from 'react';
 import {Text, View, StyleSheet, Dimensions} from 'react-native';
-import ProfileComponent from '../component/profile/profile.component';
+import ProfileComponent from './component/profile.component';
+
 
 export default function Profile(){
 

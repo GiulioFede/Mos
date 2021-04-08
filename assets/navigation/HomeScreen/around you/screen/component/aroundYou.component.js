@@ -1,12 +1,11 @@
 import React, {useRef} from "react";
 import {View,Text, FlatList,Animated,StyleSheet,Dimensions, Image} from "react-native";
-import {MiniaturaImmagineProfilo} from "./feature/miniaturaProfiloUtente.feature";
+import {MiniaturaImmagineProfilo} from "./miniaturaProfiloUtente.feature";
 import MaskedView from '@react-native-community/masked-view';
 import Svg, {Line, Rect} from 'react-native-svg';
 import {LinearGradient} from "expo-linear-gradient";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
-import {MaterialIcons, Fontisto, Ionicons} from "@expo/vector-icons";
 
 /*
 IMPORTANTE: l'array da dare alla flat list deve cominciare con id:1!
@@ -119,7 +118,7 @@ const MostraListaUtenti = ({utenti, scrollX}) =>{
                             <View>
                                <Image
                                     //sostituire la source con l'immagine dell'utente i-esimo 
-                                    source={require("../../resources/images/profilePicture2.jpg")}
+                                    source={require("../../../../../../assets/resources/images/profilePicture2.jpg")}
                                     style={{width,height:BACKDROP_HEIGHT, resizeMode:'cover', position:"absolute", bottom:0, left:-SPACER_ITEM_SIZE}} 
                                 />
                                 
@@ -142,6 +141,7 @@ const MostraListaUtenti = ({utenti, scrollX}) =>{
                                         transform:[{translateY}]
                                     }}>
                                         <MiniaturaImmagineProfilo />
+                                        
                                 </Animated.View>
                             </View>
                             </View>
@@ -150,68 +150,6 @@ const MostraListaUtenti = ({utenti, scrollX}) =>{
     )
 
 } 
-
-const MostraListaSfondo=({utenti, scrollX})=>{
-
-    return (
-        <View style={{position: 'absolute', width, height: BACKDROP_HEIGHT}}>
-            <FlatList
-                data={utenti}
-                horizontal
-                keyExtractor={(item) => item.id}
-                renderItem={({item})=>{
-                    const index = item.id;
-                    if(index==0 || index==utenti.length-1)
-                        return <View style={{backgroundColor:"yellow"}}/>
-    
-                        
-                    const inputRange=[
-                        (index-2)*ITEM_SIZE,
-                        (index-1)*ITEM_SIZE
-                    ]
-                    console.log(inputRange);
-                    const translateX = scrollX.interpolate({
-                        inputRange,
-                        outputRange:[-width,0]
-                    })
-                    return (
-                        <MaskedView 
-                            maskElement={
-                                <AnimatedSvg width={width} height={height} viewBox={`0 0 ${width} ${height}`} 
-                                    style={{transform:[{translateX}]}}
-                                    >
-                                    <Rect
-                                        x="0"
-                                        y="0"
-                                        width={width}
-                                        height={height}
-                                        fill="red"
-                                    />
-                                </AnimatedSvg>
-                            }
-                            >
-                            <Image
-                                //source={{uri:item.urlImmagineProfilo}} 
-                                source={require("../../resources/images/profilePicture2.jpg")}
-                                style={{width,height:BACKDROP_HEIGHT, resizeMode:'cover'}} 
-                            />
-                        </MaskedView>
-                    )
-                }} />
-                
-                <LinearGradient
-                    colors={['transparent','white']}
-                    style={{
-                        width,
-                        height: BACKDROP_HEIGHT,
-                        position: 'absolute',
-                        bottom:0
-                    }}>
-    
-                </LinearGradient>
-        </View>
-    )
-}
 
 const styles = StyleSheet.create({
     container: {
