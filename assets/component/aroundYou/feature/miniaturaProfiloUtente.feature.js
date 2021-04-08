@@ -1,8 +1,12 @@
 import React from "react";
-import {View,Text, StyleSheet, Image} from "react-native";
+import {View,Text, StyleSheet, Image, Dimensions} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import { MosCeleste } from "../../../resources/colors";
 import DettagliUtente from "./dettagli_utente.feature";
+
+const {width,height}= Dimensions.get("window");
+const ITEM_SIZE= width*0.72;
+const BACKDROP_HEIGHT = height*0.6;
 
 export const MiniaturaImmagineProfilo =({nome, distanza,urlImmagineProfilo}) => {
 
@@ -10,7 +14,7 @@ export const MiniaturaImmagineProfilo =({nome, distanza,urlImmagineProfilo}) => 
         <View style={{padding:10}}>
             {/* IMMAGINE PROFILO */}
             <View style={styles.contenitoreMediaProfilo}>
-                        {/* immagine */}
+                        {/* immagine SOSTITUIRE CON QUELLA DELL'UTENTE*/}
                         <View style={styles.contenitoreImmagineProfilo}>
                             <Image source={require("../../../resources/images/profilePicture2.jpg")} resizeMode="cover"  style={styles.immagineProfilo}></Image>
                         </View>
