@@ -3,11 +3,11 @@ import {Text, View, StyleSheet, Dimensions} from 'react-native';
 import ProfileComponent from './component/profile.component';
 
 
-export default function Profile(){
+export default function Profile({navigation}){
 
     return (
         <View style={styles.container} >
-                 <ProfileComponent />
+                 <ProfileComponent navigation={navigation} />
         </View>
     )
 }

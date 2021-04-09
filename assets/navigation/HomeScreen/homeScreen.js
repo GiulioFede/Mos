@@ -9,7 +9,7 @@ import Profile from './profile/screen/profile.screen';
 
 const Tab = createBottomTabNavigator();
 
-function HomeScreen(){
+function HomeScreen({navigation}){
 
     return (
         <View style={styles.container}>

@@ -2,7 +2,6 @@ import React from "react";
 import {View, Text, StyleSheet, FlatList,Button, TouchableOpacity} from "react-native";
 import {MaterialIcons, AntDesign} from "@expo/vector-icons";
 import {useFonts, Raleway_400Regular} from '@expo-google-fonts/raleway';
-import { createDrawerNavigator } from '@react-navigation/drawer';
 import ChatPreview from "./component/chat_preview.component";
 
 //qui è dove simulo l'array contenente le preview delle chat NB: ci deve essere anche l'urlImmagineProfilo che però
@@ -41,28 +40,8 @@ const Chat = [
     }
 ]
 
-function HomeScreen({ navigation }) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Button
-          onPress={() => navigation.navigate('Notifications')}
-          title="Go to notifications"
-        />
-      </View>
-    );
-  }
-  
-  function NotificationsScreen({ navigation }) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Button onPress={() => navigation.goBack()} title="Go back home" />
-      </View>
-    );
-  }
 
-const Drawer = createDrawerNavigator();
-
-export default function ChatScreen(){
+export default function ChatScreen({navigation}){
 
     let [Raleway] = useFonts({Raleway_400Regular});
     if(!Raleway)
@@ -71,6 +50,7 @@ export default function ChatScreen(){
     //quando si clicca sull'icona 'menu': apri il menu laterale
     function apriUserSettings(){
         console.log("apri menu laterale");
+        navigation.openDrawer();
     }
     
 
@@ -78,11 +58,11 @@ export default function ChatScreen(){
         <View style={styles.container}>
             {/* BARRA SUPERIORE */}
             <View style={styles.barraSuperiore}>
-                    <TouchableOpacity onPress={apriUserSettings} >
+                <AntDesign name="bells" size={24} color="#52575D" />
+                <Text style={styles.titolo}>Chat</Text>
+                <TouchableOpacity onPress={apriUserSettings}>
                         <MaterialIcons name="menu" size={24} color="#52575D" />
-                    </TouchableOpacity>
-                        <Text style={styles.titolo}>Chat</Text>
-                        <AntDesign name="bells" size={24} color="#52575D" />
+                </TouchableOpacity>
             </View>
             {/* LISTA CHAT */}
             <FlatList

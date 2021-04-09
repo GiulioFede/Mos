@@ -19,7 +19,7 @@ const ChatPreview =({nome, urlImmagineProfilo,dataUltimoMessaggio, ultimoMessagg
             <View style={styles.contenitoreMediaProfilo}>
                         {/* immagine SOSTITUIRE CON QUELLA DELL'UTENTE ma ovviamente non usare require ma (forse) fetch*/}
                         <View style={styles.contenitoreImmagineProfilo}>
-                            <Image source={require('../../../../../../../assets/resources/images/chat/fotoChat4.jpg')} resizeMode="cover"  style={styles.immagineProfilo}></Image>
+                            <Image source={require('../../../../../../../assets/resources/images/chat/fotoChat3.jpg')} resizeMode="cover"  style={styles.immagineProfilo}></Image>
                         </View>
                         {/* pallino online */}
                         <View style={styles.onlineCircle} />

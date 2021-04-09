@@ -1,11 +1,11 @@
 import React, {useRef} from "react";
-import {View,Text, FlatList,Animated,StyleSheet,Dimensions, Image} from "react-native";
+import {View,Text,TouchableOpacity,Animated,StyleSheet,Dimensions, Image} from "react-native";
 import {MiniaturaImmagineProfilo} from "./miniaturaProfiloUtente.feature";
-import MaskedView from '@react-native-community/masked-view';
 import Svg, {Line, Rect} from 'react-native-svg';
 import {LinearGradient} from "expo-linear-gradient";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
+import {MaterialIcons, AntDesign} from "@expo/vector-icons";
 
 /*
 IMPORTANTE: l'array da dare alla flat list deve cominciare con id:1!
@@ -19,7 +19,7 @@ const SPACER_ITEM_SIZE= 0;
 const BACKDROP_HEIGHT = height*0.6;
 const AnimatedSvg = Animated.createAnimatedComponent(Svg);
 
-export default function AroundYouComponent(){
+export default function AroundYouComponent({navigation}){
 
     const scrollX = useRef(new Animated.Value(0)).current;
 
@@ -60,12 +60,20 @@ export default function AroundYouComponent(){
         }
     ];
 
+    function apriUserSettings(){
+        navigation.openDrawer();
+    }
+
 
     return (
         <View style={styles.container}>
             {/* BARRA SUPERIORE */}
             <View style={styles.barraSuperiore}>
-                        <Text style={styles.titolo}>Around You</Text>
+            <View style={{width:24, height:24}}/>
+                <Text style={styles.titolo}>Around You</Text>
+                <TouchableOpacity onPress={apriUserSettings}>
+                        <MaterialIcons name="menu" size={24} color="#52575D" />
+                </TouchableOpacity>
             </View>
                 {/* LISTA UTENTI:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/}
                 <MostraListaUtenti utenti={utenti} scrollX={scrollX}/> 
@@ -163,12 +171,12 @@ const styles = StyleSheet.create({
     },
     barraSuperiore:{
         flexDirection:"row",
-        justifyContent:"center",
+        justifyContent:"space-between",
         paddingTop:24,
         paddingBottom: 24,
         marginHorizontal:16,
         alignItems:"center",
         borderBottomColor:"#e6e6e6",
-        borderBottomWidth:0.7,
-    },
+        borderBottomWidth:0.2
+    }
 })

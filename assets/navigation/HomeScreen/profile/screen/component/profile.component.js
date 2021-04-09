@@ -1,27 +1,33 @@
 import React from 'react';
-import {View, Text, StyleSheet, ScrollView, Image, Dimensions, Platform} from 'react-native';
-import {MaterialIcons, Fontisto, Ionicons} from "@expo/vector-icons";
+import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions, Platform} from 'react-native';
+import {MaterialIcons, Ionicons} from "@expo/vector-icons";
 import { MosCeleste } from '../../../../../resources/colors';
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { FAB } from 'react-native-paper';
 
 
-export default function ProfileComponent(){
+export default function ProfileComponent({navigation}){
 
     //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
     let [Raleway2] = useFonts2({Raleway_400Regular});
     if(!Raleway || !Raleway2)
         return <View></View>
+    
+    function apriUserSettings(){
+        navigation.openDrawer();
+    }
 
     return (
         <>
             {/* BARRA SUPERIORE */}
             <View style={styles.barraSuperiore}>
-                        <MaterialIcons name="arrow-back-ios" size={24} color="#52575D"/>
-                        <Text style={styles.titolo}>Profile</Text>
-                        <Fontisto name="more-v" size={24} color="#52575D" />
+                <View style={{width:24, height:24}}/>
+                <Text style={styles.titolo}>Profile</Text>
+                <TouchableOpacity onPress={apriUserSettings}>
+                        <MaterialIcons name="menu" size={24} color="#52575D" />
+                </TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between', flexDirection: 'column' }}style={{ paddingTop:10, paddingBottom: 40 }}>
                 <View style={{ flex: 1, justifyContent: 'flex-start' }}>
