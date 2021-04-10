@@ -38,6 +38,8 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                     //errori specifici
                     if(codiceErrore=="auth/invalid-verification-code")
                         setMessaggioVerifica("Codice errato.");
+                    else if(codiceErrore=="auth/code-expired")
+                        setMessaggioVerifica("Codice non più valido.")
                     else
                         setMessaggioVerifica("Si è verificato un problema. Riprova più tardi.");
                     
@@ -48,7 +50,7 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                 var codiceErrore = err.code;
                 var messaggioDiErrore;
                 //errori generali
-                if(codiceErrore=="auth/argument-error")
+                if(codiceErrore=="auth/argument-error" || codiceErrore=="auth/missing-verification-code")
                     messaggioDiErrore ="Inserire un codice valido.";
                 else if(codiceErrore=="auth/network-request-failed")
                     messaggioDiErrore ="Problemi di rete. Riprovare più tardi.";
@@ -57,6 +59,8 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                 else
                     messaggioDiErrore ="Si è verificato un problema. Riprovare più tardi.";
                 
+                console.log("errore...:"+codiceErrore+"-->"+err);
+
                 setMessaggioVerifica(messaggioDiErrore);
           }
         }
