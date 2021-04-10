@@ -2,7 +2,10 @@
 import React, {useState, useEffect, createContext} from "react";
 import * as firebase from 'firebase';
 import InizializzaApp from "./inizializzaApp";
-import {_accediConEmailPassword, _inviaEmailRecuperoPassword} from "./service/autenticazione.service";
+import {_accediConEmailPassword, 
+        _inviaCodiceDiVerifica, 
+        _inviaEmailRecuperoPassword,
+        _controllaCodiceDiVerificaTelefono} from "./service/autenticazione.service";
 
 console.log("autenticazione.js");
 
@@ -27,7 +30,9 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     user,
                     isInizializzazione,
                     accediConEmailPassword,
-                    inviaEmailRecuperoPassword
+                    inviaEmailRecuperoPassword,
+                    inviaCodiceDiVerifica,
+                    controllaCodiceDiVerificaTelefono
                 }}
                 >
                 {children}
@@ -53,6 +58,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     }
 
     //-------------------- METODI DI AUTENTICAZIONE ---------------------------------
+
+    //EMAIL E PASSWORD
     function accediConEmailPassword(email, password){
         console.log("accedi con email e password");
         return _accediConEmailPassword(email,password)         
@@ -60,5 +67,39 @@ export const AutenticazioneUtenteProvider = ({children}) => {
 
     function inviaEmailRecuperoPassword(email){
         return _inviaEmailRecuperoPassword(email);
+    }
+
+    //TELEFONO
+    function inviaCodiceDiVerifica(numeroDiTelefono, captcha){
+        console.log("invia codice di  verifica...");
+        return _inviaCodiceDiVerifica(numeroDiTelefono,captcha);
+       
+     /*   return new Promise((resolve, reject) => {  
+            let condition;  
+           setInterval(()=>{
+            if(1) {    
+                resolve('Promise is resolved successfully.');  
+            } else {    
+                reject('Promise is rejected');  
+            }
+        });
+    },3000) */
+    }
+
+    function controllaCodiceDiVerificaTelefono(id, codice){
+            console.log("verifico codice...");
+            return _controllaCodiceDiVerificaTelefono(id,codice);
+            /*
+            return new Promise((resolve, reject) => {  
+                let condition;  
+               setInterval(()=>{
+                if(0) {    
+                    resolve('credenziali corrette');  
+                } else {    
+                    reject('credenziali scorrette');  
+                }
+            });
+        },3000)*/
+
     }
   }

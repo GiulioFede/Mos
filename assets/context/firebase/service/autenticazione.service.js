@@ -22,3 +22,23 @@ import * as Localization from 'expo-localization';
 
             
     }
+
+//TELEFONO::::::::::::::::::::::::::::::::::::::::::::::
+    //invia codice di verifica a un numero specificato
+    export function _inviaCodiceDiVerifica(numeroDiTelefono,captcha){
+        console.log("_invia codice di  verifica");
+        const phoneProvider = new firebase.auth.PhoneAuthProvider();
+        return phoneProvider.verifyPhoneNumber(numeroDiTelefono, captcha);
+    }
+
+    //controlla che il codice inserito sia uguale a quello inviato dal server
+    export function _controllaCodiceDiVerificaTelefono(id, codice){
+        console.log("_controllo codice telefono");
+        const credential = firebase.auth.PhoneAuthProvider.credential(
+            id,
+            codice
+          );
+        return firebase.auth().signInWithCredential(credential);
+
+    }
+

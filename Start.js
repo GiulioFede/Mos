@@ -8,6 +8,8 @@ import { NavigationContainer, StackActions } from '@react-navigation/native';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 import { AutenticazioneUtente } from "./assets/context/firebase/autenticazione";
 import { MosCeleste } from "./assets/resources/colors";
+import PhoneAuthScreen from "./assets/navigation/PhoneAuthScreen/phoneAuth_screen";
+import PhoneAuthVerificationCodeScreen from "./assets/navigation/PhoneAuthScreen/phoneAuthVerificationCode_screen";
 
 
 const Stack = createStackNavigator();
@@ -28,10 +30,17 @@ export default function Start(){
     }else {
         return (
             <NavigationContainer>
-            <Stack.Navigator screenOptions={{...TransitionPresets.ModalPresentationIOS}} headerMode="none" initialRouteName="LoginScreen">
-                <Stack.Screen name="LoginScreen"component={LoginScreen} />
-                <Stack.Screen name="RegisterScreen"component={RegisterScreen} />
-                <Stack.Screen name="Home"component={HomeNavigator} />
+            <Stack.Navigator screenOptions={{
+                ...TransitionPresets.SlideFromRightIOS
+            }} initialRouteName="LoginScreen" headerMode="none"
+            >
+
+                    <Stack.Screen name="LoginScreen" component={LoginScreen} />
+                    <Stack.Screen name="PhoneAuthScreen" component={PhoneAuthScreen} />
+                    <Stack.Screen name="PhoneAuthVerificationCodeScreen" component={PhoneAuthVerificationCodeScreen} />
+                    <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+                    <Stack.Screen name="Home" component={HomeNavigator} />
+
             </Stack.Navigator>
             </NavigationContainer>
         )
