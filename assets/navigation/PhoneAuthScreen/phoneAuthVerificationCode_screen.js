@@ -1,10 +1,12 @@
 import React, {useState, useEffect, useContext} from "react";
-import {View,StyleSheet, Text,TouchableOpacity} from "react-native";
+import {View,StyleSheet, Text,TouchableOpacity, ScrollView} from "react-native";
 import {Button, Snackbar, ActivityIndicator, TextInput} from "react-native-paper";
 import { MosCeleste, MosPurple } from "../../resources/colors";
 import { Ionicons } from '@expo/vector-icons'; 
 import {useFonts , Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
+import {KeyboardAvoidingView} from "react-native";
+import { fontSizeTitolo, iconSize } from "../../context/variabili_globali/variabiliGlobali";
 
 export default function PhoneAuthVerificationCodeScreen({route,navigation}){
 
@@ -80,33 +82,9 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                 {/* BARRA SUPERIORE */}
                 <View style={styles.barraSuperiore}>
                     <TouchableOpacity onPress={() => navigation.navigate("PhoneAuthScreen")}>
-                            <Ionicons name="chevron-back" size={24} color={MosCeleste} />
+                            <Ionicons name="chevron-back" size={iconSize} color={MosCeleste} />
                     </TouchableOpacity>
                 </View>
-
-                {/* TITOLO */}
-                <View>
-                    <Text style={styles.titolo}>Inserisci il codice di verifica ricevuto via SMS</Text>
-                </View>
-
-                {/* AREA DOVE INSERIRE IL CODICE DI VERIFICA RICEVUTO */}
-                <TextInput
-                    style={{ marginVertical: 10, fontSize: 30, width:250, marginLeft:20, backgroundColor:"transparent"}}
-                    placeholder="123456"
-                    autoFocus
-                    paddingBottom={10}
-                    underlineColorAndroid={MosPurple}
-                    keyboardType="phone-pad"
-                    textContentType="telephoneNumber"
-                    onChangeText={setVerificationCode}
-                />
-
-{               /*BOTTONE PER INVIARE IL MESSAGGIO A TALE NUMERO */}
-                <Button icon="check" color={MosPurple} style={styles.bottoneVerifica} mode="contained" 
-                    onPress={() => { controllaCodiceVerifica() }}>
-
-                    VERIFICA
-                </Button>  
 
                 {/*COMPARE PER DIRE CHE IL CODICE DEL MESSAGGIO E' STATO INVIATO AL NUMERO SPECIFICATO PRIMA */}
                 <Snackbar
@@ -123,6 +101,38 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                     {messaggioVerifica}
                 </Snackbar>
 
+                <KeyboardAvoidingView
+                keyboardVerticalOffset={20}
+                 behavior= {(Platform.OS === 'ios')? "padding" : null}
+                >
+                    <ScrollView>
+
+                {/* TITOLO */}
+                <View>
+                    <Text style={styles.titolo}>Inserisci il codice di verifica ricevuto via SMS</Text>
+                </View>
+
+                {/* AREA DOVE INSERIRE IL CODICE DI VERIFICA RICEVUTO */}
+                <TextInput
+                    style={{  fontSize: fontSizeTitolo*0.8, width:"80%", marginLeft:20, marginVertical:iconSize*0.8, backgroundColor:"transparent"}}
+                    placeholder="123456"
+                    autoFocus={false}
+                    paddingBottom={10}
+                    underlineColorAndroid={MosPurple}
+                    keyboardType="phone-pad"
+                    textContentType="telephoneNumber"
+                    onChangeText={setVerificationCode}
+                />
+
+{               /*BOTTONE PER INVIARE IL MESSAGGIO A TALE NUMERO */}
+                <Button icon="check" color={MosPurple} style={styles.bottoneVerifica} mode="contained" 
+                    onPress={() => { controllaCodiceVerifica() }}>
+
+                    VERIFICA
+                </Button>  
+
+                    </ScrollView>
+                </KeyboardAvoidingView>
             </View>
         )
             }
@@ -136,15 +146,15 @@ container: {
   barraSuperiore:{
     flexDirection:"row",
     justifyContent:"space-between",
-    paddingTop:24,
-    paddingBottom: 24,
+    paddingTop:iconSize,
+    paddingBottom: iconSize,
     marginHorizontal:16,
     alignItems:"center"
 },
 titolo:{
     fontFamily: "Raleway_400Regular",
     color: MosPurple,
-    fontSize:36,
+    fontSize:fontSizeTitolo,
     padding:15
 },
 bottoneVerifica: {
@@ -157,6 +167,6 @@ bottoneVerifica: {
     borderRadius:10,
     borderWidth: 1,
     borderColor: '#fff',
-    width:250
+    width:"80%"
 }
 })

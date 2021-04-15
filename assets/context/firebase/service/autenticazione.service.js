@@ -12,15 +12,25 @@ import * as Localization from 'expo-localization';
 
     }
 
-    //invia email di recupero (DA RIVEDERE)
+    //invia email di recupero (DA RIVEDERE LA LINGUA)
     export function _inviaEmailRecuperoPassword(email){
         console.log("invio email recupero password a"+email);
         const language = Localization.locale;
         console.log("linguaggio "+(language.substr(0,2)));
         firebase.auth().languageCode = 'fr';
-        return firebase.auth().sendPasswordResetEmail(email);
+        return firebase.auth().sendPasswordResetEmail(email);         
+    }
 
-            
+    //registra nuovo utente con email e password
+    export function _registraNuovoUtente(email, password){
+        console.log("_registra nuovo utente");
+        return firebase.auth().createUserWithEmailAndPassword(email, password);
+    }
+
+    //invia email per verificare l'account appena creato
+    export function _inviaEmailDiVerifica(user){
+        console.log("_invia email di verifica");
+        return user.sendEmailVerification();
     }
 
 //TELEFONO::::::::::::::::::::::::::::::::::::::::::::::

@@ -5,7 +5,9 @@ import InizializzaApp from "./inizializzaApp";
 import {_accediConEmailPassword, 
         _inviaCodiceDiVerifica, 
         _inviaEmailRecuperoPassword,
-        _controllaCodiceDiVerificaTelefono} from "./service/autenticazione.service";
+        _controllaCodiceDiVerificaTelefono,
+        _registraNuovoUtente,
+        _inviaEmailDiVerifica} from "./service/autenticazione.service";
 
 console.log("autenticazione.js");
 
@@ -29,10 +31,13 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                 value = {{
                     user,
                     isInizializzazione,
+                    getUtenteCorrente,
                     accediConEmailPassword,
                     inviaEmailRecuperoPassword,
                     inviaCodiceDiVerifica,
-                    controllaCodiceDiVerificaTelefono
+                    controllaCodiceDiVerificaTelefono,
+                    registraNuovoUtente,
+                    inviaEmailDiVerifica
                 }}
                 >
                 {children}
@@ -41,6 +46,7 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     //chiamato ogni qual volta l'utente si logga o meno. La prima volta che viene chiamata serve anche a sottoscriversi all'evento
     function inizializzaAscoltatoreAutenticazione(){ 
             console.log("inizializzo ascoltatore login");
+
             firebase.auth().onAuthStateChanged(function(user) {
                  //se l'app era in fase di inizializzazione la sblocco (succede solo la prima volta che la funzione viene chiamata)
                 if(isInizializzazione)
@@ -48,13 +54,17 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                 if (user) {
                     // User is signed in.
                     console.log("utente loggato");
-                    setUser(false);
+                    setUser(user);
                 } else {
                     // No user is signed in.
                     console.log("utente non loggato");
                     setUser(null);
                 }
             });
+    }
+
+    function getUtenteCorrente(){
+        return user;
     }
 
     //-------------------- METODI DI AUTENTICAZIONE ---------------------------------
@@ -73,33 +83,24 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     function inviaCodiceDiVerifica(numeroDiTelefono, captcha){
         console.log("invia codice di  verifica...");
         return _inviaCodiceDiVerifica(numeroDiTelefono,captcha);
-       
-     /*   return new Promise((resolve, reject) => {  
-            let condition;  
-           setInterval(()=>{
-            if(1) {    
-                resolve('Promise is resolved successfully.');  
-            } else {    
-                reject('Promise is rejected');  
-            }
-        });
-    },3000) */
     }
 
     function controllaCodiceDiVerificaTelefono(id, codice){
             console.log("verifico codice...");
             return _controllaCodiceDiVerificaTelefono(id,codice);
-            /*
-            return new Promise((resolve, reject) => {  
-                let condition;  
-               setInterval(()=>{
-                if(0) {    
-                    resolve('credenziali corrette');  
-                } else {    
-                    reject('credenziali scorrette');  
-                }
-            });
-        },3000)*/
+
+    }
+
+    //REGISTRA NUOVO UTENTE CON EMAIL E PASSWORD
+    function registraNuovoUtente(email, password){
+        console.log("registra nuovo utente");
+        return _registraNuovoUtente(email,password);
+    }
+
+    //INVIA EMAIL DI VERIFICA
+    function inviaEmailDiVerifica(user){
+        console.log("invia email di verifica");
+        return _inviaEmailDiVerifica(user);
 
     }
   }
