@@ -1,10 +1,16 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import {Text, View, StyleSheet } from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 
 import { Button } from 'react-native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItemList,
+  DrawerItem,
+} from '@react-navigation/drawer';
 import HomeScreen from './HomeScreen/homeScreen';
+import { AutenticazioneUtente } from '../context/firebase/autenticazione';
 
 
 
@@ -18,12 +24,27 @@ const Drawer = createDrawerNavigator();
     parte dell'app (es. Account).
 */
 
+export default function HomeNavigator({navigation}) {
 
-export default function HomeNavigator() {
+  //contesto autenticazione
+var {logOut} = useContext(AutenticazioneUtente);
+
+function AltriPulsanti(props) {
   return (
-      <Drawer.Navigator initialRouteName="Home">
+    <DrawerContentScrollView {...props}>
+       {/*inserisco prima gli Screen definiti nel Drawer.Navigator*/}
+      <DrawerItemList {...props} /> 
+      {/*aggiungo il bottone di logOut*/}
+      <DrawerItem label="Logout" onPress={() => logOut().then((ok)=>navigation.navigate("LoginScreen")).catch((e)=>{console.log("errore al logout"); navigation.navigate("LoginScreen")})} /> 
+    </DrawerContentScrollView>
+  );
+}
+
+  return (
+      <Drawer.Navigator initialRouteName="Home" drawerContent={props => <AltriPulsanti {...props} />} >
         <Drawer.Screen name="Home" component={HomeScreen} />
         <Drawer.Screen name="Informazioni Personali" component={InformazioniPersonali} />
+       
       </Drawer.Navigator>
   );
 }

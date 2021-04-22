@@ -12,13 +12,15 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
 
     const {verificationIdentity} = route.params;
     //contesto autenticazione
-    const {controllaCodiceDiVerificaTelefono} = useContext(AutenticazioneUtente);
+    const {controllaCodiceDiVerificaTelefono, isProfiloCompletato} = useContext(AutenticazioneUtente);
 
     //gestisce lo snackbar per mostrare che il messaggio di verifica è stato inviato
     const [messaggioVerifica, setMessaggioVerifica] = useState(null);
     const onDismissSnackBar = () => setMessaggioVerifica(null);
     //codice di verifica inserito di volta in volta che si digita
     const [verificationCode, setVerificationCode] = useState();
+    //attesa dei controlli (del codice + se ha verificato profilo)
+    const [isLoading, setIsLoading] = useState(false);
 
     console.log("verificationId:"+verificationIdentity);
     //quando il componente viene montato si inizializza il messaggio con il numero di telefono passato
@@ -29,13 +31,34 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
 
       const controllaCodiceVerifica = async () => {
         console.log("controlla codice");
+        setIsLoading(true);
         try {
             controllaCodiceDiVerificaTelefono(verificationIdentity, verificationCode)
-                .then((user)=>{
+                .then((credenziali)=>{
+                    //l'utente è autenticato
                     console.log("autenticato con successo");
                     setMessaggioVerifica("autenticato con successo!");
-                    console.log(user);
+                    var user = credenziali.user;
+                    console.log("UID:"+user.uid);
+                    //controllo se ha già completato gli step per la creazione del profilo
+                    isProfiloCompletato(user.uid)
+                    .then((doc)=>{
+                        setIsLoading(false);
+                        //se è stato completato portalo direttamente alla home
+                        if (doc.exists) {
+                            navigation.navigate("Home");
+                        } else {
+                            // se non è stato completato inviarlo allo Slider 
+                            navigation.navigate("SliderNuovoUtente", {uid: user.uid});
+                        }
+                    }).catch((e)=>{
+                        setIsLoading(false);
+                        console.log("Si è verificato un errore:"+e);
+                        setMessaggioVerifica("Si è verificato un problema. Riprova più tardi.");
+                    })
+                   
                 }).catch((e)=>{
+                    setIsLoading(false);
                     const codiceErrore = e.code;
                     //errori specifici
                     if(codiceErrore=="auth/invalid-verification-code")
@@ -45,10 +68,11 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                     else
                         setMessaggioVerifica("Si è verificato un problema. Riprova più tardi.");
                     
-                    console.log("errore col codice:"+e.code);
+                    console.log("errore x:"+e.code+":"+e);
 
                 })
           } catch (err) {
+                setIsLoading(false);
                 var codiceErrore = err.code;
                 var messaggioDiErrore;
                 //errori generali
@@ -126,10 +150,16 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
 
 {               /*BOTTONE PER INVIARE IL MESSAGGIO A TALE NUMERO */}
                 <Button icon="check" color={MosPurple} style={styles.bottoneVerifica} mode="contained" 
-                    onPress={() => { controllaCodiceVerifica() }}>
+                    onPress={() => { 
+                        if(!isLoading)
+                            controllaCodiceVerifica()     
+                        }}>
 
                     VERIFICA
                 </Button>  
+
+                {/*Loading */}
+                {isLoading && <ActivityIndicator animating={true} color={MosPurple} style={{paddingTop:20}} /> }
 
                     </ScrollView>
                 </KeyboardAvoidingView>

@@ -30,3 +30,5 @@ export const fontSizeSottoTitolo = Dimensions.get("window").height*0.03;
 export const fontSizeCampi = Dimensions.get("window").height*0.02;
 //dimensioni icona torna indietro
 export const iconSize = Dimensions.get("window").width*0.07;
+//dimensioni menu di navigazione
+export const navbarHeight = 49;

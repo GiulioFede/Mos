@@ -19,6 +19,7 @@ export default function InizializzaApp(){
         console.log("app non collegata");
         firebase.initializeApp(firebaseConfig);
       }
+      console.log("app inizializzata");
     //---------------------------------------------------------------------
 }
 

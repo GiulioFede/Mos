@@ -49,6 +49,14 @@ import * as Localization from 'expo-localization';
             codice
           );
         return firebase.auth().signInWithCredential(credential);
-
     }
+
+
+
+
+//LOGOUT
+    export function _logOut(){
+        return firebase.auth().signOut();
+    }
+
 

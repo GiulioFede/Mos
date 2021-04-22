@@ -28,6 +28,7 @@ export default function PhoneAuthScreen({navigation}){
         //invia il codice di verifica
     const inviaCodiceVerificaNumero = async () => {
         console.log("invio codice di verifica");
+        
         if(phoneNumber.length==0){
             setMessaggioVerifica("Inserire un numero di telefono valido.");
             return;

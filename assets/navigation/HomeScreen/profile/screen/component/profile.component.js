@@ -1,11 +1,27 @@
 import React from 'react';
-import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions, Platform} from 'react-native';
+import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions, Platform, StatusBar} from 'react-native';
 import {MaterialIcons, Ionicons} from "@expo/vector-icons";
 import { MosCeleste } from '../../../../../resources/colors';
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { FAB } from 'react-native-paper';
+import {navbarHeight, fontSizeTitolo } from '../../../../../context/variabili_globali/variabiliGlobali';
 
+/*
+    MISURE
+    altezza barra profilo --> 10%
+    altezza sezione immagine profilo --> 30%
+    altezza area dettagli utenti --> 10%
+
+    altezza area galleria
+*/
+const larghezzaSchermo = Dimensions.get("window").width;
+const altezzaSchermo = Dimensions.get("window").height;
+const altezzaBarraProfilo = Dimensions.get("window").height*0.1;
+const altezzaSezioneImmagineProfilo = Dimensions.get("window").height*0.3;
+const altezzaDettagliUtenti = Dimensions.get("window").height*0.1;
+const altezzaSezioneGalleria = Dimensions.get("window").height*0.5-navbarHeight;
+const dimensioneFotoGalleria = (larghezzaSchermo/2>altezzaSezioneGalleria) ? (altezzaSezioneGalleria): (larghezzaSchermo/2);
 
 export default function ProfileComponent({navigation}){
 
@@ -25,12 +41,11 @@ export default function ProfileComponent({navigation}){
             <View style={styles.barraSuperiore}>
                 <View style={{width:24, height:24}}/>
                 <Text style={styles.titolo}>Profile</Text>
-                <TouchableOpacity onPress={apriUserSettings}>
+                <TouchableOpacity onPress={apriUserSettings} style={{right:Dimensions.get("window").width*0.03}}>
                         <MaterialIcons name="menu" size={24} color="#52575D" />
                 </TouchableOpacity>
             </View>
-            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between', flexDirection: 'column' }}style={{ paddingTop:10, paddingBottom: 40 }}>
-                <View style={{ flex: 1, justifyContent: 'flex-start' }}>
+            <View style={{ flex: 1, justifyContent: 'flex-start' }}>
                     
                     {/* IMMAGINE PROFILO */}
                     <View style={styles.contenitoreMediaProfilo}>
@@ -42,20 +57,19 @@ export default function ProfileComponent({navigation}){
                         <View style={styles.onlineCircle} />
                         {/* icona chat */}
                         <View style={styles.chatIcon}>
-                            <Ionicons name="ios-chatbubble-outline" size={24} color={MosCeleste} />
+                            <Ionicons name="ios-chatbubble-outline" size={altezzaSezioneImmagineProfilo*0.1} color={MosCeleste} />
                         </View>
                     </View>
 
                     {/* NOME */}
                     <View style = {styles.areaDettagliUtente}>
-                        <Text style={styles.testo}>Julie</Text>
+                        <Text style={styles.nome}>Julie</Text>
                     </View>
 
                 </View>
-                <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+                <View style={styles.sezioneGalleria}>
                         {/* GALLERIA */}
-                        <View>
-                            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+                            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{justifyContent:"center", alignItems:"center"}}>
                                 <View style={styles.contenitoreFotoGalleria}>
                                     <Image source={require("../../../../../../assets/resources/images/fotoGalleria1.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
                                 </View>
@@ -72,17 +86,17 @@ export default function ProfileComponent({navigation}){
                                     <Image source={require("../../../../../../assets/resources/images/fotoGalleria5.jpg")} style={styles.immagineGalleria} resizeMode="cover" />
                                 </View>
                             </ScrollView>
-                        </View>
 
-                        {/*Bottone aggiungi foto */}
-                        <FAB
+
+                            {/*Bottone aggiungi foto */}
+                            <FAB
                             style={styles.bottoneAggiungiFoto}
                             small
                             icon="plus"
                             color={MosCeleste}
                             onPress={() => console.log('Pressed')}/>
-                 </View>
-    </ScrollView>
+
+                </View>
 </>
     )
 }
@@ -90,6 +104,7 @@ export default function ProfileComponent({navigation}){
 const styles = StyleSheet.create({
     container: {
       backgroundColor:"#fff",
+      height: Dimensions.get("window").height,
       flex:1
     },
     titolo:{
@@ -99,19 +114,20 @@ const styles = StyleSheet.create({
         color: "#52575D",
     },
     barraSuperiore:{
+        width:Dimensions.get("window").width,
+        height:altezzaBarraProfilo,
         flexDirection:"row",
         justifyContent:"space-between",
         paddingTop:24,
         paddingBottom: 24,
-        marginHorizontal:16,
         alignItems:"center",
         borderBottomColor:"#e6e6e6",
         borderBottomWidth:0.7,
     },
-    testo:{
+    nome:{
         fontFamily: "Raleway_200ExtraLight",
         color: "#52575D",
-        fontSize:36
+        fontSize:fontSizeTitolo
     },
     immagineProfilo: {
         flex:1,
@@ -119,7 +135,11 @@ const styles = StyleSheet.create({
         height: undefined
     },
     contenitoreMediaProfilo:{
-        alignSelf:"center",
+        alignItems:"center",
+        justifyContent:"center",
+        height: altezzaSezioneImmagineProfilo, //altezza sezione immagine profilo
+        width: Dimensions.get("window").width,
+        backgroundColor:"red",
         ...Platform.select({
             ios:{
                 shadowOffset: { width: 3, height: 3 },
@@ -129,9 +149,9 @@ const styles = StyleSheet.create({
         })
     },
     contenitoreImmagineProfilo: {
-        width: 200,
-        height: 200,
-        borderRadius: 100,
+        width: altezzaSezioneImmagineProfilo,
+        height: altezzaSezioneImmagineProfilo,
+        borderRadius: altezzaSezioneImmagineProfilo/2,
         overflow: "hidden",
         backgroundColor: '#52575D',
         ...Platform.select({
@@ -144,30 +164,38 @@ const styles = StyleSheet.create({
         backgroundColor: "#00ff40",
         elevation: 10,
         position: "absolute",
-        bottom: 28,
-        left:10,
-        padding:4, 
-        height:20,
-        width: 20,
-        borderRadius:10
+        left:(larghezzaSchermo/2)-altezzaSezioneImmagineProfilo/2*0.8071,
+        top:(altezzaSezioneImmagineProfilo/2)+altezzaSezioneImmagineProfilo/2*0.6071,
+        height:altezzaSezioneImmagineProfilo*0.1,
+        width: altezzaSezioneImmagineProfilo*0.1,
+        borderRadius:altezzaSezioneImmagineProfilo*0.1/2
     },
     chatIcon: {
         backgroundColor: "white",
         position: "absolute",
-        bottom: 0,
-        right: 0,
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+        left:(larghezzaSchermo/2)+altezzaSezioneImmagineProfilo/2*0.5071,
+        top:(altezzaSezioneImmagineProfilo/2)+altezzaSezioneImmagineProfilo/2*0.5071,
+        height:altezzaSezioneImmagineProfilo*0.2,
+        width: altezzaSezioneImmagineProfilo*0.2,
+        borderRadius:altezzaSezioneImmagineProfilo*0.2/2,
         alignItems: "center",
         justifyContent: "center",
-        elevation: 5,
-        margin:8
+        elevation: 5
     },
     areaDettagliUtente: {
         alignSelf: "center",
         alignItems:"center",
-        marginTop: 16
+        width:larghezzaSchermo,
+        height: altezzaDettagliUtenti, //area dettagli utenti
+        backgroundColor:"green",
+        justifyContent:"center",
+        alignItems:"center"
+    },
+    sezioneGalleria: {
+        width:larghezzaSchermo,
+        height:altezzaSezioneGalleria,  //sezione galleria
+        justifyContent: 'center',
+        alignItems:"center"
     },
     immagineGalleria: {
         flex:1,
@@ -177,21 +205,19 @@ const styles = StyleSheet.create({
     contenitoreGalleria: {
         alignItems:"flex-end",
         justifyContent:"flex-end",
-        backgroundColor:"black",
         flexGrow:1
     },
     contenitoreFotoGalleria: {
-        width:Dimensions.get("window").width/2-8, 
-        height:Dimensions.get("window").width/2-8,
-        borderRadius:(Dimensions.get("window").width/2-2.5)*10/200,
+        width:dimensioneFotoGalleria-5, 
+        height:dimensioneFotoGalleria-5,
+        borderRadius:(larghezzaSchermo/2-2.5)*10/200,
         overflow: "hidden",
-        marginLeft:5
+        marginHorizontal:2.5
     },
     bottoneAggiungiFoto: {
         position: 'absolute',
-        margin: 16,
-        right: 0,
-        bottom: 0,
+        right: larghezzaSchermo*0.05,
+        bottom: altezzaSchermo*0.08,
         backgroundColor:"white",
         ...Platform.select({
             android: {

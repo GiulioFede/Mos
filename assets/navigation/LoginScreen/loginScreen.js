@@ -22,7 +22,7 @@ export default function LoginScreen({navigation}){
     //EMAIL E PASSWORD::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
     //contesto autenticazione
-    const {accediConEmailPassword, inviaEmailRecuperoPassword, inviaEmailDiVerifica, getUtenteCorrente} = useContext(AutenticazioneUtente);
+    const {accediConEmailPassword, inviaEmailRecuperoPassword, inviaEmailDiVerifica, getUtenteCorrente, isProfiloCompletato} = useContext(AutenticazioneUtente);
     //label button email e password
     const [labelEmailPasswordButton, setLabelEmailPasswordButton] = useState("ACCEDI CON EMAIL/PASSWORD");
     //email
@@ -210,15 +210,35 @@ export default function LoginScreen({navigation}){
                 accediConEmailPassword(email,password)
                 .then((userCredential) => {
                     // Signed in
-                    setIsLoading(false);
                     console.log("autenticato:"+userCredential.user);
                     var user = userCredential.user;
 
                     //controllo se ha verificato l'email
                     var isEmailVerified = user.emailVerified;
                     console.log("is email verified? --> "+isEmailVerified);
-                    if(!isEmailVerified)
+                    if(!isEmailVerified){
                         setSnackmessageEmailVerified(true);
+                        setIsLoading(false);
+                    }
+                    else {
+                        console.log("UID:"+user.uid);
+                        //controllo se ha già completato gli step per la creazione del profilo
+                        isProfiloCompletato(user.uid)
+                            .then((doc)=>{
+                                setIsLoading(false);
+                                //se è stato completato portalo direttamente alla home
+                                if (doc.exists) {
+                                    navigation.navigate("Home");
+                                } else {
+                                    // se non è stato completato inviarlo allo Slider 
+                                    navigation.navigate("SliderNuovoUtente", {uid: user.uid});
+                                }
+                            }).catch((e)=>{
+                                setIsLoading(false);
+                                console.log("Si è verificato un errore.");
+                                setErrore("Si è verificato un problema. Riprova più tardi.");
+                            })
+                    }
 
                 })
                 .catch((error) => {
@@ -253,6 +273,8 @@ export default function LoginScreen({navigation}){
             
             })
         }catch(e){
+            setIsLoading(false);
+            console.log("errore imprevisto:"+e);
             setErrore("*errore imprevisto. Riprovare piu tardi.");
         } 
       }

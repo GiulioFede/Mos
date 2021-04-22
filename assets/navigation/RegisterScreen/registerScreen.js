@@ -3,7 +3,7 @@ import {View, Text, ActivityIndicator,StyleSheet,ScrollView,TouchableOpacity, Ke
 import {Snackbar, FAB, TextInput} from "react-native-paper";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
-import { MosCeleste } from "../../resources/colors";
+import { MosCeleste, MosViola } from "../../resources/colors";
 import { Ionicons } from '@expo/vector-icons';
 import { ColoreBarraDiStato, fontSizeTitoloPiccolo,fontSizeSottoTitolo, iconSize, fontSizeCampi } from "../../context/variabili_globali/variabiliGlobali";
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
@@ -126,6 +126,25 @@ export default function RegisterScreen({navigation}){
                             <Ionicons name="chevron-back" size={iconSize} color={MosCeleste} style={{paddingLeft:24}} />
                     </TouchableOpacity>
             </View>
+
+            {/*QUANDO SI STA ASPETTANDO LA RISPOSTA DEL SERVER isLoading=true (permette anche di non premere altri bottoni)*/}
+            {isLoading &&  <View  style={{position:"absolute", zIndex:15, justifyContent:"center",alignItems:"center",width:Dimensions.get("window").width, height:Dimensions.get("window").height}}><ActivityIndicator animating={true} color={MosCeleste}/></View> }
+            {isLoading  && <View style={{backgroundColor:"rgba(255, 255, 255,0.8)", position:"absolute", width:Dimensions.get("window").width, height:Dimensions.get("window").height, zIndex:10}}/>} 
+
+            {/*COMPARE SOLO PER DARE UNA RISPOSTA SE L'EMAIL E' STATA INVIATA O MENO */}
+            <Snackbar
+                                    visible={snackmessage ? true : false}
+                                    onDismiss={onDismissSnackBar}
+                                    duration = {5000}
+                                    theme={{ colors: { surface: "white",accent: "white"},}}
+                                    action={{
+                                        label: 'UNDO',
+                                        onPress: () => {
+                                            onDismissSnackBar();
+                                        },
+                                    }}>
+                                    {snackmessage}
+             </Snackbar>
                 
             <KeyboardAvoidingView
                     behavior= {(Platform.OS === 'ios')? "padding" : null}
@@ -133,10 +152,6 @@ export default function RegisterScreen({navigation}){
                  <ScrollView showsVerticalScrollIndicator={false}>
 
                     <View style={{alignItems:"center", justifyContent:"center"}}> 
-
-                        {/*QUANDO SI STA ASPETTANDO LA RISPOSTA DEL SERVER isLoading=true (permette anche di non premere altri bottoni)*/}
-                        {isLoading &&  <ActivityIndicator animating={true} color={MosCeleste} style={{position:"absolute", zIndex:15}} /> }
-                        {isLoading  && <View style={{backgroundColor:"rgba(255, 255, 255,0.9)", position:"absolute", width:Dimensions.get("window").width, height:Dimensions.get("window").height, zIndex:10}}/>} 
 
                             {/* IMMAGINE */}
                             <View style={styles.contenitoreImmagineSfondo}>
@@ -193,7 +208,7 @@ export default function RegisterScreen({navigation}){
                             
                                 {/*ERRORE*/}
                                 <View style={{alignItems:"flex-start", paddingVertical:10, justifyContent:"flex-start", width:"80%"}}>
-                                    <Text style={[styles.errore,{color:"#cc0000"}]}>{errore}</Text>
+                                    <Text style={[styles.errore,{color:"white"}]}>{errore}</Text>
                                 </View>
 
                             {/*BOTTONE REGISTRATI CON EMAIL/PASSWORD*/}
@@ -208,22 +223,6 @@ export default function RegisterScreen({navigation}){
                                     label="REGISTRATI"
                                 /> 
                                 </View>                             
-
-
-                                {/*COMPARE SOLO PER DARE UNA RISPOSTA SE L'EMAIL E' STATA INVIATA O MENO */}
-                                <Snackbar
-                                    visible={snackmessage ? true : false}
-                                    onDismiss={onDismissSnackBar}
-                                    duration = {5000}
-                                    theme={{ colors: { surface: "white",accent: "white"},}}
-                                    action={{
-                                        label: 'UNDO',
-                                        onPress: () => {
-                                            onDismissSnackBar();
-                                        },
-                                    }}>
-                                    {snackmessage}
-                                </Snackbar>
                                 </View>
 
                             </View>

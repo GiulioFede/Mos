@@ -7,7 +7,9 @@ import {_accediConEmailPassword,
         _inviaEmailRecuperoPassword,
         _controllaCodiceDiVerificaTelefono,
         _registraNuovoUtente,
-        _inviaEmailDiVerifica} from "./service/autenticazione.service";
+        _inviaEmailDiVerifica,
+        _logOut} from "./service/autenticazione.service";
+import { _aggiornaImmagineProfilo, _creaNuovoUtente, _isProfiloCompletato } from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -24,7 +26,13 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     //quando il componente viene montato...
     useEffect(()=>{
         InizializzaApp(); //indico all'app dove si trova il database
-        inizializzaAscoltatoreAutenticazione(); //mi metto in ascolto dei cambiamenti di stato dell'utente (loggato/non loggato)
+        const unsubscribe = inizializzaAscoltatoreAutenticazione(); //mi metto in ascolto dei cambiamenti di stato dell'utente (loggato/non loggato)
+        //subscriber();
+        //quando il componente viene smontato elimino il listening (evitando memory leak)
+        return () =>{
+            console.log("elimino listenter Auth autenticazione.");
+            unsubscribe(); //elimino listener
+        }
     },[])
 
     return <AutenticazioneUtente.Provider
@@ -32,12 +40,16 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     user,
                     isInizializzazione,
                     getUtenteCorrente,
+                    logOut,
                     accediConEmailPassword,
                     inviaEmailRecuperoPassword,
                     inviaCodiceDiVerifica,
                     controllaCodiceDiVerificaTelefono,
                     registraNuovoUtente,
-                    inviaEmailDiVerifica
+                    inviaEmailDiVerifica,
+                    creaNuovoUtente,
+                    aggiornaImmagineProfilo,
+                    isProfiloCompletato
                 }}
                 >
                 {children}
@@ -47,24 +59,29 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     function inizializzaAscoltatoreAutenticazione(){ 
             console.log("inizializzo ascoltatore login");
 
-            firebase.auth().onAuthStateChanged(function(user) {
-                 //se l'app era in fase di inizializzazione la sblocco (succede solo la prima volta che la funzione viene chiamata)
-                if(isInizializzazione)
-                    setIsInizializzazione(false);
+            return firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
                     // User is signed in.
                     console.log("utente loggato");
-                    setUser(user);
+                    setUser(user.uid);
                 } else {
                     // No user is signed in.
                     console.log("utente non loggato");
                     setUser(null);
                 }
+                
+                //se l'app era in fase di inizializzazione la sblocco (succede solo la prima volta che la funzione viene chiamata)
+                if(isInizializzazione)
+                    setIsInizializzazione(false);
             });
     }
 
     function getUtenteCorrente(){
         return user;
+    }
+
+    function logOut(){
+        return _logOut();
     }
 
     //-------------------- METODI DI AUTENTICAZIONE ---------------------------------
@@ -104,3 +121,20 @@ export const AutenticazioneUtenteProvider = ({children}) => {
 
     }
   }
+
+  //CONTROLLA CHE IL PROFILO E' STATO COMPLETATO
+   function isProfiloCompletato(uid){
+    console.log("controllo che l'utente abbia completato il profilo");
+    return _isProfiloCompletato(uid);
+   }
+
+   //-------------------- METODI PER LA CREAZIONE DI UN NUOVO UTENTE ---------------------------------
+    function creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso){
+        console.log("autenticazione: crea nuovo utente");
+        return _creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso);
+    }
+
+    function aggiornaImmagineProfilo(idUser, blob){
+        console.log("aggiorno immagine profilo");
+        return _aggiornaImmagineProfilo(idUser,blob);
+    }

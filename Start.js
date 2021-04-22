@@ -19,11 +19,13 @@ const Stack = createStackNavigator();
 export default function Start(){
 
     
-    const {isInizializzazione} = useContext(AutenticazioneUtente);
+    const {isInizializzazione, getUtenteCorrente} = useContext(AutenticazioneUtente);
 
     var coloreBarra = useContext(ColoreBarraDiStato);
 
     console.log("Start.js"+isInizializzazione);
+    console.log("l'utente è loggato?:");
+    console.log(getUtenteCorrente());
 
     //se l'accesso a firebase è ancora in fase di inizializzazione...
     if(isInizializzazione){
@@ -33,13 +35,14 @@ export default function Start(){
                 <StatusBar backgroundColor={coloreBarra.colore} barStyle="dark-content" />
             </View>
         )
-    }else {
+    }
+    else {
         return (
             <>
             <NavigationContainer>
             <Stack.Navigator screenOptions={{
                 ...TransitionPresets.SlideFromRightIOS
-            }} initialRouteName="SliderNuovoUtente" headerMode="none"
+            }} initialRouteName={getUtenteCorrente() ?"Home" : "LoginScreen"} headerMode="none" //se l'utente è già autenticato lo mando in Home, altrimenti no
             >
 
                     <Stack.Screen name="LoginScreen" component={LoginScreen} />

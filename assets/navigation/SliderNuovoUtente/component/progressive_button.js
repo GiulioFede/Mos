@@ -5,7 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { altezzaSchermoInterno, larghezzaDevice } from "../../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste, MosPurple, MosViola } from "../../../resources/colors";
 
-export default function ProgressiveButton({percentage, scrollSlide}){
+export default function ProgressiveButton({percentage, scrollSlide, scrollBack, showLeftArrow, showForwardArrow}){
 
     const size = altezzaSchermoInterno*0.05;
     const strokeWidth = 2;
@@ -54,9 +54,16 @@ export default function ProgressiveButton({percentage, scrollSlide}){
                 <Circle ref={progressRef} stroke="white" cx={center} cy={center} r={radius} strokeWidth={strokeWidth} strokeDasharray={circumference} />
                 </G>
             </Svg>
-            <TouchableOpacity onPress={scrollSlide} style={styles.button} activeOpacity={0.6}>
-                <MaterialIcons name="arrow-forward-ios" size={altezzaSchermoInterno*0.03} color="white" />
+            { showForwardArrow &&
+                <TouchableOpacity onPress={scrollSlide} style={styles.button} activeOpacity={0.6}>
+                    <MaterialIcons name="arrow-forward-ios" size={altezzaSchermoInterno*0.03} color="white" />
+                </TouchableOpacity>
+            }
+            {showLeftArrow &&
+            <TouchableOpacity onPress={scrollBack} style={styles.leftButton} activeOpacity={0.6}>
+                <MaterialIcons name="arrow-back-ios" size={altezzaSchermoInterno*0.03} color="white" />
             </TouchableOpacity>
+            }
         </View>
     )
 }
@@ -67,11 +74,16 @@ const styles = StyleSheet.create({
         height: altezzaSchermoInterno*0.06,
         justifyContent:"center",
         alignItems:"center",
-        backgroundColor:"red"
     },
     button: {
         position:"absolute",
         alignSelf:"center",
+        borderRadius: 100
+    },
+    leftButton: {
+        position:"absolute",
+        alignSelf:"flex-start",
+        paddingLeft:larghezzaDevice*0.1,
         borderRadius: 100
     }
 })
