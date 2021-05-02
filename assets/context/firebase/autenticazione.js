@@ -6,10 +6,13 @@ import {_accediConEmailPassword,
         _inviaCodiceDiVerifica, 
         _inviaEmailRecuperoPassword,
         _controllaCodiceDiVerificaTelefono,
+        _controllaCodiceDiVerificaTelefonoEAggiornaNumero,
         _registraNuovoUtente,
         _inviaEmailDiVerifica,
-        _logOut} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _creaNuovoUtente, _isProfiloCompletato } from "./service/firestore.service";
+        _logOut,
+        _aggiornaEmail} from "./service/autenticazione.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente } from "./service/firestore.service";
+import { getCurrentUser } from "expo-google-sign-in";
 
 console.log("autenticazione.js");
 
@@ -22,6 +25,14 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     const [isInizializzazione, setIsInizializzazione] = useState(true);
     //contiene le informazioni dell'utente
     const [user, setUser] = useState(null);
+    //se true indica che ha completato gli step necessari a configurare il profilo
+    const [isUserProfileCompleted, setIsUserProfileCompleted] = useState(null);
+    //parte importantissima. Contiene le informazioni dell'utente (settata dalla Home quando recupera le informazioni)
+    const [informazioniProfiloUtente, setInformazioniProfiloUtente] = useState(null);
+    //contiene le informazioni riguardo l'autenticazione (se email o telefono e il contenuto )
+    const [informazioniAutenticazioneUtente, setInformazioniAutenticazioneUtente] = useState(null);
+    //messaggio che può essere sfruttato per mostrare informazioni globali
+    const [messaggioAuth, setMessaggioAuth] = useState(null);
 
     //quando il componente viene montato...
     useEffect(()=>{
@@ -30,26 +41,41 @@ export const AutenticazioneUtenteProvider = ({children}) => {
         //subscriber();
         //quando il componente viene smontato elimino il listening (evitando memory leak)
         return () =>{
-            console.log("elimino listenter Auth autenticazione.");
+            console.log("elimino listener Auth autenticazione.");
             unsubscribe(); //elimino listener
         }
     },[])
 
     return <AutenticazioneUtente.Provider
                 value = {{
-                    user,
+                    user, //uid
+                    isUserProfileCompleted,
                     isInizializzazione,
+                    informazioniProfiloUtente,
+                    informazioniAutenticazioneUtente,
+                    messaggioAuth,
+                    setMessaggioAuth,
+                    setInformazioniProfiloUtente,
+                    setInformazioniAutenticazioneUtente,
                     getUtenteCorrente,
                     logOut,
                     accediConEmailPassword,
                     inviaEmailRecuperoPassword,
                     inviaCodiceDiVerifica,
                     controllaCodiceDiVerificaTelefono,
+                    controllaCodiceDiVerificaTelefonoEAggiornaNumero,
                     registraNuovoUtente,
                     inviaEmailDiVerifica,
                     creaNuovoUtente,
                     aggiornaImmagineProfilo,
-                    isProfiloCompletato
+                    isProfiloCompletato,
+                    getUrlImmagineProfiloUtente,
+                    getUserInformation,
+                    caricaNuovaImmagineDiGalleria,
+                    eliminaImmagineDiGalleria,
+                    cambiaImmagineDiProfilo,
+                    aggiornaEmail,
+                    aggiornaDettagliProfiloUtente
                 }}
                 >
                 {children}
@@ -60,12 +86,36 @@ export const AutenticazioneUtenteProvider = ({children}) => {
             console.log("inizializzo ascoltatore login");
 
             return firebase.auth().onAuthStateChanged(function(user) {
+                console.log("stato cambiato..........................................................................................");
                 if (user) {
                     // User is signed in.
                     console.log("utente loggato");
+                    console.log(user);
                     setUser(user.uid);
+                    //controllo se il profilo è stato completato
+                    isProfiloCompletato(user.uid)
+                        .then((doc)=>{
+                            //se è stato completato portalo direttamente alla home
+                            if (doc.exists) {
+                                console.log("L'utente ha completato il profilo.");
+                                const metodo = [user.email,user.phoneNumber];
+                                setInformazioniAutenticazioneUtente(metodo);
+                                setIsUserProfileCompleted(true);
+                            }else {
+                                setIsUserProfileCompleted(false);
+                            }
+                        }).catch((e)=>{
+                            console.log("Si è verificato un errore.");
+                        })
+
+                        //se l'utente non ha verificato l'email (se ha scelto questo come metodo di login allora esegui il logout)
+                        if(user.email!=null && user.emailVerified==false){
+                            logOut();
+                            console.log("l'utente non ha ancora verificato l'email");
+                        }
                 } else {
                     // No user is signed in.
+                    setIsUserProfileCompleted(false);
                     console.log("utente non loggato");
                     setUser(null);
                 }
@@ -105,8 +155,13 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     function controllaCodiceDiVerificaTelefono(id, codice){
             console.log("verifico codice...");
             return _controllaCodiceDiVerificaTelefono(id,codice);
-
     }
+
+    function controllaCodiceDiVerificaTelefonoEAggiornaNumero(id, codice){
+        console.log("verifico codice per aggiornare numero di telefono...");
+        return _controllaCodiceDiVerificaTelefonoEAggiornaNumero(id,codice);
+
+}
 
     //REGISTRA NUOVO UTENTE CON EMAIL E PASSWORD
     function registraNuovoUtente(email, password){
@@ -117,7 +172,7 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     //INVIA EMAIL DI VERIFICA
     function inviaEmailDiVerifica(user){
         console.log("invia email di verifica");
-        return _inviaEmailDiVerifica(user);
+        return _inviaEmailDiVerifica();
 
     }
   }
@@ -128,13 +183,50 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     return _isProfiloCompletato(uid);
    }
 
+   //AGGIORNA EMAIL
+   function aggiornaEmail(nuovaEmail){
+    console.log("aggiorno email_");
+    return _aggiornaEmail(nuovaEmail);
+   }
+
    //-------------------- METODI PER LA CREAZIONE DI UN NUOVO UTENTE ---------------------------------
-    function creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso){
+    function creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso, urlImmagineProfilo){
         console.log("autenticazione: crea nuovo utente");
-        return _creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso);
+        return _creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso, urlImmagineProfilo);
     }
 
     function aggiornaImmagineProfilo(idUser, blob){
         console.log("aggiorno immagine profilo");
         return _aggiornaImmagineProfilo(idUser,blob);
+    }
+
+    //-------------------- METODI PER L'UTENTE CORRENTE -----------------------------------------------
+    function getUrlImmagineProfiloUtente(idUser){
+        console.log("ottengo url immagine profilo");
+        return _getUrlImmagineProfiloUtente(idUser);
+    }
+
+    function getUserInformation(idUser){
+        console.log("ottengo info utente corrente");
+        return _getUserInformation(idUser);
+    }
+
+    function caricaNuovaImmagineDiGalleria(idUser, blob){
+        console.log("carico nuova immagine di galleria");
+        return _caricaNuovaImmagineDiGalleria(idUser, blob);
+    }
+
+    function eliminaImmagineDiGalleria(idUser, value){
+        console.log("elimino immagine di galleria_"+value);
+        return _eliminaImmagineDiGalleria(idUser,value);
+    }
+
+    function cambiaImmagineDiProfilo(idUser, blob){
+        console.log("cambio immagine di profilo_");
+        return _cambiaImmagineDiProfilo(idUser,blob);
+    }
+
+    function aggiornaDettagliProfiloUtente(idUser,doc){
+        console.log("aggiorno dettaglid del profilo utente_");
+        return _aggiornaDettagliProfiloUtente(idUser,doc);
     }

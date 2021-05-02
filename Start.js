@@ -1,4 +1,4 @@
-import React, {useContext} from "react";
+import React, {useContext, useState, useEffect} from "react";
 import {View,StatusBar} from "react-native";
 import { ActivityIndicator} from 'react-native-paper';
 import LoginScreen from './assets/navigation/LoginScreen/loginScreen';
@@ -19,16 +19,15 @@ const Stack = createStackNavigator();
 export default function Start(){
 
     
-    const {isInizializzazione, getUtenteCorrente} = useContext(AutenticazioneUtente);
+    const {isInizializzazione,user, getUtenteCorrente, isUserProfileCompleted} = useContext(AutenticazioneUtente);
 
     var coloreBarra = useContext(ColoreBarraDiStato);
 
-    console.log("Start.js"+isInizializzazione);
     console.log("l'utente è loggato?:");
-    console.log(getUtenteCorrente());
+    console.log(user, isUserProfileCompleted);
 
     //se l'accesso a firebase è ancora in fase di inizializzazione...
-    if(isInizializzazione){
+    if(isInizializzazione || isUserProfileCompleted==null ){
         return (
             <View style={{justifyContent:"center", alignItems:"center", flex:1, backgroundColor:"white"}}>
                 <ActivityIndicator animating={true} color={MosCeleste} />
@@ -42,7 +41,7 @@ export default function Start(){
             <NavigationContainer>
             <Stack.Navigator screenOptions={{
                 ...TransitionPresets.SlideFromRightIOS
-            }} initialRouteName={getUtenteCorrente() ?"Home" : "LoginScreen"} headerMode="none" //se l'utente è già autenticato lo mando in Home, altrimenti no
+            }} initialRouteName={isUserProfileCompleted ? "Home" : "LoginScreen"} headerMode="none"
             >
 
                     <Stack.Screen name="LoginScreen" component={LoginScreen} />

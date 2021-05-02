@@ -17,6 +17,7 @@ import Svg, { Path } from 'react-native-svg'
 // from 'https://github.com/nirsky/react-native-size-matters'
 import { moderateScale } from 'react-native-size-matters' //installa con: yarn add react-native-size-matters
 import { MosCeleste } from '../../../../../../resources/colors'
+import { fontSizeCampi } from '../../../../../../context/variabili_globali/variabiliGlobali'
 
 // Props info list
 // 1. mine (bool) => renders blue bubble on right
@@ -30,7 +31,7 @@ function MessageBubble({messaggio}) {
         <View style={[styles.item, styles.itemIn]}>
         <View style={[styles.balloon, {backgroundColor: MosCeleste}]}>
         {/* non preoccuparti per la lunghezza dato che verranno consentiti al massimo solo brevi messaggi*/}
-          <Text style={{paddingTop: 5, color: 'white'}}>{messaggio}</Text> 
+          <Text style={{paddingTop: 5, color: 'white', fontSize:fontSizeCampi}}>{messaggio}</Text> 
           <View
           style={[
             styles.arrowContainer,
@@ -57,15 +58,13 @@ export default MessageBubble;
 
 const styles = StyleSheet.create({
 item: {
-    marginVertical: moderateScale(7, 2),
     flexDirection: 'row'
  },
  itemIn: {
-     marginLeft: 20
+    
  },
  itemOut: {
     alignSelf: 'flex-end',
-    marginRight: 20
  },
  balloon: {
     maxWidth: moderateScale(250, 2),
@@ -77,7 +76,7 @@ item: {
  arrowContainer: {
      position: 'absolute',
      top: 0,
-     left: 0,
+     left: 0.3,
      right: 0,
      bottom: 0,
      zIndex: -1,

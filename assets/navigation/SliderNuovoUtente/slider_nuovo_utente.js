@@ -13,7 +13,7 @@ import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 export default function SliderNuovoUtente({route, navigation}){ //NB: route.params.uid contiene l'uid col quale salvare l'utente (e' uguale all'uid di autenticazione)
 
     //contesto autenticazione
-    var {creaNuovoUtente, aggiornaImmagineProfilo, logOut} = useContext(AutenticazioneUtente);
+    var {creaNuovoUtente, aggiornaImmagineProfilo, logOut, getUrlImmagineProfiloUtente} = useContext(AutenticazioneUtente);
     //estraggo argomenti dalla funzione
     var {uid} = route.params;
 
@@ -102,16 +102,6 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
         coloreBarra.setColore("white");
 
         try{
-           creaNuovoUtente(uid,
-                           name.current,
-                           dataDiNascita.current,
-                           posizione.current,
-                           sesso.current,
-                           preferenzaSesso.current)
-                .then((ris)=>{
-                    console.log("Utente inserito:");
-                    console.log(ris);
-
                     //salvo immagine profilo
                     //prendo il file
                     fetch(uriImmagineProfilo.current)
@@ -123,10 +113,42 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                                     //chiamo firebase
                                     aggiornaImmagineProfilo(uid, blob)
                                         .then((ris)=>{
-                                            setIsCreazioneUtenteIsLoading(false);
                                             console.log("successo caricamento immagine profilo:"+ris);
-                                            //navigo nella home
-                                            navigation.navigate("Home");
+                                            //ottengo l'url (unico modo e rifare la richiesta dato che chiederlo direttamente è o verrà deprecato)
+                                            getUrlImmagineProfiloUtente(uid)
+                                                .then((url)=>{
+                                                    console.log("url immagine profilo ottenuta:"+url);
+                                                    
+                                                    creaNuovoUtente(uid,
+                                                        name.current,
+                                                        dataDiNascita.current,
+                                                        posizione.current,
+                                                        sesso.current,
+                                                        preferenzaSesso.current,
+                                                        url
+                                                        )
+                                                            .then((ris)=>{
+                                                                //navigo nella home
+                                                                console.log("Utente inserito:");
+                                                                console.log(ris);
+                                                                navigation.navigate("Home");
+                                            
+                                                            }).catch((e)=>{
+                                                                setIsCreazioneUtenteIsLoading(false);
+                                                                coloreBarra.setColore(MosCeleste);
+                                                                var messaggio = "Si è verificato un problema. Riprova più tardi.";
+                                                                var code = e.code;
+                                            
+                                                                console.log("Errore specifico:"+code+","+e);
+                                                                setSnackError(messaggio);
+                                            
+                                                            });
+
+                                                }).catch((e)=>{
+                                                    console.log("Errore scaricamento immagine:"+code+","+e.code);
+                                                    setSnackError("Si è verificato un problema. Riprova più tardi.");
+                                                })
+    
                                         }).catch((e)=>{
                                             var code = e.code;
                                             var message = "Si è verificato un problema. Riprova più tardi.";
@@ -154,22 +176,12 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                             console.log("Errore generico:"+e);
                             setSnackError("Si è verificato un problema. Riprova più tardi.");
                         });
-                }).catch((e)=>{
-                    setIsCreazioneUtenteIsLoading(false);
-                    coloreBarra.setColore(MosCeleste);
-                    var messaggio = "Si è verificato un problema. Riprova più tardi.";
-                    var code = e.code;
-
-                    console.log("Errore specifico:"+code+","+e);
-                    setSnackError(messaggio);
-
-                });
-            }catch(e){
-                setIsCreazioneUtenteIsLoading(false);
-                coloreBarra.setColore(MosCeleste);
-                console.log("Errore generico:"+e);
-                setSnackError("Si è verificato un problema. Riprova più tardi.");
-            }
+                    }catch(e){
+                        setIsCreazioneUtenteIsLoading(false);
+                        coloreBarra.setColore(MosCeleste);
+                        console.log("Errore generico:"+e);
+                        setSnackError("Si è verificato un problema. Riprova più tardi.");
+                    }
             
     }
 

@@ -1,15 +1,20 @@
-import React from 'react';
+import React,{useContext} from 'react';
 import {View, StyleSheet } from 'react-native';
+import {Snackbar} from "react-native-paper"
 import {Ionicons,AntDesign} from '@expo/vector-icons'
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import { MosCeleste } from '../../resources/colors';
 import ChatNavigator from './chat/navigation.chat';
 import AroundYou from './around you/screen/aroundYou.screen';
 import Profile from './profile/screen/profile.screen';
+import { AutenticazioneUtente } from '../../context/firebase/autenticazione';
+import { altezzaMenuNavigazione } from '../../context/variabili_globali/variabiliGlobali';
 
 const Tab = createBottomTabNavigator();
 
 function HomeScreen({navigation}){
+
+    var {setMessaggioAuth,messaggioAuth} = useContext(AutenticazioneUtente);
 
     return (
         <View style={styles.container}>
@@ -30,13 +35,30 @@ function HomeScreen({navigation}){
                     })}
                         tabBarOptions={{
                             activeTintColor:MosCeleste,
-                            inactiveTintColor: 'gray'
+                            inactiveTintColor: 'gray',
+                            style:{height:altezzaMenuNavigazione}
                         }}
                     >
                     <Tab.Screen name="Chat" component={ChatNavigator} />
                     <Tab.Screen name="Around You" component={AroundYou} />
                     <Tab.Screen name="Profile" component={Profile} />
                 </Tab.Navigator>
+
+                            {/*COMPARE SOLO PER MOSTRARE UN MESSAGGIO DAL CONTESTO DI AUTENTICAZIZONE */}
+            <Snackbar
+                visible={messaggioAuth}
+                style={{position:"absolute",zIndex:10, elevation:10, bottom:0}}
+                onDismiss={()=>{setMessaggioAuth(null)}}
+                duration = {5000}
+                theme={{ colors: { surface: "white",accent: "white"},}}
+                action={{
+                label: 'UNDO',
+                onPress: () => {
+                        setMessaggioAuth(null);
+                    },
+                }}>
+                    {messaggioAuth}
+            </Snackbar>
         </View>
     )
 }

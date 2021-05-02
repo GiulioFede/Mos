@@ -1,8 +1,11 @@
-import React from "react";
-import {View, Text, StyleSheet, FlatList,Button, TouchableOpacity} from "react-native";
+import React, {useEffect, useContext} from "react";
+import {View, Text, StyleSheet, FlatList,Button, TouchableOpacity, Dimensions} from "react-native";
 import {MaterialIcons, AntDesign} from "@expo/vector-icons";
 import {useFonts, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import ChatPreview from "./component/chat_preview.component";
+import { AutenticazioneUtente } from "../../../../../context/firebase/autenticazione";
+import { useIsDrawerOpen } from '@react-navigation/drawer';
+import { altezzaBarraScreen, altezzaDevice, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../context/variabili_globali/variabiliGlobali";
 
 //qui è dove simulo l'array contenente le preview delle chat NB: ci deve essere anche l'urlImmagineProfilo che però
 //non posso dare in quanto il componente ChatPreview vuole l'url statico se usa require.
@@ -43,33 +46,40 @@ const Chat = [
 
 export default function ChatScreen({navigation}){
 
-    let [Raleway] = useFonts({Raleway_400Regular});
-    if(!Raleway)
-    return <View></View>
+    //contesto autenticazione
+    var {informazioniProfiloUtente} = useContext(AutenticazioneUtente);
+
 
     //quando si clicca sull'icona 'menu': apri il menu laterale
     function apriUserSettings(){
+        navigation.setOptions({ tabBarVisible: false });
         console.log("apri menu laterale");
         navigation.openDrawer();
     }
-    
 
+
+    let [Raleway] = useFonts({Raleway_400Regular});
+    if(!Raleway)
+        return <View></View>
+    
     return (
         <View style={styles.container}>
             {/* BARRA SUPERIORE */}
             <View style={styles.barraSuperiore}>
-                <AntDesign name="bells" size={24} color="#52575D" />
                 <Text style={styles.titolo}>Chat</Text>
-                <TouchableOpacity onPress={apriUserSettings}>
-                        <MaterialIcons name="menu" size={24} color="#52575D" />
+                <TouchableOpacity onPress={apriUserSettings} style={{position:"absolute", right:Dimensions.get("window").width*0.03}}>
+                        <MaterialIcons name="menu" size={fontSizeTitoloBarra} color="#52575D" />
                 </TouchableOpacity>
+                <AntDesign name="bells" size={fontSizeTitoloBarra} color="#52575D" style={{position:"absolute", left:Dimensions.get("window").width*0.03}} />
             </View>
             {/* LISTA CHAT */}
             <FlatList
                 data={Chat}
                 keyExtractor={item=>item.id}
                 renderItem={({item})=>(
-                    <ChatPreview nome={item.userName}
+                    <ChatPreview
+                                 navigation ={navigation}
+                                 nome={item.userName}
                                  //urlImmagineProfilo={item.urlProfileImage}  quando lo avremo..
                                  dataUltimoMessaggio={item.messageTime}
                                  ultimoMessaggio={item.messageText}
@@ -85,21 +95,24 @@ export default function ChatScreen({navigation}){
 const styles = StyleSheet.create({
     container: {
         flex:1,
-        backgroundColor:"#fff"
-    },
-    barraSuperiore:{
-        flexDirection:"row",
-        justifyContent:"space-between",
-        paddingTop:24,
-        paddingBottom: 24,
-        marginHorizontal:16,
-        alignItems:"center",
-        borderBottomColor:"#e6e6e6",
-        borderBottomWidth:0.2
+        backgroundColor:"#fff",
+        height:altezzaDevice
     },
     titolo:{
-        fontSize:25,
+        fontSize:fontSizeTitoloBarra,
+        position:"absolute",
         fontFamily: "Raleway_400Regular",
         color: "#52575D",
-    }
+        textAlign:"center",
+        alignItems:"center",
+        width:larghezzaDevice,
+    },
+    barraSuperiore:{
+        width:larghezzaDevice,
+        height:altezzaBarraScreen,
+        justifyContent:"center",
+        paddingTop:24,
+        borderBottomColor:"#e6e6e6",
+        borderBottomWidth:0.7,
+    },
 })

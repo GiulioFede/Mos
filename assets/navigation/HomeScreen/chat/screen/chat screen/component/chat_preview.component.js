@@ -1,11 +1,16 @@
 import React from "react";
-import {View, StyleSheet, Image,Text, Dimensions} from "react-native";
+import {View, StyleSheet, Image,Text,TouchableOpacity, Touchable} from "react-native";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import MessageBubble from "./message_bubble";
+import { altezzaDevice, fontSizeCampi, fontSizeSottoTitolo, fontSizeTitolo, fontSizeTitoloPiccolo } from "../../../../../../context/variabili_globali/variabiliGlobali";
 
 
-const ChatPreview =({nome, urlImmagineProfilo,dataUltimoMessaggio, ultimoMessaggio}) => {
+const ChatPreview =({navigation,nome, urlImmagineProfilo,dataUltimoMessaggio, ultimoMessaggio}) => {
+
+    function apriDettagliChat(){
+        navigation.navigate("Chat detail");
+    }
 
         //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
@@ -14,7 +19,7 @@ const ChatPreview =({nome, urlImmagineProfilo,dataUltimoMessaggio, ultimoMessagg
             return <View></View>
 
     return (
-        <View style={styles.container}>
+        <TouchableOpacity activeOpacity={.7} style={styles.container} onPress={()=>{apriDettagliChat()}}>
             {/* IMMAGINE PROFILO */}
             <View style={styles.contenitoreMediaProfilo}>
                         {/* immagine SOSTITUIRE CON QUELLA DELL'UTENTE ma ovviamente non usare require ma (forse) fetch*/}
@@ -32,7 +37,7 @@ const ChatPreview =({nome, urlImmagineProfilo,dataUltimoMessaggio, ultimoMessagg
                             <MessageBubble messaggio={ultimoMessaggio} />
                         </View>
             </View>
-        </View>
+        </TouchableOpacity>
     )
 }
 
@@ -40,12 +45,14 @@ export default ChatPreview;
 
 const styles = StyleSheet.create({
     container: {
-        padding:10,
         borderBottomColor:"#e6e6e6",
-        borderBottomWidth:0.2
+        backgroundColor:"#fff",
+        height:altezzaDevice*0.2,
+        marginVertical:5
     },
     contenitoreMediaProfilo:{
-        paddingLeft:Dimensions.get("window").width*0.10,
+        justifyContent:"center",
+        height:altezzaDevice*0.2,
         ...Platform.select({
             ios:{
                 shadowOffset: { width: 3, height: 3 },
@@ -58,18 +65,19 @@ const styles = StyleSheet.create({
         backgroundColor: "#00ff40",
         elevation: 10,
         position: "absolute",
-        bottom: 20,
-        left:46,
-        padding:4, 
-        height:15,
-        width: 15,
-        borderRadius:10
+        bottom: altezzaDevice*0.2*0.065,
+        left:altezzaDevice*0.22/4,
+        height:altezzaDevice*0.2*0.07,
+        width: altezzaDevice*0.2*0.07,
+        borderRadius:altezzaDevice*0.2*0.07/2
     },
     contenitoreImmagineProfilo: {
-        width: 150,
-        height: 150,
-        borderRadius: 75,
+        width: altezzaDevice*0.2,
+        height: altezzaDevice*0.2,
+        borderRadius: altezzaDevice*0.2/2,
         overflow: "hidden",
+        position:"absolute",
+        left:altezzaDevice*0.02,
         backgroundColor: '#52575D',
         ...Platform.select({
             android: {
@@ -97,20 +105,23 @@ const styles = StyleSheet.create({
     },
     contenitoreNome:{
         position:"absolute",
-        left:180,
+        left:altezzaDevice*0.22,
+        top:altezzaDevice*0.03,
         zIndex:10,
     },
     nome:{
         fontSize:20,
         fontFamily: "Raleway_400Regular",
         color: "#52575D",
+        fontSize:fontSizeSottoTitolo
     },
     ultimoMessaggio: {
         position: "absolute",
+        left:altezzaDevice*0.22/2+altezzaDevice*0.02,
+        bottom:0,
         zIndex:10,
-        elevation:10,
-        top:102,
-        left:120
+        elevation:8
+
     }
 })
 

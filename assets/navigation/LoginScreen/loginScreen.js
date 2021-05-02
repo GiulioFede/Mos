@@ -18,11 +18,13 @@ const indici = [{id:"1"},{id:"2"},{id:"3"}];
 
 export default function LoginScreen({navigation}){
 
+    console.log("LOGIN SCREEN");
+ 
 
     //EMAIL E PASSWORD::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
     //contesto autenticazione
-    const {accediConEmailPassword, inviaEmailRecuperoPassword, inviaEmailDiVerifica, getUtenteCorrente, isProfiloCompletato} = useContext(AutenticazioneUtente);
+    const {accediConEmailPassword, inviaEmailRecuperoPassword, inviaEmailDiVerifica, getUtenteCorrente, isProfiloCompletato,messaggioAuth,setMessaggioAuth, isUserProfileCompleted} = useContext(AutenticazioneUtente);
     //label button email e password
     const [labelEmailPasswordButton, setLabelEmailPasswordButton] = useState("ACCEDI CON EMAIL/PASSWORD");
     //email
@@ -80,7 +82,7 @@ export default function LoginScreen({navigation}){
                 style={{backgroundColor:MosPurple, width:"90%"}}
                 small
                 icon="cellphone-iphone"
-                onPress={() => navigation.navigate("PhoneAuthScreen")}
+                onPress={() => navigation.navigate("PhoneAuthScreen",{updatePhoneNumber: "no"})}
                 label="ACCEDI COL TUO NUMERO DI TELEFONO"
             /> 
             </View>
@@ -235,7 +237,7 @@ export default function LoginScreen({navigation}){
                                 }
                             }).catch((e)=>{
                                 setIsLoading(false);
-                                console.log("Si è verificato un errore.");
+                                console.log("Si è verificato un errore:"+e);
                                 setErrore("Si è verificato un problema. Riprova più tardi.");
                             })
                     }
@@ -303,6 +305,7 @@ export default function LoginScreen({navigation}){
                 
                 setIsLoading(false);
                 setErrore(messaggioDiErrore);
+                console.log("Si è verificato un errore:"+error);
             });
         }catch(e){
             setIsLoading(false);
@@ -313,7 +316,7 @@ export default function LoginScreen({navigation}){
     //--------------------------------------------------
     
     console.log("Rendering LoginScreen.js");
-    console.log("snackmessage "+snackmessage);
+
 
     if(mostraSchermataTelefono)
         return (
@@ -365,6 +368,22 @@ export default function LoginScreen({navigation}){
                                 },
                             }}>
                                 {snackmessage}
+                        </Snackbar>
+
+                        {/*COMPARE SOLO PER MOSTRARE UN MESSAGGIO DAL CONTESTO DI AUTENTICAZIZONE */}
+                        <Snackbar
+                               visible={messaggioAuth}
+                               style={{position:"absolute",zIndex:10, elevation:10, bottom:0}}
+                               onDismiss={()=>{setMessaggioAuth(null)}}
+                               duration = {5000}
+                               theme={{ colors: { surface: "white",accent: "white"},}}
+                               action={{
+                               label: 'UNDO',
+                               onPress: () => {
+                                    setMessaggioAuth(null);
+                                },
+                            }}>
+                                {messaggioAuth}
                         </Snackbar>
 
                         {/*COMPARE SOLO PER DIRE ALL'UTENTE CHE DEVE VERIFICARE L'EMAIL PRIMA DI PROCEDERE E PERMETTE L'INVIO DELL'EMAIL DI VERIFICA NEL CASO NON SIA ARRIVATA IN FASE DI REGISTRAZIONE*/}

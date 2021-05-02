@@ -10,7 +10,11 @@ import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 import {KeyboardAvoidingView} from "react-native";
 import { fontSizeTitolo, iconSize } from "../../context/variabili_globali/variabiliGlobali";
 
-export default function PhoneAuthScreen({navigation}){
+export default function PhoneAuthScreen({navigation,route}){
+
+
+    console.log("PhoneAuthScreen");
+    console.log(route);
 
     //contesto autenticazione
     const {inviaCodiceDiVerifica} = useContext(AutenticazioneUtente);
@@ -27,21 +31,27 @@ export default function PhoneAuthScreen({navigation}){
 
         //invia il codice di verifica
     const inviaCodiceVerificaNumero = async () => {
-        console.log("invio codice di verifica");
         
         if(phoneNumber.length==0){
             setMessaggioVerifica("Inserire un numero di telefono valido.");
             return;
         }
-            try {
+
+        //se sto richiedendo l'aggiornamento del numero allora controllo che non sia uguale a quello vecchio
+        if(route.params.updatePhoneNumber=="yes" && phoneNumber==route.params.oldNumber){
+            setMessaggioVerifica("Questo numero è già attivo.");
+            return;
+        }
+
+        try {
                 
               //attendo che il messaggio sia inviato. 
               inviaCodiceDiVerifica(phoneNumber, recaptchaVerifier.current)
                 .then((verificationID)=>{
-                    //setVerificationId(verificationID);
                     console.log("il messaggio è stato inviato al tuo numero. VerificatioId="+verificationID);
-                    navigation.navigate("PhoneAuthVerificationCodeScreen", {verificationIdentity:verificationID, phoneNumber: phoneNumber});
-                    //setPhoneNumber("");
+                    //apro screen per verificare il numero
+                    navigation.navigate("PhoneAuthVerificationCodeScreen", {verificationIdentity:verificationID, phoneNumber: phoneNumber, updatePhoneNumber: route.params.updatePhoneNumber});
+                    setPhoneNumber("");
                 }).catch((e)=>{
                     const codiceErrore = e.code;
                     //errori specifici
@@ -91,7 +101,7 @@ export default function PhoneAuthScreen({navigation}){
         <View style={styles.container}>
             {/* BARRA SUPERIORE */}
             <View style={styles.barraSuperiore}>
-                <TouchableOpacity onPress={() => navigation.navigate("LoginScreen")}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
                         <Ionicons name="chevron-back" size={iconSize} color={MosCeleste} />
                 </TouchableOpacity>
             </View>
@@ -118,7 +128,10 @@ export default function PhoneAuthScreen({navigation}){
             <ScrollView>
                         {/* TITOLO */}
                         <View>
-                                <Text style={styles.titolo}>Inserisci il tuo numero di telefono</Text>
+                                {/* se la procedura è di login/registrazione.... */}
+                                {route.params.updatePhoneNumber!="yes" && <Text style={styles.titolo}>Inserisci il tuo numero di telefono</Text> }
+                                {/* se la procedura è di aggiornamento numero di telefono... */}
+                                {route.params.updatePhoneNumber=="yes" && <Text style={styles.titolo}>Inserisci il tuo nuovo numero di telefono</Text> }
                         </View>
 
                         {/* CAPTCHA PER VERIFICARE CHE NON SI E' ROBOT */}
@@ -139,7 +152,7 @@ export default function PhoneAuthScreen({navigation}){
                         autoCompleteType="tel"
                         keyboardType="phone-pad"
                         textContentType="telephoneNumber"
-                        onChangeText={phoneNumber => setPhoneNumber(phoneNumber)}
+                        onChangeText={phoneNumber => setPhoneNumber(phoneNumber.trim())}
                         />
 
                         {/*BOTTONE PER INVIARE IL MESSAGGIO A TALE NUMERO */}

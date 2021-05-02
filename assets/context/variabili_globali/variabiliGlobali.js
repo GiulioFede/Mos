@@ -21,10 +21,15 @@ export const altezzaDevice = Dimensions.get("window").height;
 //larghezza
 export const larghezzaDevice = Dimensions.get("window").width;
 export const fontUnit = Dimensions.get("window").height*0.016;
+//altezza della barra dei vari screen
+export const altezzaBarraScreen= Dimensions.get("window").height*0.1;
+//altezza menu
+export const altezzaMenuNavigazione= Dimensions.get("window").height*0.07;
 //altezza schermo interno
 export const altezzaSchermoInterno = (Dimensions.get("window").height-StatusBar.currentHeight);
 //dimensioni font predefinite
 export const fontSizeTitolo = Dimensions.get("window").height*0.06;
+export const fontSizeTitoloBarra = Dimensions.get("window").height*0.035;
 export const fontSizeTitoloPiccolo = Dimensions.get("window").height*0.04;
 export const fontSizeSottoTitolo = Dimensions.get("window").height*0.03;
 export const fontSizeCampi = Dimensions.get("window").height*0.02;
