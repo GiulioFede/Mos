@@ -12,6 +12,7 @@ export function _creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, 
     return db.collection("users").doc(userId).set({ //utilizzo set perchè voglio un id custom e non random
             name: nome,
             dateOfBirth: dataDiNascita,
+            gallery: [],
             position: posizione,
             sex: sesso,
             sexPreference: preferenzaSesso,
