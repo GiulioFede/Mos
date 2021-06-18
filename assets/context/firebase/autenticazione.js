@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente } from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo} from "./service/firestore.service";
 import { getCurrentUser } from "expo-google-sign-in";
 
 console.log("autenticazione.js");
@@ -75,7 +75,10 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     eliminaImmagineDiGalleria,
                     cambiaImmagineDiProfilo,
                     aggiornaEmail,
-                    aggiornaDettagliProfiloUtente
+                    aggiornaDettagliProfiloUtente,
+                    caricaNuovaImmagine,
+                    scaricaUrlImmagine,
+                    eliminaImmagineDiProfilo
                 }}
                 >
                 {children}
@@ -190,9 +193,9 @@ export const AutenticazioneUtenteProvider = ({children}) => {
    }
 
    //-------------------- METODI PER LA CREAZIONE DI UN NUOVO UTENTE ---------------------------------
-    function creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso, urlImmagineProfilo){
+    function creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso){
         console.log("autenticazione: crea nuovo utente");
-        return _creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso, urlImmagineProfilo);
+        return _creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso);
     }
 
     function aggiornaImmagineProfilo(idUser, blob){
@@ -216,9 +219,10 @@ export const AutenticazioneUtenteProvider = ({children}) => {
         return _caricaNuovaImmagineDiGalleria(idUser, blob);
     }
 
-    function eliminaImmagineDiGalleria(idUser, value){
-        console.log("elimino immagine di galleria_"+value);
-        return _eliminaImmagineDiGalleria(idUser,value);
+    //NEW
+    function eliminaImmagineDiGalleria(idUser, url, nome){
+        console.log("elimino immagine di galleria di nome "+nome+" e url:"+url);
+        return _eliminaImmagineDiGalleria(idUser,url,nome);
     }
 
     function cambiaImmagineDiProfilo(idUser, blob){
@@ -229,4 +233,22 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     function aggiornaDettagliProfiloUtente(idUser,doc){
         console.log("aggiorno dettaglid del profilo utente_");
         return _aggiornaDettagliProfiloUtente(idUser,doc);
+    }
+
+    //NEW:Caricare una nuova immagine di profilo (isForProfile=true e in tal caso nomeImmagine ha senso) oppure di galleria (isForProfile=false)
+    function caricaNuovaImmagine(base64, isForProfile, nomeImmagine){
+        console.log("carico nuova immagine");
+        return _caricaNuovaImmagine(base64, isForProfile, nomeImmagine);
+    }
+
+    //NEW: ottieni url immagine
+    function scaricaUrlImmagine(path){
+        console.log("ottieni url immagine");
+        return _scaricaUrlImmagine(path);
+    }
+
+    //NEW: elimina immagine di profilo
+    function eliminaImmagineDiProfilo(nome){
+        console.log("elimina immagine di profilo");
+        return _eliminaImmagineDiProfilo(nome);
     }

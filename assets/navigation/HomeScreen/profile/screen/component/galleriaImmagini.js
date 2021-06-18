@@ -1,10 +1,11 @@
-import React, {useState, memo} from 'react';
+import React, {useState, memo, useEffect, useContext, useRef} from 'react';
 import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions, Platform, FlatList} from 'react-native';
 import {MaterialIcons, Ionicons, Entypo} from "@expo/vector-icons";
 import {navbarHeight, fontSizeTitolo } from '../../../../../context/variabili_globali/variabiliGlobali';
 import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button } from 'react-native-paper';
 import CachedImage from 'react-native-expo-cached-image'; //installa yarn add react-native-expo-cached-image
 import { MosCeleste, MosViola } from '../../../../../resources/colors';
+import { AutenticazioneUtente } from '../../../../../context/firebase/autenticazione';
 
 
 const larghezzaSchermo = Dimensions.get("window").width;
@@ -13,6 +14,9 @@ const dimensioneFotoGalleria = (larghezzaSchermo/2>altezzaSezioneGalleria) ? (al
 
 function GalleriaImmagini({galleria, openDialog}){
 
+        //contesto autenticazione
+        const {scaricaUrlImmagine} = useContext(AutenticazioneUtente);
+
     console.log("GALLERIA COMPONENTE");
     console.log(galleria);
 
@@ -20,17 +24,19 @@ function GalleriaImmagini({galleria, openDialog}){
        function ImmagineGalleria({item}){
 
             //se l'immagine viene scaricata e visualizzata allora faccio spuntare il bottone per eliminarla
-            const [isImageLoaded, setIsImageLoaded] = useState(false);
+            const [isImageLoaded, setIsImageLoaded] = useState( (item.url!="null")?false:true );
+
             return  (
                 <View style={styles.contenitoreFotoGalleria}>
-                    {console.log("carico elemento "+item.key)}
-                    {isImageLoaded &&
+                   
+                    {isImageLoaded && 
                     <TouchableOpacity style={styles.bottoneEliminaFoto} onPress={()=>{openDialog(galleria.findIndex(p => p.url == item.url))}}>
                         <Entypo name="cross" size={altezzaSezioneGalleria*0.1} color={MosViola} />
                     </TouchableOpacity>
                     }
                     <ActivityIndicator animating={!isImageLoaded} color={MosCeleste} style={{position:"absolute", right:0, left:0, top:0, bottom:0}} />
-                    <Image source={{uri:(item.localUrl==undefined)?item.url:item.localUrl}} style={styles.immagineGalleria} onLoad={()=>{setIsImageLoaded(true)}} resizeMode="cover" /> 
+                    {item.url!="null" && <Image source={{uri:item.url}} style={styles.immagineGalleria} onLoad={()=>{setIsImageLoaded(true)}} resizeMode="cover" /> }
+                    {item.url=="null" && <Text style={{position:"absolute", textAlign:"center", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
                  </View>
             )
         }
@@ -51,8 +57,6 @@ function GalleriaImmagini({galleria, openDialog}){
   //questa funzione serve per dire quando renderizzare GalleriaImmagini
   function compareFunction(prevProps, nextProps){
       console.log("COMPARO PER RENDERING");
-      console.log(prevProps);
-      console.log(nextProps);
     if(prevProps.galleria!=nextProps.galleria)
         return false; //renderizza  
     

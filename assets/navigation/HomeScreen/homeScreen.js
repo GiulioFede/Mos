@@ -6,9 +6,9 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import { MosCeleste } from '../../resources/colors';
 import ChatNavigator from './chat/navigation.chat';
 import AroundYou from './around you/screen/aroundYou.screen';
-import Profile from './profile/screen/profile.screen';
 import { AutenticazioneUtente } from '../../context/firebase/autenticazione';
 import { altezzaMenuNavigazione } from '../../context/variabili_globali/variabiliGlobali';
+import ProfileNavigator from './profile/navigation.profile';
 
 const Tab = createBottomTabNavigator();
 
@@ -41,7 +41,7 @@ function HomeScreen({navigation}){
                     >
                     <Tab.Screen name="Chat" component={ChatNavigator} />
                     <Tab.Screen name="Around You" component={AroundYou} />
-                    <Tab.Screen name="Profile" component={Profile} />
+                    <Tab.Screen name="Profile" component={ProfileNavigator} />
                 </Tab.Navigator>
 
                             {/*COMPARE SOLO PER MOSTRARE UN MESSAGGIO DAL CONTESTO DI AUTENTICAZIZONE */}
@@ -50,9 +50,9 @@ function HomeScreen({navigation}){
                 style={{position:"absolute",zIndex:10, elevation:10, bottom:0}}
                 onDismiss={()=>{setMessaggioAuth(null)}}
                 duration = {5000}
-                theme={{ colors: { surface: "white",accent: "white"},}}
+                
                 action={{
-                label: 'UNDO',
+                label: 'Chiudi',
                 onPress: () => {
                         setMessaggioAuth(null);
                     },

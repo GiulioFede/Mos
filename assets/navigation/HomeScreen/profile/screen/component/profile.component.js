@@ -5,11 +5,13 @@ import { MosCeleste, MosViola } from '../../../../../resources/colors';
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button } from 'react-native-paper';
-import {navbarHeight, fontSizeTitolo, altezzaBarraScreen, larghezzaDevice, fontSizeTitoloBarra, altezzaMenuNavigazione } from '../../../../../context/variabili_globali/variabiliGlobali';
+import {navbarHeight, fontSizeTitolo, altezzaBarraScreen, larghezzaDevice, fontSizeTitoloBarra, altezzaMenuNavigazione } from '../../../../../context/variabili_globali/variabiliGlobali'
 import CachedImage from 'react-native-expo-cached-image'; //installa yarn add react-native-expo-cached-image
 import * as ImagePicker from 'expo-image-picker';
 import { AutenticazioneUtente } from "../../../../../context/firebase/autenticazione";
 import GalleriaImmagini from './galleriaImmagini';
+import * as ImageManipulator from 'expo-image-manipulator';
+
 /*
     MISURE
     altezza barra profilo --> 10%
@@ -26,8 +28,11 @@ const dimensioneFotoGalleria = (larghezzaSchermo/2>altezzaSezioneGalleria) ? (al
 
 export default function ProfileComponent(props){
 
+    //DA ELIMINARE
+    const [base64DaEliminare, setBase64DaEliminare] = useState("");
+
     //contesto autenticazione
-    var {caricaNuovaImmagineDiGalleria, user,eliminaImmagineDiGalleria,cambiaImmagineDiProfilo, informazioniProfiloUtente} = useContext(AutenticazioneUtente);
+    const {caricaNuovaImmagineDiGalleria,messaggioAuth, user,eliminaImmagineDiGalleria,cambiaImmagineDiProfilo,scaricaUrlImmagine, informazioniProfiloUtente, setInformazioniProfiloUtente} = useContext(AutenticazioneUtente);
 
     //dati utente
     var {navigation} = props;
@@ -35,15 +40,27 @@ export default function ProfileComponent(props){
     //inizializzo la galleria
     const [galleria, setGalleria] = useState([]);
 
+    //DA ELIMINARE
+    var imgProfRef = useRef();
+
     const inizializzaGalleria = () =>{
+        console.log("reinizializzo galleria");
+        console.log(galleria);
+        console.log(informazioniProfiloUtente.gallery);
+        console.log(informazioniProfiloUtente.urlGalleryImages);
         var tmp = [];
-        if(informazioniProfiloUtente.gallery) 
-            informazioniProfiloUtente.gallery.forEach((item, i) => {tmp.push({key: i, url: item})});
+        if(informazioniProfiloUtente.urlGalleryImages) 
+            informazioniProfiloUtente.urlGalleryImages.forEach((item, i) => {
+                        tmp.push({key: i, url: item});
+                });
         tmp.reverse();
         setGalleria(tmp);
     }
 
+    const [daEliminare, setDaEliminare] = useState("");
+    
     useEffect(()=>{
+        console.log("chiamo use effect profileComponent");
         inizializzaGalleria();
     },[informazioniProfiloUtente])
 
@@ -55,7 +72,7 @@ export default function ProfileComponent(props){
     const [isLoading, setIsLoading] = useState(false);
 
     //per il dialog
-    const [isDialogVisible, setIsDialogVisible] = React.useState(false);
+    const [isDialogVisible, setIsDialogVisible] = useState(false);
     //contiene l'indice della foto da eliminare
     const indiceFotoDaEliminare = useRef(-1);
 
@@ -68,112 +85,6 @@ export default function ProfileComponent(props){
     //APRO MENU
     function apriUserSettings(){
         navigation.openDrawer();
-    }
-
-    //APRO GALLERIA IMMAGINI::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    function apriGalleria(){
-        console.log(isLoading);
-        if(isLoading==false){
-        //chiedo permessi
-        try{
-        setIsLoading(true);
-        console.log("apro galleria immagini");
-        ImagePicker.requestMediaLibraryPermissionsAsync(false)
-            .then((ris)=>{
-                console.log(ris);
-                //se ha bloccato la possibilità di chiedere i permessi
-                if(ris.canAskAgain==false){
-                    setSnackMessage("Vai in impostazioni e consenti a Mosaic di chiedere i permessi per accedere alla galleria.");
-                    setIsLoading(false);
-                    return;
-                }
-                //se non ha bloccato, ma ha rifiutato di concedere i permessi
-                if(ris.status!="granted"){
-                    setSnackMessage("Mosaic ha bisogno del tuo permesso per aprire la galleria.");
-                    setIsLoading(false);
-                    return;
-                }
-                //se sono qui i permessi sono stati dati
-                //apro galleria
-                ImagePicker.launchImageLibraryAsync({
-                                                        mediaTypes: ImagePicker.MediaTypeOptions.Images, //permetto la selezione di sole immagini
-                                                        allowsEditing: true, //apro un editor col quale edito la foto
-                                                        aspect: [4, 4], //l'editor permette solo un crop quadrato
-                                                        quality: 1,
-                                                    })
-                    .then((ris)=>{
-                        console.log("galleria aperta");
-                        console.log(ris);
-                        //se l'operazione non è stata annullata
-                        if(!ris.cancelled){
-                            //prendo l'uri e lo uso per settare l'immagine di galleria ma anche per caricarlo sullo storage
-                            console.log(ris.uri);
-                            const localUri = ris.uri;
-                            //prendo il file
-                            fetch(localUri)
-                                .then((response)=>{
-                                    //il file è stato preso, creo il blob dal file
-                                    response.blob()
-                                        .then((blob)=>{
-                                            //blob creato
-                                            console.log("blob img galleria creato");
-                                            //chiamo firebase per salvarla sullo storage
-                                            caricaNuovaImmagineDiGalleria(user,blob)
-                                                .then((remoteUrl)=>{
-                                                    console.log("immagine di galleria caricata sullo storage");
-                                                    //aggiungo immagine galleria (se vuota)
-                                                    if(galleria.length==0)
-                                                        var tmp = [{key: 0, url: remoteUrl, localUrl: localUri},...galleria];
-                                                    //aggiungo l'immagine alla galleria se esistono già foto (usando l'uri interno per evitare di scaricarla)
-                                                    else
-                                                        var tmp = [{key: (galleria[0].key+1), url: remoteUrl, localUrl: localUri},...galleria];
-                                                    setGalleria(tmp);
-                                                    //utilizzo lo snack per dire all'utente che il caricamento è stato completato
-                                                    setSnackMessage("Immagine caricata con successo.");
-                                                    setIsLoading(false);
-                                                }).catch((e)=>{
-                                                   var code = e.code;
-                                                    var message = "Si è verificato un problema. Riprova più tardi.";
-                                                    if(code=="storage/retry-limit-exceeded")
-                                                        message = "La richiesta ha impiegato troppo tempo. Riprovare.";
-                                                    else if(code=="storage/canceled")
-                                                        message = "Operazione annullata.";
-                                                    else if(code=="storage/cannot-slice-blob")
-                                                        message = "Si è verificato un errore: il file locale è stato cambiato.";
-                        
-                                                    console.log("Errore caricamento immagine di galleria:"+code+","+e.code);
-                                                    setSnackMessage("Si è verificato un problema. Riprova più tardi.");
-                                                    setIsLoading(false);
-                                                })
-
-                                        }).catch((e)=>{
-                                            setIsLoading(false);
-                                            console.log("Errore scaricamento immagine:"+e.code+","+e);
-                                            setSnackMessage("Si è verificato un problema. Riprova più tardi.");
-                                        })
-                                  }).catch((e)=>{
-                                    setIsLoading(false);
-                                    console.log("Errore scaricamento immagine:"+code+","+e.code);
-                                    setSnackMessage("Si è verificato un problema. Riprova più tardi.");
-                                  })
-                        }
-                        else 
-                            //se l'operazione è stata annullata
-                            setIsLoading(false);
-
-                        })}).catch((e)=>{
-                setIsLoading(false);
-                setSnackMessage("Si è verificato un problema. Riprova più tardi.");
-                console.log("photo.js errore1:"+e);
-            })
-        }catch(e){
-            setIsLoading(false);
-            setSnackMessage("Si è verificato un problema. Riprova più tardi.");
-            console.log("errore galleria:"+e);
-        }
-    }else {
-        setSnackMessage("Attendi la fine del caricamento prima di procedere.");
-    }
     }
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -195,18 +106,36 @@ export default function ProfileComponent(props){
     //ELIMINA FOTO:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     //si basa sull'indice della foto che è stato settato quando abbiamo chiamato openDialog
     function eliminaImmagineDallaGalleria(){
-        console.log("STA CARICANDO?"+isLoading);
+        console.log("indice da eliminare"+indiceFotoDaEliminare.current);
+        console.log(galleria);
+        console.log("_________________________________");
+        console.log(informazioniProfiloUtente.gallery);
+        console.log("_________________________________");
+        console.log(informazioniProfiloUtente.urlGalleryImages);
+        
         if(isLoading==false){
             try{
             setIsLoading(true);
             const index = indiceFotoDaEliminare.current;
-            const url = galleria[indiceFotoDaEliminare.current].url;
+            const url = galleria[index].url;
+            const nome = informazioniProfiloUtente.gallery[informazioniProfiloUtente.gallery.length-1-index];
             closeDialog();
             //elimino
-            eliminaImmagineDiGalleria(user,url)
+            eliminaImmagineDiGalleria(user,url,nome)
                 .then((ris)=>{
                     setIsLoading(false);
-                    console.log("Immagine eliminata con successo");
+                    console.log("Eliminazione completata "+ris);
+                    //aggiorno informazioniProfiloUtente
+                    var infoGallery = [...informazioniProfiloUtente.gallery];
+                    infoGallery.splice(informazioniProfiloUtente.gallery.length-1-index,1);
+                    var infoUrlGalleryImages = [...informazioniProfiloUtente.urlGalleryImages];
+                    infoUrlGalleryImages.splice(informazioniProfiloUtente.gallery.length-1-index,1);
+
+                    var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
+                    nuoveInformazioniProfilo.gallery = infoGallery;
+                    nuoveInformazioniProfilo.urlGalleryImages = infoUrlGalleryImages;
+                    setInformazioniProfiloUtente(nuoveInformazioniProfilo);
+
                     var tmp = [...galleria];
                     tmp.splice(index,1);
                     setGalleria(tmp);
@@ -231,14 +160,16 @@ export default function ProfileComponent(props){
         }     
     }
 
-    //CAMBIA IMMAGINE PROFILO:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    function cambiaImmagineProfilo(){
-        if(isLoading==false){
+   
 
-            //chiedo permessi
+    //CAMBIA IMMAGINE PROFILO:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //isForProfile contiene true se la richiesta è stata fatta per cambiare l'immagine del profilo, altrimenti per aggiungere una nuova di galleria.
+   function aggiungiNuovaImmagine(isForProfile){ 
+        if(isLoading==false){
         try{
             setIsLoading(true);
             console.log("apro galleria immagini");
+            //chiedo permessi
             ImagePicker.requestMediaLibraryPermissionsAsync(false)
                 .then((ris)=>{
                     console.log(ris);
@@ -264,55 +195,27 @@ export default function ProfileComponent(props){
                                                         })
                         .then((ris)=>{
                             console.log("galleria aperta");
-                            console.log(ris);
                             //se l'operazione non è stata annullata
                             if(!ris.cancelled){
-                                //prendo l'uri e lo uso per settare l'immagine di profilo ma anche per caricarlo sullo storage
+                                //prendo l'uri e lo uso per settare l'immagine di profilo / galleria ma anche per caricarlo sullo storage
                                 console.log(ris.uri);
                                 const localUri = ris.uri;
-                                //prendo il file
-                                fetch(localUri)
-                                    .then((response)=>{
-                                        //il file è stato preso, creo il blob dal file
-                                        response.blob()
-                                            .then((blob)=>{
-                                                //blob creato
-                                                console.log("blob img galleria creato");
-                                                //chiamo firebase per salvarla sullo storage
-                                                cambiaImmagineDiProfilo(user,blob)
-                                                    .then((remoteUrl)=>{
-                                                        console.log("immagine di profilo caricata sullo storage");
-                                                        //aggiungo immagine galleria (se vuota)
-                                                        informazioniProfiloUtente.urlProfileImage = localUri;
-                                                        //utilizzo lo snack per dire all'utente che il caricamento è stato completato
-                                                        setSnackMessage("Immagine di profilo aggiornata.");
-                                                        setIsLoading(false);
-                                                    }).catch((e)=>{
-                                                       var code = e.code;
-                                                        var message = "Si è verificato un problema. Riprova più tardi.";
-                                                        if(code=="storage/retry-limit-exceeded")
-                                                            message = "La richiesta ha impiegato troppo tempo. Riprovare.";
-                                                        else if(code=="storage/canceled")
-                                                            message = "Operazione annullata.";
-                                                        else if(code=="storage/cannot-slice-blob")
-                                                            message = "Si è verificato un errore: il file locale è stato cambiato.";
-                            
-                                                        console.log("Errore caricamento immagine di galleria:"+code+","+e.code);
-                                                        setSnackMessage("Si è verificato un problema. Riprova più tardi.");
-                                                        setIsLoading(false);
-                                                    })
-    
-                                            }).catch((e)=>{
-                                                setIsLoading(false);
-                                                console.log("Errore scaricamento immagine:"+e.code+","+e);
-                                                setSnackMessage("Si è verificato un problema. Riprova più tardi.");
-                                            })
-                                      }).catch((e)=>{
-                                        setIsLoading(false);
-                                        console.log("Errore scaricamento immagine:"+code+","+e.code);
-                                        setSnackMessage("Si è verificato un problema. Riprova più tardi.");
-                                      })
-                            }
+                                
+                                //modifico l'immagine per ridurne le dimensioni a meno di 1MB cosi da velocizzare lato server la trasformazione
+                                ImageManipulator.manipulateAsync(
+                                    localUri,
+                                    [{ resize: { width: 800, height: 800 } }],
+                                    { format: 'jpeg',base64: true }
+                                  ).then((immagineManipolata)=>{
+                                      //apro screen per il caricamento dell'immagine
+                                      navigation.navigate("ImageBlurLoaderScreen",{isProfileImage: isForProfile ,uri: localUri, base64:immagineManipolata.base64});
+                                  }).catch((e)=>{
+                                    setSnackMessage("Si è verificato un problema. Riprova più tardi.");
+                                    console.log("photo.js errore2:"+e);
+                                  })
+
+                                setIsLoading(false);
+                                }
                             else 
                                 //se l'operazione è stata annullata
                                 setIsLoading(false);
@@ -345,18 +248,20 @@ export default function ProfileComponent(props){
                 </TouchableOpacity>
                 <ActivityIndicator animating={isLoading} size={fontSizeTitoloBarra} color={MosCeleste} style={{position:"absolute", left:Dimensions.get("window").width*0.03}} />
             </View>
+
             <View style={{ flex: 1, justifyContent: 'flex-start'}}>
                     
                     {/* IMMAGINE PROFILO */}
                     <View style={styles.contenitoreMediaProfilo}>
                         {/* immagine */}
                         <View style={styles.contenitoreImmagineProfilo}>
-                            <Image source={{uri:informazioniProfiloUtente.urlProfileImage}} resizeMode="cover"  style={styles.immagineProfilo}/>
+                            {informazioniProfiloUtente.urlProfileImage!="null" && <Image source={{uri:informazioniProfiloUtente.urlProfileImage}} resizeMode="cover"  style={styles.immagineProfilo} />}
+                            {informazioniProfiloUtente.urlProfileImage=="null" && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
                         </View>
                         {/* pallino online */}
                         <View style={styles.onlineCircle} />
                         {/* icona chat */}
-                        <TouchableOpacity style={styles.modificaImmagineProfiloIcon} onPress={cambiaImmagineProfilo}>
+                        <TouchableOpacity style={styles.modificaImmagineProfiloIcon} onPress={()=>aggiungiNuovaImmagine(true)}>
                             <Entypo name="pencil" size={altezzaSezioneImmagineProfilo*0.1} color={MosCeleste} />
                         </TouchableOpacity>
                     </View>
@@ -379,13 +284,13 @@ export default function ProfileComponent(props){
                                 small
                                 icon="plus"
                                 color={MosCeleste}
-                                onPress={() => apriGalleria()}/>
+                                onPress={()=>aggiungiNuovaImmagine(false)}/>
 
                         {/*MOSTRA L'ERRORE */}
                         <Snackbar
                                     visible={snackMessage ? true : false}
                                     onDismiss={hideSnackMessage}
-                                    duration= {5000}
+                                    duration= {3000}
                                     style={{elevation:12, zIndex:12}}
                                     action={{
                                     label: 'Chiudi',

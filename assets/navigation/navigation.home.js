@@ -29,10 +29,28 @@ const Drawer = createDrawerNavigator();
 export default function HomeNavigator({navigation}) {
 
     //contesto
-    const {getUserInformation, getUtenteCorrente,user, logOut, setInformazioniProfiloUtente} = useContext(AutenticazioneUtente);
+    const {getUserInformation, getUtenteCorrente,user, logOut,scaricaUrlImmagine, setInformazioniProfiloUtente} = useContext(AutenticazioneUtente);
 
     //se true indica che il profilo non è stato ancora caricato
     const [isProfileLoading, setIsProfileLoading] = useState(true);
+
+    //simulo la Promise.allSettled che da problemi ma è vitale in questo caso
+    //raccoglie tutti gli url delle immagini di galleria e di profilo dell'utente. I risultati errati verranno marchiati come
+    //status di tipo "rejected" altrimenti come "fulfilled" e in value di trovo l'url.
+    Promise.myAllSettled = promises =>
+    Promise.all(
+      promises.map((promise, i) =>
+        promise
+          .then(value => ({
+            status: "fulfilled",
+            value,
+          }))
+          .catch(reason => ({
+            status: "rejected",
+            reason,
+          }))
+      )
+    );
 
 
     function AltriPulsanti(props) {
@@ -61,15 +79,57 @@ export default function HomeNavigator({navigation}) {
                 if (info.exists) {
                   console.log("Home: informazioni utente recuperate");
                   console.log(info.data());
-                  //info contiene le info dell'utente
-                  setInformazioniProfiloUtente(info.data());
-                  setIsProfileLoading(false);
+                  const info_utente = info.data();
+
+                  const promisesUrlImages = [];
+                  if(info.data.gallery){
+                    for(let i=0; i<info.data().gallery.length; i++){
+                        promisesUrlImages.push(scaricaUrlImmagine(info.data().gallery[i]));
+                    }
+                  }
+                  //aggiungo alla promise anche di scaricare l'immagine del profilo
+                  promisesUrlImages.push(scaricaUrlImmagine(info.data().profileImageName));
+
+                    //scarico gli url delle immagini
+                    Promise.myAllSettled(promisesUrlImages)
+                      .then((url_list)=>{
+                        var arrayUrl = new Array(url_list.length);
+                        console.log("tutti gli url sono stati scaricati");
+                        for(var i=0; i<url_list.length; i++){
+                          console.log(url_list[i].status);
+                          if(url_list[i].status=="rejected")
+                            arrayUrl[i]="null";
+                          else
+                            arrayUrl[i]=url_list[i].value;
+                        }
+                        //l'ultimo url è quello del profilo
+                        console.log(arrayUrl);
+                        var urlProfilo = arrayUrl.pop();
+                        info_utente.urlGalleryImages = arrayUrl;
+                        info_utente.urlProfileImage = urlProfilo;
+                        console.log("di seguito le informazioni complete inizializzate dell'utente");
+                        console.log(info_utente);
+                      }).catch((e)=>{
+                        //di norma non si va mai al catch con promise alSettled ma siccome è una implementazione personale è meglio prevedere tale casistica
+                        console.log("è avvenuto un problema nello scaricare tutti gli url");
+                        console.log(e);
+                        var arrayUrl = new Array(promisesUrlImages.length).fill("null");
+                        info_utente.urlGalleryImages = arrayUrl;
+                        info_utente.urlProfileImage = "null";
+                      }).finally(()=>{
+                        //info contiene le info dell'utente
+                        setInformazioniProfiloUtente(info_utente);
+                        setIsProfileLoading(false);
+                      })
+              
+                    
                 } else {
                   // doc.data() will be undefined in this case
                   console.log("No such document!");
                 }
             }).catch((e)=>{
-              console.log("Si è verificato un problema durante il recupero delle info dell'utente")
+              console.log("Navigation.home.js: Si è verificato un problema durante il recupero delle info dell'utente")
+              console.log(e);
             })
         }
       }catch(e){

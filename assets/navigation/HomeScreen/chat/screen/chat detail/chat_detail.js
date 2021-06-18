@@ -8,7 +8,7 @@ import ListaMessaggi from "./listaMessaggi";
 
 import * as firebase from 'firebase';
 import 'firebase/firestore';
-import { RSA } from "../../../../../context/local_storage/localStorage";
+import { generateRSA, testAudio } from "../../../../../context/local_storage/localStorage";
 
 const Chat = [
     {
@@ -82,6 +82,7 @@ export default function ChatDetail({ navigation,nome}){
 
     //tiene conto dell'ultima 
 
+    const [sound, setSound] = React.useState();
     function inviaMessaggio(){
 /*
         var db = firebase.firestore();
@@ -103,12 +104,12 @@ export default function ChatDetail({ navigation,nome}){
         });*/
 
         //crittografaTesto(messaggio, "a");
-        RSA();
+        testAudio();
 
     }
 
     useEffect(()=>{
-        
+        /*
         console.log("inizializzo ascoltatore collezione messaggi");
         var ultimaData = new Date("2021-05-02T09:33:00.105Z");
         var db = firebase.firestore();
@@ -126,6 +127,7 @@ export default function ChatDetail({ navigation,nome}){
             console.log("chat smontata...elimino il listening alla collezione messaggi");
             unsubscribe();
         }
+        */
     })
     
     return (

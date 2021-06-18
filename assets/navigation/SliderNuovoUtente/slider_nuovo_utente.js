@@ -6,14 +6,14 @@ import { MosCeleste } from "../../resources/colors";
 import IndicatoreSlide from "./component/indicatore_slide";
 import ProgressiveButton from "./component/progressive_button";
 import SlidePage from "./component/slide_page";
-
+import * as ImageManipulator from 'expo-image-manipulator';
 import slider_data from './resources/slider_data';
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 
 export default function SliderNuovoUtente({route, navigation}){ //NB: route.params.uid contiene l'uid col quale salvare l'utente (e' uguale all'uid di autenticazione)
 
     //contesto autenticazione
-    var {creaNuovoUtente, aggiornaImmagineProfilo, logOut, getUrlImmagineProfiloUtente} = useContext(AutenticazioneUtente);
+    var {creaNuovoUtente, logOut, caricaNuovaImmagine} = useContext(AutenticazioneUtente);
     //estraggo argomenti dalla funzione
     var {uid} = route.params;
 
@@ -88,7 +88,9 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
         setShowForwardArrow(true);
     }
 
+
     const [isCreazioneUtenteLoading, setIsCreazioneUtenteIsLoading] = useState(false);
+  
     function creaNuovoProfilo(){
         console.log("creazione profilo:"+name.current+","+dataDiNascita.current+","+posizione.current+","+sesso.current+","+preferenzaSesso.current+","+uriImmagineProfilo.current);
         //ultimo check di sicurezza
@@ -102,86 +104,62 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
         coloreBarra.setColore("white");
 
         try{
-                    //salvo immagine profilo
-                    //prendo il file
-                    fetch(uriImmagineProfilo.current)
-                        .then((response)=>{
-                            //il file è stato preso, creo il blob dal file
-                            response.blob()
-                                .then((blob)=>{
-                                    //blob creato
-                                    //chiamo firebase
-                                    aggiornaImmagineProfilo(uid, blob)
-                                        .then((ris)=>{
-                                            console.log("successo caricamento immagine profilo:"+ris);
-                                            //ottengo l'url (unico modo e rifare la richiesta dato che chiederlo direttamente è o verrà deprecato)
-                                            getUrlImmagineProfiloUtente(uid)
-                                                .then((url)=>{
-                                                    console.log("url immagine profilo ottenuta:"+url);
-                                                    
-                                                    creaNuovoUtente(uid,
-                                                        name.current,
-                                                        dataDiNascita.current,
-                                                        posizione.current,
-                                                        sesso.current,
-                                                        preferenzaSesso.current,
-                                                        url
-                                                        )
-                                                            .then((ris)=>{
-                                                                //navigo nella home
-                                                                console.log("Utente inserito:");
-                                                                console.log(ris);
-                                                                navigation.navigate("Home");
-                                            
-                                                            }).catch((e)=>{
-                                                                setIsCreazioneUtenteIsLoading(false);
-                                                                coloreBarra.setColore(MosCeleste);
-                                                                var messaggio = "Si è verificato un problema. Riprova più tardi.";
-                                                                var code = e.code;
-                                            
-                                                                console.log("Errore specifico:"+code+","+e);
-                                                                setSnackError(messaggio);
-                                            
-                                                            });
-
-                                                }).catch((e)=>{
-                                                    console.log("Errore scaricamento immagine:"+code+","+e.code);
-                                                    setSnackError("Si è verificato un problema. Riprova più tardi.");
-                                                })
-    
-                                        }).catch((e)=>{
-                                            var code = e.code;
-                                            var message = "Si è verificato un problema. Riprova più tardi.";
-                                            if(code=="storage/retry-limit-exceeded")
-                                                message = "La richiesta ha impiegato troppo tempo. Riprovare.";
-                                            else if(code=="storage/canceled")
-                                                message = "Operazione annullata.";
-                                            else if(code=="storage/cannot-slice-blob")
-                                                message = "Si è verificato un errore: il file locale è stato cambiato.";
                 
-                                            setIsCreazioneUtenteIsLoading(false);
-                                            coloreBarra.setColore(MosCeleste);
-                                            console.log("Errore caricamento immagine:"+code+","+e.code);
-                                            setSnackError("Si è verificato un problema. Riprova più tardi.");
-                                        })
-                                }).catch((e)=>{
-                                    setIsCreazioneUtenteIsLoading(false);
-                                    coloreBarra.setColore(MosCeleste);
-                                    console.log("Errore generico:"+e);
-                                    setSnackError("Si è verificato un problema. Riprova più tardi.");
-                                })
-                        }).catch((e)=>{
-                            setIsCreazioneUtenteIsLoading(false);
-                            coloreBarra.setColore(MosCeleste);
-                            console.log("Errore generico:"+e);
-                            setSnackError("Si è verificato un problema. Riprova più tardi.");
-                        });
-                    }catch(e){
+            console.log("creazione nuovo profilo...");
+            
+            creaNuovoUtente(uid,
+                name.current,
+                dataDiNascita.current,
+                posizione.current,
+                sesso.current,
+                preferenzaSesso.current
+                )
+                    .then((ris)=>{
+                        //navigo nella home
+                        console.log("Utente inserito:");
+                        console.log(ris);
+
+                        //carico immagine del profilo in tutte le sue versioni
+                        //1) manipolo l'immagine per ridurne le dimensioni a meno di 1MB cosi da velocizzare lato server la trasformazione
+                        ImageManipulator.manipulateAsync(
+                            uriImmagineProfilo.current,
+                            [{ resize: { width: 800, height: 800 } }],
+                            { format: 'jpeg',base64: true }
+                            ).then((immagineManipolata)=>{
+                                //immagine manipolata. Carico versioni
+                                console.log("Carico immagine profilo con tutte le sue versioni");
+                                //carico nuova immagine passandogli la base 64 dell'immagine e indicando se si tratta di una immagine di profilo o meno
+                                //nel caso si tratta di immagine di profilo il nome dell'immagine del profilo che passo è utile dopo
+                                caricaNuovaImmagine(immagineManipolata.base64,true, "profileImage2") 
+                                  .then((ris)=>{
+                                    console.log("chiamata riuscita");
+                                    console.log(ris);
+                                  }).catch((e)=>{
+                                    console.log("errore: chiamata non riuscita");
+                                    console.log(e);
+                                    setMessaggioAuth("Non è stato possibile caricare l'imamgine del profilo. Riprova a caricarla.");
+                                  }).finally(() =>   navigation.navigate("Home"));
+                            }).catch((e)=>{
+                                setSnackError("Si è verificato un problema. Riprova più tardi.");
+                                console.log("slider_nuovo_utente.js : errore-->"+e);
+                            })
+
+                    }).catch((e)=>{
                         setIsCreazioneUtenteIsLoading(false);
                         coloreBarra.setColore(MosCeleste);
-                        console.log("Errore generico:"+e);
-                        setSnackError("Si è verificato un problema. Riprova più tardi.");
-                    }
+                        var messaggio = "Si è verificato un problema. Riprova più tardi.";
+                        var code = e.code;
+
+                        console.log("Errore specifico:"+code+","+e);
+                        setSnackError(messaggio);
+
+                    });
+            }catch(e){
+                setIsCreazioneUtenteIsLoading(false);
+                coloreBarra.setColore(MosCeleste);
+                console.log("Errore generico:"+e);
+                setSnackError("Si è verificato un problema. Riprova più tardi.");
+            }
             
     }
 

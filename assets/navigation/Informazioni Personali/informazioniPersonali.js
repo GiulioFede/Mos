@@ -167,7 +167,7 @@ function aggiornaPhoneNumber(){
                 //altrimenti se è attiva...
                 else {
                     //controlla se l'utente ha già accontentito a darci i permessi
-                    Location.requestPermissionsAsync()
+                    Location.requestForegroundPermissionsAsync()
                         .then((ris)=>{
                             //se l'utente non ha permesso più di chiedere la posizione ancora una volta...
                             if(ris.canAskAgain==false){

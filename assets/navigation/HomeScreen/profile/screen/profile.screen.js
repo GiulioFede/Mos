@@ -9,7 +9,6 @@ import ProfileComponent from './component/profile.component';
 
 //TODO: TROVARE L'ERRRORE CHE BLOCCA L'APP (LA FREEZZA)
 export default function Profile({navigation}){
-
     
       return (
           <View style={styles.container} >
