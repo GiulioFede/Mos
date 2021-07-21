@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente} from "./service/firestore.service";
 import { getCurrentUser } from "expo-google-sign-in";
 
 console.log("autenticazione.js");
@@ -78,7 +78,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     aggiornaDettagliProfiloUtente,
                     caricaNuovaImmagine,
                     scaricaUrlImmagine,
-                    eliminaImmagineDiProfilo
+                    eliminaImmagineDiProfilo,
+                    getGalleriaUtente
                 }}
                 >
                 {children}
@@ -251,4 +252,10 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     function eliminaImmagineDiProfilo(nome){
         console.log("elimina immagine di profilo");
         return _eliminaImmagineDiProfilo(nome);
+    }
+
+    //Ottieni galleria immagini
+    function getGalleriaUtente(uuid){
+        console.log("ottengo galleria utente");
+        return _getGalleriaUtente(uuid);
     }

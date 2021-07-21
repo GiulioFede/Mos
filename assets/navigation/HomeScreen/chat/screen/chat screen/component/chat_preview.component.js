@@ -12,6 +12,10 @@ const ChatPreview =({navigation,nome, urlImmagineProfilo,dataUltimoMessaggio, ul
         navigation.navigate("Chat detail");
     }
 
+    function apriDettagliProfilo(){
+        navigation.navigate("User profile");
+    }
+
         //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
     let [Raleway2] = useFonts2({Raleway_400Regular});
@@ -23,9 +27,9 @@ const ChatPreview =({navigation,nome, urlImmagineProfilo,dataUltimoMessaggio, ul
             {/* IMMAGINE PROFILO */}
             <View style={styles.contenitoreMediaProfilo}>
                         {/* immagine SOSTITUIRE CON QUELLA DELL'UTENTE ma ovviamente non usare require ma (forse) fetch*/}
-                        <View style={styles.contenitoreImmagineProfilo}>
-                            <Image source={require('../../../../../../../assets/resources/images/chat/fotoChat3.jpg')} resizeMode="cover"  style={styles.immagineProfilo}></Image>
-                        </View>
+                        <TouchableOpacity onPress={()=>{apriDettagliProfilo()}} style={styles.contenitoreImmagineProfilo}>
+                                <Image source={require('../../../../../../../assets/resources/images/chat/fotoChat3.jpg')} resizeMode="cover"  style={styles.immagineProfilo}></Image>
+                        </TouchableOpacity>
                         {/* pallino online */}
                         <View style={styles.onlineCircle} />
                         {/* nome */}
@@ -77,6 +81,7 @@ const styles = StyleSheet.create({
         borderRadius: altezzaDevice*0.2/2,
         overflow: "hidden",
         position:"absolute",
+        zIndex: 10,
         left:altezzaDevice*0.02,
         backgroundColor: '#52575D',
         ...Platform.select({
@@ -88,7 +93,7 @@ const styles = StyleSheet.create({
     immagineProfilo: {
         flex:1,
         width: undefined,
-        height: undefined
+        height: undefined,
     },
     chatIcon: {
         backgroundColor: "white",

@@ -8,6 +8,29 @@ const os = require('os');
 const fs = require('fs');
 const { v4: uuid } = require("uuid");
 
+//scaricare l'immagine con il corretto grado di visibilità
+/*
+
+   IDEA: l'utente X lato client vuole scaricare le immmagini di profilo e galleria dell'utente Y. Quindi effettua una
+         richiesta inserendo nel data l'indice della i-esima immagine di galleria che vuole
+   INPUT:
+      - context --> contiene dati utili all'autenticazione dell'utente (es. context.auth.uuid)
+      - data --> contiene i seguenti campi:
+                  - data.index --> indice della i-esima immagine di galleria che si vuole scaricare
+*/
+exports.downloadUserImage = functions.https.onCall((data, context) =>{
+
+   //le informazioni sull'autenticazione dell'utente sono automaticamente inserite nella richiesta e li trovo in context
+   //Se l'utente non è autenticato ritorna un errore
+   if (!context.auth) {
+      // Throwing an HttpsError so that the client gets the error details.
+      throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
+         'while authenticated.');
+   }
+
+   //data è un json a cui è possibile accedere tramite punto direttamente. Tale json viene codificato lato client, quindi devo sapere a priori la sua struttura
+   //in data.
+});
 
 
 //Quando l'utente carica la propria immagine si creano diverse versioni di questa

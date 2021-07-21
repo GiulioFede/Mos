@@ -259,4 +259,11 @@ export function _isProfiloCompletato(uid){
         return pathReference.getDownloadURL();
     }
 
+    export function _getGalleriaUtente(uuid){
+        console.log("_ottieni galleria utente");
+        var storageRef = firebase.storage();
+        //ritorno la lista delle immagini
+        return storageRef.ref("users/"+uuid).listAll();
+    }
+
     

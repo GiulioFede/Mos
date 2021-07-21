@@ -47,7 +47,7 @@ const Chat = [
 export default function ChatScreen({navigation}){
 
     //contesto autenticazione
-    var {informazioniProfiloUtente} = useContext(AutenticazioneUtente);
+    var {informazioniProfiloUtente, getGalleriaUtente} = useContext(AutenticazioneUtente);
 
 
     //quando si clicca sull'icona 'menu': apri il menu laterale
