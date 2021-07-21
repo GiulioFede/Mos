@@ -8,6 +8,9 @@ const os = require('os');
 const fs = require('fs');
 const { v4: uuid } = require("uuid");
 
+
+
+//Quando l'utente carica la propria immagine si creano diverse versioni di questa
 exports.uploadImage = functions.https.onCall(async(data, context) => {
 
       // Checking that the user is authenticated.
