@@ -6,7 +6,6 @@ import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button } from 'react-native-paper';
 import {navbarHeight, fontSizeTitolo, altezzaBarraScreen, larghezzaDevice, fontSizeTitoloBarra, altezzaMenuNavigazione } from '../../../../../context/variabili_globali/variabiliGlobali'
-import CachedImage from 'react-native-expo-cached-image'; //installa yarn add react-native-expo-cached-image
 import * as ImagePicker from 'expo-image-picker';
 import { AutenticazioneUtente } from "../../../../../context/firebase/autenticazione";
 import GalleriaImmagini from './galleriaImmagini';
@@ -32,7 +31,7 @@ export default function ProfileComponent(props){
     const [base64DaEliminare, setBase64DaEliminare] = useState("");
 
     //contesto autenticazione
-    const {caricaNuovaImmagineDiGalleria,messaggioAuth, user,eliminaImmagineDiGalleria,cambiaImmagineDiProfilo,scaricaUrlImmagine, informazioniProfiloUtente, setInformazioniProfiloUtente} = useContext(AutenticazioneUtente);
+    const {caricaNuovaImmagineDiGalleria,messaggioAuth, user,eliminaImmagineDiGalleria,cambiaImmagineDiProfilo,scaricaUrlImmagine, informazioniProfiloUtente, setInformazioniProfiloUtente, getNomeImmagineDaUrl} = useContext(AutenticazioneUtente);
 
     //dati utente
     var {navigation} = props;
@@ -46,13 +45,16 @@ export default function ProfileComponent(props){
     const inizializzaGalleria = () =>{
         console.log("reinizializzo galleria");
         console.log(galleria);
-        console.log(informazioniProfiloUtente.gallery);
+//*        console.log(informazioniProfiloUtente.gallery);
         console.log(informazioniProfiloUtente.urlGalleryImages);
         var tmp = [];
-        if(informazioniProfiloUtente.urlGalleryImages) 
-            informazioniProfiloUtente.urlGalleryImages.forEach((item, i) => {
-                        tmp.push({key: i, url: item});
-                });
+        if(informazioniProfiloUtente.urlGalleryImages){
+            let i = 0;
+            for(var key of Object.keys(informazioniProfiloUtente.urlGalleryImages).sort()){
+                    tmp.push({key: i, name: key, url: informazioniProfiloUtente.urlGalleryImages[key]});
+                    i++;
+            }
+        }       
         tmp.reverse();
         setGalleria(tmp);
     }
@@ -109,30 +111,29 @@ export default function ProfileComponent(props){
         console.log("indice da eliminare"+indiceFotoDaEliminare.current);
         console.log(galleria);
         console.log("_________________________________");
-        console.log(informazioniProfiloUtente.gallery);
+        //*console.log(informazioniProfiloUtente.gallery);
         console.log("_________________________________");
         console.log(informazioniProfiloUtente.urlGalleryImages);
         
         if(isLoading==false){
             try{
             setIsLoading(true);
-            const index = indiceFotoDaEliminare.current;
+            const index = indiceFotoDaEliminare.current; //non è l'indice su firebase, ma sull'array locale
             const url = galleria[index].url;
-            const nome = informazioniProfiloUtente.gallery[informazioniProfiloUtente.gallery.length-1-index];
+            //const nome = informazioniProfiloUtente.gallery[informazioniProfiloUtente.gallery.length-1-index];
+            const nome = getNomeImmagineDaUrl(url);
+            console.log("Nome immagine: "+nome);
             closeDialog();
             //elimino
-            eliminaImmagineDiGalleria(user,url,nome)
+            eliminaImmagineDiGalleria(url,nome) //firebase elimina cercando il valore (ecco perchè diamo url)
                 .then((ris)=>{
                     setIsLoading(false);
                     console.log("Eliminazione completata "+ris);
                     //aggiorno informazioniProfiloUtente
-                    var infoGallery = [...informazioniProfiloUtente.gallery];
-                    infoGallery.splice(informazioniProfiloUtente.gallery.length-1-index,1);
-                    var infoUrlGalleryImages = [...informazioniProfiloUtente.urlGalleryImages];
-                    infoUrlGalleryImages.splice(informazioniProfiloUtente.gallery.length-1-index,1);
-
+                   var infoUrlGalleryImages = JSON.parse(JSON.stringify(informazioniProfiloUtente.urlGalleryImages));
+                    //rimuovo elemento
+                    delete infoUrlGalleryImages[nome];
                     var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
-                    nuoveInformazioniProfilo.gallery = infoGallery;
                     nuoveInformazioniProfilo.urlGalleryImages = infoUrlGalleryImages;
                     setInformazioniProfiloUtente(nuoveInformazioniProfilo);
 
@@ -149,6 +150,7 @@ export default function ProfileComponent(props){
                 })
         
             }catch(e){
+                console.log(e);
                 setSnackMessage("Si è verificato un problema. Riprova più tardi.");
                 setIsLoading(false);
             }
@@ -201,14 +203,14 @@ export default function ProfileComponent(props){
                                 console.log(ris.uri);
                                 const localUri = ris.uri;
                                 
-                                //modifico l'immagine per ridurne le dimensioni a meno di 1MB cosi da velocizzare lato server la trasformazione
+                                //modifico l'immagine per ridurne le dimensioni a meno di 1MB cosi da velocizzare lato server la trasformazione e indico il formato come jpg
                                 ImageManipulator.manipulateAsync(
                                     localUri,
                                     [{ resize: { width: 800, height: 800 } }],
                                     { format: 'jpeg',base64: true }
                                   ).then((immagineManipolata)=>{
                                       //apro screen per il caricamento dell'immagine
-                                      navigation.navigate("ImageBlurLoaderScreen",{isProfileImage: isForProfile ,uri: localUri, base64:immagineManipolata.base64});
+                                      navigation.navigate("UploadImageLoaderScreen",{isProfileImage: isForProfile ,uri: localUri, base64:immagineManipolata.base64});
                                   }).catch((e)=>{
                                     setSnackMessage("Si è verificato un problema. Riprova più tardi.");
                                     console.log("photo.js errore2:"+e);

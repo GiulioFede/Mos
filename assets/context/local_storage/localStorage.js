@@ -1,123 +1,139 @@
-import forge from 'node-forge';
-import * as React from 'react';
-import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
+import * as SQLite from 'expo-sqlite'
 
-function convertStringToByteArray(str){
-    String.prototype.encodeHex = function () {
-    var bytes = [];
-    for (var i = 0; i < this.length; ++i) {
-     bytes.push(this.charCodeAt(i));
+const db = SQLite.openDatabase("MosaicLocalDB");
+
+const SUCCESS_QUERY = "SUCCESS_QUERY";
+
+export class LocalStorage {
+
+    static createNewTableForConversation(contactUid, callbackSuccesso, callbackErrore){
+        try{
+            //creo tabella se non esiste
+            console.log("creo tabella se non esiste");
+            let query = 'CREATE TABLE IF NOT EXISTS '+ contactUid +'(row INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, date TEXT, type TEXT, content TEXT)'
+        db.transaction(
+            (tx)=>{
+                tx.executeSql(
+                    query,
+                    [],
+                    //in caso di successo
+                    callbackSuccesso,
+                    //in caso di errore
+                    callbackErrore
+                )
+            },
+            callbackErrore,
+            (arg)=>{ console.log("trasazione eseguita con successo:"+arg);}
+        )
+
+        }catch(e){
+            return ("errore interno:"+e);
+        }
+
     }
-    return bytes;
-    };
-   
-    var byteArray = str.encodeHex();
-    return byteArray
+
+    static getListOfChatMessages(contactUid, callbackSuccesso, callbackErrore){
+        try{
+        console.log("apro database MosaicLocalDB...");
+
+        //altrimenti preleva i messaggi
+        console.log("Avvio query...");
+        //prendo tutti i messaggi e li ritorno
+        let query = "SELECT * FROM "+contactUid;
+        db.transaction(
+            (tx)=>{
+                tx.executeSql(
+                    query,
+                    [],
+                    //in caso di successo
+                    callbackSuccesso,
+                    //in caso di errore
+                    callbackErrore
+                )
+            },
+            callbackErrore,
+            (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
+        )
+
+        }catch(e){
+            return ("errore interno:"+e);
+        }
+
     }
 
+    static storeNewMessage(contactUid,author,date,type,value,callbackSuccesso, callbackErrore){
+        console.log("Memorizzo nuovo messaggio");
+        let update = "INSERT INTO "+contactUid+"(author,date,type,content) VALUES(?,?,?,?)";
+        db.transaction(
+            (tx)=>{
+                tx.executeSql(
+                    update,
+                    [author,date, type,value],
+                    //in caso di successo
+                    callbackSuccesso,
+                    //in caso di errore
+                    callbackErrore
+                )
+            },
+            callbackErrore,
+            (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
+        )
+    }
 
-const privateRsaKey= "MIIEpgIBAAKCAQEAu26jI+mc/gQluhVjpjQGpDVB2sTQz3AVLHJp24qza5089L5vBCrucMd3ptkubZ9FEBmsbhhpV3Sl0YVa3CQPfBFZrhIb+DTsBth/6eWSwacgvjq5thqhjI3hIbWcVw2yXqW+CBr9+WfCnlmxQ74Tk/YcHFvd6RB0rhzgaVxaMjyKpwNKkFbSdTUzafgOIOLU8Yfb6zN4ZVlTIEMRN8jtrfNE8tnTxcGnNlWSt+DXwXUSadzrxlwWeS7vi7PK67NhBQpL83BCw2uudZPFzBo/bgu8OgRjTB7D4Uy36Omjxd8WO5JZtGJm/ca6I/feyx3fDl+4BoWECb+RqHdqdCw9xQIDAQABAoIBAQCPn6DdRQcq0qzCId/BHP6116WF6OkE+6MN8wJQ28DOxqdN95sEO42I2CBEtwlPsQrv4mxx1Lzr6hOiMKjGJc/Dx1vL+k56bLssJ7wk0+kYAWQiwMdL1q5SEOohtZN+VZ2Hz0OF3IEfGzZTtvERstY3vBAgXvj1vclbHf+MXNs0wEXdUZxNAFOkbE9ZgxbyMSldEypLc2vFyZtRINMz9C/v3knFuhIpooiNyXJYA/FfyPpSufCOjs3rOB1X5SReYkK6r30bMdj1ah77a7A18a9Rk6/GOK8LAuWEAi9cG4vcKXPldeB2EvTTvXJYBaV66eNIr9KcVUej2xo1/OIc7rmFAoGBANvhkvcO0TF0iH54L5arhv+B0XUlS+M2Akm9yLZADZeUsVYsSJkYJQTWoIOkVd1y5aIdQSrujdQrh0KNdEFD6rdfSWMyawdmdLAlE3/UHlRQBt3iPimrwLFr7CaP0MTzvWqXh+0q++XpkW8ajTSVH/WH7nD/Tpv9mYrarjg41c6/AoGBANo4hXp23qgPIHSp6fIgnAAaScILMt/Nt7amm4y43DY2Ym6lRSWi8Fo1psZIyV8MZ/D8hH29Y0GlR1jm42AkcwVubBxIajNg/ImkKm4uVgIcjQU9E1IpwALQcY0kFkFlYE4mYRB9AX6NUocgMW+UaLe2f2lqkZQwp3813Vd58Bh7AoGBAMU6TBohh1FGBxzx7zXF+9x59IiQgMZ4bor4me2n/Mknjf4O0LvKJYJ2hhousPpnEkVc2lSJEFztAnGW8l2MbyA2b1x0H/7OTwKk7x2tBdt4wQAL7Nhx//DlLjjUrV3Mh+3xp/H7qWFsJZC0D07IKJeTazSePUO8sRoU10sE5/t/AoGBALSodliccFjRrRzoTjWVqZCsMsPiYYvG04DzDXPC1wxKmdLgIA64hiMop5kgSRXXP3XSmB1A3RtLqXWAMF03z8F/WSFREhrXADszHa15ztqQqG7d0VEEH2I1Dsy6Q3KAaupH+7OaydHrTZdwn3ywcMEm5PRwtXTpksFN5qC04oBhAoGBAIwrinb2G3TyJsCWmTUX6UXGcb8DoBxi5UUPmqTqWRY2PzmzNYEuNJMeih15kS81/Q9md6kfLFaeDST/gkr8V+NjGE4G5RFbQ3zeD2ZAXTCScgNcF69rwqcFTK2BFiv4wYZkNgaEHUp4JotjtTYCuw6NLDU4N1OxuObs///mPOJU";
-const publicRsaKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu26jI+mc/gQluhVjpjQGpDVB2sTQz3AVLHJp24qza5089L5vBCrucMd3ptkubZ9FEBmsbhhpV3Sl0YVa3CQPfBFZrhIb+DTsBth/6eWSwacgvjq5thqhjI3hIbWcVw2yXqW+CBr9+WfCnlmxQ74Tk/YcHFvd6RB0rhzgaVxaMjyKpwNKkFbSdTUzafgOIOLU8Yfb6zN4ZVlTIEMRN8jtrfNE8tnTxcGnNlWSt+DXwXUSadzrxlwWeS7vi7PK67NhBQpL83BCw2uudZPFzBo/bgu8OgRjTB7D4Uy36Omjxd8WO5JZtGJm/ca6I/feyx3fDl+4BoWECb+RqHdqdCw9xQIDAQAB";
+    static removeTableForConversation(contactUid,callbackSuccesso, callbackErrore){
+        console.log("rimuovo tabella");
+        let update = "DROP TABLE IF EXISTS "+contactUid;
+        db.transaction(
+            (tx)=>{
+                tx.executeSql(
+                    update,
+                    [],
+                    //in caso di successo
+                    callbackSuccesso,
+                    //in caso di errore
+                    callbackErrore
+                )
+            },
+            callbackErrore,
+            (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
+        )
+    }
 
-const pub= "-----BEGIN PUBLIC KEY-----\
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu26jI+mc/gQluhVjpjQG\
-pDVB2sTQz3AVLHJp24qza5089L5vBCrucMd3ptkubZ9FEBmsbhhpV3Sl0YVa3CQP\
-fBFZrhIb+DTsBth/6eWSwacgvjq5thqhjI3hIbWcVw2yXqW+CBr9+WfCnlmxQ74T\
-k/YcHFvd6RB0rhzgaVxaMjyKpwNKkFbSdTUzafgOIOLU8Yfb6zN4ZVlTIEMRN8jt\
-rfNE8tnTxcGnNlWSt+DXwXUSadzrxlwWeS7vi7PK67NhBQpL83BCw2uudZPFzBo/\
-bgu8OgRjTB7D4Uy36Omjxd8WO5JZtGJm/ca6I/feyx3fDl+4BoWECb+RqHdqdCw9\
-xQIDAQAB\
------END PUBLIC KEY-----";
+    static async saveAudioIntoFolder(folder,author, uri_cache, callbackSuccesso, callbackErrore){
+        console.log("salvo audio in "+uri_cache+" nel file system");
+        //crea una cartella se non esiste
+        try {
+            await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + folder, {
+                intermediates: true
+            });
+            console.log("cartella creata (se non esisteva già):");
+            //scrivo il file che si trova in un uri temporanea (cache) nel database
+            //quando lo scrivo utilizzo
+            const audio_string = await FileSystem.readAsStringAsync(uri_cache,{ encoding: FileSystem.EncodingType.Base64 });
+            //ho ottenuto una stringa del contenuto audio
+            console.log("audio stringa letto");
+            //cripto audio stringa prima di salvare
+            console.log("audio stringa criptato");
+            //....(cripare stringa)
+            /*
+                salvo file criptato
+                NB: non salvo la stringa nel database altrimenti ad ogni apertura di chat deve leggere miliardi di bit, piuttosto salvo
+                    il file criptato e salvo nel database solo un riferimento uri per trovarlo. Sarà solo quando richiesto che lo leggerò
+            */
+            const percorso= FileSystem.documentDirectory + folder+"/"+(new Date().toUTCString().replace(/ /g,""));
+            await FileSystem.writeAsStringAsync((percorso), audio_string, {encoding: FileSystem.EncodingType.Base64 });
+            console.log("file salvato con successo nel file system");
+            //salvo nel database
+            this.storeNewMessage(folder,author,"30/07/2021","audio",percorso,
+                    callbackSuccesso,
+                    callbackErrore);
+        } catch (err) {
+            console.log("errore durante il salvataggio dell'audio: "+err);
+            callbackErrore();
+        }
+        console.log(FileSystem.documentDirectory);
+    }
 
-const priv = "-----BEGIN RSA PRIVATE KEY-----\
-MIIEpgIBAAKCAQEAu26jI+mc/gQluhVjpjQGpDVB2sTQz3AVLHJp24qza5089L5v\
-BCrucMd3ptkubZ9FEBmsbhhpV3Sl0YVa3CQPfBFZrhIb+DTsBth/6eWSwacgvjq5\
-thqhjI3hIbWcVw2yXqW+CBr9+WfCnlmxQ74Tk/YcHFvd6RB0rhzgaVxaMjyKpwNK\
-kFbSdTUzafgOIOLU8Yfb6zN4ZVlTIEMRN8jtrfNE8tnTxcGnNlWSt+DXwXUSadzr\
-xlwWeS7vi7PK67NhBQpL83BCw2uudZPFzBo/bgu8OgRjTB7D4Uy36Omjxd8WO5JZ\
-tGJm/ca6I/feyx3fDl+4BoWECb+RqHdqdCw9xQIDAQABAoIBAQCPn6DdRQcq0qzC\
-Id/BHP6116WF6OkE+6MN8wJQ28DOxqdN95sEO42I2CBEtwlPsQrv4mxx1Lzr6hOi\
-MKjGJc/Dx1vL+k56bLssJ7wk0+kYAWQiwMdL1q5SEOohtZN+VZ2Hz0OF3IEfGzZT\
-tvERstY3vBAgXvj1vclbHf+MXNs0wEXdUZxNAFOkbE9ZgxbyMSldEypLc2vFyZtR\
-INMz9C/v3knFuhIpooiNyXJYA/FfyPpSufCOjs3rOB1X5SReYkK6r30bMdj1ah77\
-a7A18a9Rk6/GOK8LAuWEAi9cG4vcKXPldeB2EvTTvXJYBaV66eNIr9KcVUej2xo1\
-/OIc7rmFAoGBANvhkvcO0TF0iH54L5arhv+B0XUlS+M2Akm9yLZADZeUsVYsSJkY\
-JQTWoIOkVd1y5aIdQSrujdQrh0KNdEFD6rdfSWMyawdmdLAlE3/UHlRQBt3iPimr\
-wLFr7CaP0MTzvWqXh+0q++XpkW8ajTSVH/WH7nD/Tpv9mYrarjg41c6/AoGBANo4\
-hXp23qgPIHSp6fIgnAAaScILMt/Nt7amm4y43DY2Ym6lRSWi8Fo1psZIyV8MZ/D8\
-hH29Y0GlR1jm42AkcwVubBxIajNg/ImkKm4uVgIcjQU9E1IpwALQcY0kFkFlYE4m\
-YRB9AX6NUocgMW+UaLe2f2lqkZQwp3813Vd58Bh7AoGBAMU6TBohh1FGBxzx7zXF\
-+9x59IiQgMZ4bor4me2n/Mknjf4O0LvKJYJ2hhousPpnEkVc2lSJEFztAnGW8l2M\
-byA2b1x0H/7OTwKk7x2tBdt4wQAL7Nhx//DlLjjUrV3Mh+3xp/H7qWFsJZC0D07I\
-KJeTazSePUO8sRoU10sE5/t/AoGBALSodliccFjRrRzoTjWVqZCsMsPiYYvG04Dz\
-DXPC1wxKmdLgIA64hiMop5kgSRXXP3XSmB1A3RtLqXWAMF03z8F/WSFREhrXADsz\
-Ha15ztqQqG7d0VEEH2I1Dsy6Q3KAaupH+7OaydHrTZdwn3ywcMEm5PRwtXTpksFN\
-5qC04oBhAoGBAIwrinb2G3TyJsCWmTUX6UXGcb8DoBxi5UUPmqTqWRY2PzmzNYEu\
-NJMeih15kS81/Q9md6kfLFaeDST/gkr8V+NjGE4G5RFbQ3zeD2ZAXTCScgNcF69r\
-wqcFTK2BFiv4wYZkNgaEHUp4JotjtTYCuw6NLDU4N1OxuObs///mPOJU\
------END RSA PRIVATE KEY-----";
-
-
-
-
-export function generateRSA(mex){
-    console.log("GENERO RSA:"+mex);
- 
-
-    const forge = require('node-forge');
-    var rsa = forge.pki.rsa;
-    var pki = forge.pki;
-    forge.options.usePureJavaScript = true;
    
-    //genero coppie
-    //var keypair = rsa.generateKeyPair({bits: 2048, e: 0x10001});
-   // rsa.generateKeyPair({bits: 2048, workers: 2}, function(err, keypair) {
-
-    //trasformo chiave pubblica in stringa
-    //var chiavePubblica = pki.publicKeyToPem(keypair.publicKey);
-    //trasformo chiave privata in stringa
-    /* 
-    var chiavePrivata = pki.privateKeyToPem(keypair.privateKey);
-    console.log("chiave pubblica:")
-    console.log(chiavePubblica);
-    console.log("chiave privata:")
-    console.log(chiavePrivata);
-
-    //trasformo le chiavi per poterle utilizzare
-    var kpublica = pki.publicKeyFromPem(chiavePubblica);
-    var kprivata = pki.privateKeyFromPem(chiavePrivata);
-    */
-    
-
-    //queste due valgono solo quando ho le stringhe direttamente
-    var kpublica = pki.publicKeyFromPem(pub);
-    var kprivata = pki.privateKeyFromPem(priv);
-
-
-    console.log("cripto");
-    //trasformo il testo (con emoticons include) in bytes
-    var plaintextBytes = forge.util.encodeUtf8(mex);
-
-    //cripto il testo con la chiave pubblica
-    const stringa_criptata = kpublica.encrypt(plaintextBytes);
-    console.log(stringa_criptata);
-
-    //decripto la stringa criptata utilizzando la chiave privata
-    console.log("decripto");
-    const stringa_decriptata = forge.util.decodeUtf8(kprivata.decrypt(stringa_criptata));
-    console.log(stringa_decriptata);
-    
-   // })
-
-}
-
-export function testAudio(){
-    
-    //stringa originale
-    const str = "ciao sono giulio";
-    //converti in base64
-    
-
-
 }

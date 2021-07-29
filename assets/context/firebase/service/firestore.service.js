@@ -56,7 +56,14 @@ export function _isProfiloCompletato(uid){
         return userProfileImageRef.getDownloadURL();
     }
 
-    //ottiene i dati dell'utente
+    /*
+    ottiene i dati dell'utente nel formato (dentro .data):
+        - dateOfBirth
+        - name
+        - position
+        - sex
+        - sexPreference
+    */
     export function _getUserInformation(idUser){
         console.log("ottengo info utente................................................................................");
         var db = firebase.firestore();
@@ -64,6 +71,19 @@ export function _isProfiloCompletato(uid){
         var userDocument = db.collection("users").doc(idUser);
         return userDocument.get();
     }
+
+    /*
+    ottiene i media del profilo dell'utente:
+        - profileImageUrl
+        - gallery (array di url delle immagini di galleria dell'utente)
+    */
+   export function _getMediaProfiloUtente(){
+        console.log("ottengo media profilo utente................................................................................");
+        var db = firebase.firestore();
+
+        var mediaDocument = db.collection("users").doc(firebase.auth().currentUser.uid).collection("media").doc("0"); //0 indica a risoluzione massima di visibilità
+        return mediaDocument.get();
+   }
 
     export function _caricaNuovaImmagineDiGalleria(idUser, blob){
         console.log("carico nuova immagine di galleria..................................................................");
@@ -125,34 +145,56 @@ export function _isProfiloCompletato(uid){
         Se sullo storage qualche immagine viene eliminata e qualcun'altra no non ci sono problemi.
         Se sullo storage alcune foto da eliminare mancano non ci sono problemi.
     */
-    export function _eliminaImmagineDiGalleria(idUser, url, nome){
+    export function _eliminaImmagineDiGalleria(url, nome){
         console.log("elimino immagine................................................................................:");
         var db = firebase.firestore();
+        const idUser = firebase.auth().currentUser.uid;
+        console.log(nome);
+        console.log(url);
+        console.log(url.replace(nome,nome+"_25"));
+        //faccio un batch per eliminare tutti i riferimenti su firestore nei 4 documenti dei media
+        var batch = db.batch();
+            //elimino riferimento immagine originale
+        var eliminoUrlImmagineOriginale = db.collection("users").doc(idUser).collection("media").doc("0");
+        batch.update(eliminoUrlImmagineOriginale,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
+            //elimino riferimento immagine 25
+        var eliminoUrlImmagine25 = db.collection("users").doc(idUser).collection("media").doc("25");
+        batch.update(eliminoUrlImmagine25,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
+            //elimino riferimento immagine 50
+        var eliminoUrlImmagine50 = db.collection("users").doc(idUser).collection("media").doc("50");
+        batch.update(eliminoUrlImmagine50,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
+            //elimino riferimento immagine 75
+        var eliminoUrlImmagine75 = db.collection("users").doc(idUser).collection("media").doc("75");
+        batch.update(eliminoUrlImmagine75,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
+            //elimino riferimento immagine 100
+        var eliminoUrlImmagine100 = db.collection("users").doc(idUser).collection("media").doc("100");
+        batch.update(eliminoUrlImmagine100,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
 
-        var userDocument = db.collection("users").doc(idUser);
-        return userDocument.update({
-            gallery: firebase.firestore.FieldValue.arrayRemove(nome)
-            }).then((ris)=>{
-                //riferimento in firestore eliminato...
-                //elimino dallo storage tutte le 5 versioni
-                var storage = firebase.storage().ref();
-               
-                var immagineOriginale = storage.child("users/"+idUser+"/"+nome);
-                var immagine25 = storage.child("users/"+idUser+"/"+nome+"_25");
-                var immagine50 = storage.child("users/"+idUser+"/"+nome+"_50");
-                var immagine75 = storage.child("users/"+idUser+"/"+nome+"_75");
-                var immagine100 = storage.child("users/"+idUser+"/"+nome+"_100");
+        //faccio il commit del batch
+        return batch.commit().then((ris)=>{
+            //riferimento in firestore eliminato...
+            //elimino dallo storage tutte le 5 versioni
+            console.log("Elimino le 5 versioni sullo storage");
+            var storage = firebase.storage().ref();
+            
+            var immagineOriginale = storage.child("users/"+idUser+"/"+nome);
+            var immagine25 = storage.child("users/"+idUser+"/"+nome+"_25");
+            var immagine50 = storage.child("users/"+idUser+"/"+nome+"_50");
+            var immagine75 = storage.child("users/"+idUser+"/"+nome+"_75");
+            var immagine100 = storage.child("users/"+idUser+"/"+nome+"_100");
 
-                const promises = [immagineOriginale.delete(), immagine25.delete(), immagine50.delete(),immagine75.delete(), immagine100.delete()];
-                return Promise.all(promises)
-                            .then((ris)=>{
-                                return "all-versions-deleted";
-                            }).catch((e)=>{
-                                return "only-reference-removed";
-                            })
+            const promises = [immagineOriginale.delete(), immagine25.delete(), immagine50.delete(),immagine75.delete(), immagine100.delete()];
+            return Promise.all(promises)
+                        .then((ris)=>{
+                            console.log("Le 5 versioni sono state correttamente eliminate");
+                            return "all-versions-deleted";
+                        }).catch((e)=>{
+                            console.log("Non tutte le versioni sono state eliminate");
+                            return "only-reference-removed";
+                        })
 
             }).catch((e)=>{
-                throw e;
+                return e;
             })
 
     }
@@ -221,7 +263,7 @@ export function _isProfiloCompletato(uid){
     }
 
 
-    //NUOVA VERSIONE 
+    //NUOVA VERSIONE (ok)
     //Caricare una nuova immagine di profilo (isForProfile=true) oppure di galleria (isForProfile=false)
     export function _caricaNuovaImmagine(base64, isForProfile, nomeImmagine){
         console.log("_carico immagine "+isForProfile);
@@ -259,11 +301,70 @@ export function _isProfiloCompletato(uid){
         return pathReference.getDownloadURL();
     }
 
-    export function _getGalleriaUtente(uuid){
-        console.log("_ottieni galleria utente");
-        var storageRef = firebase.storage();
-        //ritorno la lista delle immagini
-        return storageRef.ref("users/"+uuid).listAll();
+    //Nuova2
+    export function _getNomeImmagineDaUrl(url){
+        var httpsReference = firebase.storage().refFromURL(url);
+        return httpsReference.name;
     }
+
+    /*
+        NEW2: ottieni la lista delle conversazioni nel formato:
+                {
+            conversations: [
+                0: {
+                    chatId: "AHNCDJ..."
+                    uid: "YSTRN..."
+                },
+                1: {
+                    chatId: "BHNCDJ..."
+                    uid: "ZSTRN..."
+                }
+            ]
+        }
+    */
+    export function _getListOfConversations(){
+        console.log("ottengo lista conversazioni................................................................................:");
+
+        var db = firebase.firestore();
+
+        var listOfConversations = db.collection("users").doc(firebase.auth().currentUser.uid).collection("chats").doc("Conversations"); 
+        return listOfConversations.get();
+
+    }
+
+    /*
+    Data la mappa di sopra, ritorna le informazioni riassuntive su ogni chat nel formato:
+        {
+            lastMessage: {
+                author: "YTRFS..."
+                timestamp: "2021-07-..."
+                type= "text"
+                value = "Ciao!"
+            }
+            numberOfMessages: 37
+        }
+    */
+    export function _getChatSummaryInformation(idChat){
+        console.log("ottengo informazioni chat riassuntive "+idChat+" ................................................................................:");
+
+        var db = firebase.firestore();
+
+        var chatSummary = db.collection("chats").doc(idChat);
+        return chatSummary.get();
+    }
+
+    /*
+    ottiene i media del profilo dell'utente con uid e livello di visibilità specificati:
+        - profileImageUrl
+        - gallery (array di url delle immagini di galleria dell'utente)
+    */
+        export function _getMediaProfiloContatto(uid, visibility){
+            console.log("ottengo media profilo utente con uid="+uid+" ................................................................................");
+            var db = firebase.firestore();
+    
+            var mediaDocument = db.collection("users").doc(uid).collection("media").doc(visibility); 
+            return mediaDocument.get();
+       }
+
 
     

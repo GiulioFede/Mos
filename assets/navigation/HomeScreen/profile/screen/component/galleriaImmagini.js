@@ -3,7 +3,6 @@ import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions, 
 import {MaterialIcons, Ionicons, Entypo} from "@expo/vector-icons";
 import {navbarHeight, fontSizeTitolo } from '../../../../../context/variabili_globali/variabiliGlobali';
 import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button } from 'react-native-paper';
-import CachedImage from 'react-native-expo-cached-image'; //installa yarn add react-native-expo-cached-image
 import { MosCeleste, MosViola } from '../../../../../resources/colors';
 import { AutenticazioneUtente } from '../../../../../context/firebase/autenticazione';
 
@@ -25,6 +24,7 @@ function GalleriaImmagini({galleria, openDialog}){
 
             //se l'immagine viene scaricata e visualizzata allora faccio spuntare il bottone per eliminarla
             const [isImageLoaded, setIsImageLoaded] = useState( (item.url!="null")?false:true );
+            const [error, setError] = useState(false);
 
             return  (
                 <View style={styles.contenitoreFotoGalleria}>
@@ -35,8 +35,10 @@ function GalleriaImmagini({galleria, openDialog}){
                     </TouchableOpacity>
                     }
                     <ActivityIndicator animating={!isImageLoaded} color={MosCeleste} style={{position:"absolute", right:0, left:0, top:0, bottom:0}} />
-                    {item.url!="null" && <Image source={{uri:item.url}} style={styles.immagineGalleria} onLoad={()=>{setIsImageLoaded(true)}} resizeMode="cover" /> }
-                    {item.url=="null" && <Text style={{position:"absolute", textAlign:"center", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
+                    {item.url!="null" && error == false && <Image source={{uri:item.url}} style={styles.immagineGalleria} 
+                                                onLoad={()=>{setIsImageLoaded(true)}} resizeMode="cover" 
+                                                onError={(e) => {setError(true); setIsImageLoaded(true)}}/>}
+                    {error==true && <Text style={{position:"absolute", textAlign:"center", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
                  </View>
             )
         }

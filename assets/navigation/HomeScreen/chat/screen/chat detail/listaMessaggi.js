@@ -2,10 +2,10 @@ import React, {useState, memo} from 'react';
 import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions, Platform, FlatList} from 'react-native';
 import {MaterialIcons, Ionicons, Entypo} from "@expo/vector-icons";
 import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button } from 'react-native-paper';
-import CachedImage from 'react-native-expo-cached-image'; //installa yarn add react-native-expo-cached-image
 import { MosCeleste, MosViola } from '../../../../../resources/colors';
 import { larghezzaDevice, navbarHeight } from '../../../../../context/variabili_globali/variabiliGlobali';
 import TextMessageModel from './components/textMessageModel';
+import MessageModel from './components/messageModel';
 
 
 
@@ -36,7 +36,7 @@ function ListaMessaggi({lista}){
             horizontal={false}
             showsVerticalScrollIndicator={false}
             keyExtractor={item => item.id.toString()}
-            renderItem={({ item }) => <Messaggio item={item}/>}
+            renderItem={({ item }) => <MessageModel item={item}/>}
         />
     )
   }

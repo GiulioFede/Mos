@@ -1,8 +1,9 @@
 /*
     Questa sezione fa quanto segue:
     1) viene chiamata di solito quando una immagine è stata caricata dal locale 
-    2) mostra 5 immagini di quella appena caricata dal locale con differenti blur
-    3) li carica su firebase
+    2) chiama la cloud function "updateImage" per caricare l'immagine (le sue 5 versioni)
+    3) ritorna un risultato (contenuto dentro result.data) del nome e dell'url dell'immagina a visibilità originale 
+      (utile perchè quando la elimineremo dall'array su firestore, quest'ultimo non lavorerà con gli indici ma con i valori)
 */
 import React,{useState, useContext, useEffect} from "react";
 import {ImageBackground,Image,View, Text, StyleSheet, Dimensions, ActivityIndicator, Platform, BackHandler} from "react-native";
@@ -13,7 +14,7 @@ import {LinearGradient} from "expo-linear-gradient";
 import { AutenticazioneUtente } from "../../../../context/firebase/autenticazione";
 import * as firebase from 'firebase';
 
-export default function ImageBlurLoader({navigation,route}){
+export default function UploadImageLoader({navigation,route}){
 
     console.log(route.params);
     
@@ -30,31 +31,39 @@ export default function ImageBlurLoader({navigation,route}){
         console.log("Carico nuova immagine"+route.params.isProfileImage);
         //carico nuova immagine passandogli la base 64 dell'immagine e indicando se si tratta di una immagine di profilo o meno
         //nel caso si tratta di immagine di profilo il nome dell'immagine del profilo che passo è utile dopo
-        caricaNuovaImmagine(route.params.base64,route.params.isProfileImage, informazioniProfiloUtente.profileImageName) 
-          .then((ris)=>{
-            console.log("chiamata riuscita");
-            console.log(ris);
+        //prendo il nome dell'immagine di profilo attuale (estraendola dall'url)
+        const nomeImmagineProfiloAttuale = (informazioniProfiloUtente.urlProfileImage).includes("profileImage1") ? "profileImage1" : "profileImage2";
+        caricaNuovaImmagine(route.params.base64,route.params.isProfileImage, nomeImmagineProfiloAttuale) 
+          .then((result)=>{ 
+            /*
+              ritorna (dentro result.data):
+                - name: nome immagine...
+                - url: url download link...
+            */
+            console.log("chiamata riuscita. Nuovo url generato:");
+            console.log(result);
             if(route.params.isProfileImage==true){
               //aggiorno localmente l'immagine di profilo
               informazioniProfiloUtente.urlProfileImage = route.params.uri;
               //elimino le vecchie copie
-              eliminaImmagineDiProfilo(informazioniProfiloUtente.profileImageName)
+              eliminaImmagineDiProfilo(nomeImmagineProfiloAttuale)
                 .then((ris)=>{
                   console.log("tutte le vecchie versioni dell'immagine di profilo sono state eliminate");
                 }).catch((e)=>{
                   console.log("non è stato possibile eliminare tutte le vecchie versioni dell'immagine di profilo: "+e);
                 }).finally(()=>{
-                  //aggiorno localmente il nuovo nome
+                  //aggiorno localmente 
                   var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
-                  nuoveInformazioniProfilo.profileImageName = ris.data; //profileImage1 o profileImage2
                   setInformazioniProfiloUtente(nuoveInformazioniProfilo); 
                   setMessaggioAuth("Immagine di profilo aggiornata.");
                 })
               }else {
+                console.log("Nuova immagine di galleria aggiunta");
                //aggiorno localmente l'immagine di galleria
                 var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
-                nuoveInformazioniProfilo.gallery.push(ris.data);
-                nuoveInformazioniProfilo.urlGalleryImages.push(route.params.uri);
+                console.log(nuoveInformazioniProfilo);
+                nuoveInformazioniProfilo.urlGalleryImages[result.data.name]=result.data.url;
+                console.log(nuoveInformazioniProfilo);
                 setInformazioniProfiloUtente(nuoveInformazioniProfilo);
                    
                setMessaggioAuth("Immagine caricata con successo.");

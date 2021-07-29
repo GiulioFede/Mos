@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto} from "./service/firestore.service";
 import { getCurrentUser } from "expo-google-sign-in";
 
 console.log("autenticazione.js");
@@ -33,6 +33,23 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     const [informazioniAutenticazioneUtente, setInformazioniAutenticazioneUtente] = useState(null);
     //messaggio che può essere sfruttato per mostrare informazioni globali
     const [messaggioAuth, setMessaggioAuth] = useState(null);
+    /*
+        contiene le chat dell'utente come array di mappe nel formato:
+        {
+            conversations: [
+                0: {
+                    chatId: "AHNCDJ..."
+                    uid: "YSTRN..."
+                },
+                1: {
+                    chatId: "BHNCDJ..."
+                    uid: "ZSTRN..."
+                }
+            ]
+        }
+
+    */
+    const [listOfConversations, setListOfConversations] = useState(null);
 
     //quando il componente viene montato...
     useEffect(()=>{
@@ -54,9 +71,11 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     informazioniProfiloUtente,
                     informazioniAutenticazioneUtente,
                     messaggioAuth,
+                    listOfConversations,
                     setMessaggioAuth,
                     setInformazioniProfiloUtente,
                     setInformazioniAutenticazioneUtente,
+                    setListOfConversations,
                     getUtenteCorrente,
                     logOut,
                     accediConEmailPassword,
@@ -79,7 +98,11 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     caricaNuovaImmagine,
                     scaricaUrlImmagine,
                     eliminaImmagineDiProfilo,
-                    getGalleriaUtente
+                    getMediaProfiloUtente,
+                    getNomeImmagineDaUrl,
+                    getListOfConversations,
+                    getChatSummaryInformation,
+                    getMediaProfiloContatto
                 }}
                 >
                 {children}
@@ -221,9 +244,9 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     }
 
     //NEW
-    function eliminaImmagineDiGalleria(idUser, url, nome){
+    function eliminaImmagineDiGalleria(url, nome){
         console.log("elimino immagine di galleria di nome "+nome+" e url:"+url);
-        return _eliminaImmagineDiGalleria(idUser,url,nome);
+        return _eliminaImmagineDiGalleria(url,nome);
     }
 
     function cambiaImmagineDiProfilo(idUser, blob){
@@ -254,8 +277,57 @@ export const AutenticazioneUtenteProvider = ({children}) => {
         return _eliminaImmagineDiProfilo(nome);
     }
 
-    //Ottieni galleria immagini
-    function getGalleriaUtente(uuid){
-        console.log("ottengo galleria utente");
-        return _getGalleriaUtente(uuid);
+    //NEW2: ottieni media profilo utente
+    function getMediaProfiloUtente(){
+        console.log("ottengo media profilo utente");
+        return _getMediaProfiloUtente();
     }
+
+    //NEW2: ottieni nome immagine da url
+    function getNomeImmagineDaUrl(url){
+        return _getNomeImmagineDaUrl(url);
+    }
+
+    /*
+        NEW2: ottieni la lista delle conversazioni nel formato:
+                {
+            conversations: [
+                0: {
+                    chatId: "AHNCDJ..."
+                    uid: "YSTRN..."
+                },
+                1: {
+                    chatId: "BHNCDJ..."
+                    uid: "ZSTRN..."
+                }
+            ]
+        }
+    */
+   function getListOfConversations(){
+       return _getListOfConversations();
+   }
+
+   /*
+    Data la mappa di sopra, ritorna le informazioni riassuntive su ogni chat nel formato:
+        {
+            lastMessage: {
+                author: "YTRFS..."
+                timestamp: "2021-07-..."
+                type= "text"
+                value = "Ciao!"
+            }
+            numberOfMessages: 37
+        }
+   */
+  function getChatSummaryInformation(idChat){
+      return _getChatSummaryInformation(idChat);
+  }
+
+  /*
+    ottiene i media del profilo dell'utente con uid e livello di visibilità specificati:
+        - profileImageUrl
+        - gallery (array di url delle immagini di galleria dell'utente)
+  */
+  function getMediaProfiloContatto(uid, visibility){
+      return _getMediaProfiloContatto(uid,visibility);
+  }

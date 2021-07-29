@@ -2,7 +2,7 @@ import React,{useEffect,useLayoutEffect} from "react";
 import {createStackNavigator, TransitionPresets} from "@react-navigation/stack";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/core";
 import Profile from "./screen/profile.screen.js"
-import ImageBlurLoader from "./screen/imageBlurLoader.screen.js"
+import UploadImageLoader from "./screen/uploadImageLoader.screen.js"
 
 const profileStack = createStackNavigator();
 
@@ -34,8 +34,8 @@ const ProfileNavigator = ({navigation,route}) => {
             />
 
             <profileStack.Screen 
-                name="ImageBlurLoaderScreen"
-                component ={ImageBlurLoader}
+                name="UploadImageLoaderScreen"
+                component ={UploadImageLoader}
             />
 
 

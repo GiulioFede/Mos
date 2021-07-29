@@ -4,7 +4,7 @@ import {createStackNavigator, TransitionPresets} from "@react-navigation/stack";
 import ChatScreen from "./screen/chat screen/chat.screen";
 import ChatDetail from "./screen/chat detail/chat_detail";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/core";
-import UserProfile from "./screen/user profile/userProfile";
+import ContactProfile from "./screen/contact profile/contactProfile";
 
 const chatStack = createStackNavigator();
 
@@ -43,8 +43,8 @@ const ChatNavigator = ({navigation,route}) => {
             
             <chatStack.Screen 
 
-                name="User profile"
-                component ={UserProfile}
+                name="Contact profile"
+                component ={ContactProfile}
             />
 
         </chatStack.Navigator>

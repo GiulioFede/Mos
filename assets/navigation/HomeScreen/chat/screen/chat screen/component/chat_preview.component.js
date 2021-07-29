@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import {View, StyleSheet, Image,Text,TouchableOpacity, Touchable} from "react-native";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
@@ -6,15 +6,21 @@ import MessageBubble from "./message_bubble";
 import { altezzaDevice, fontSizeCampi, fontSizeSottoTitolo, fontSizeTitolo, fontSizeTitoloPiccolo } from "../../../../../../context/variabili_globali/variabiliGlobali";
 
 
-const ChatPreview =({navigation,nome, urlImmagineProfilo,dataUltimoMessaggio, ultimoMessaggio}) => {
+const ChatPreview =({navigation,nome,contactUid, content, media}) => {
+
+    console.log("PROFILE IMAHE URL");
+    console.log(media);
 
     function apriDettagliChat(){
-        navigation.navigate("Chat detail");
+        console.log("apro dettagli chat con utente "+contactUid);
+        navigation.navigate("Chat detail",{contactUid: contactUid});
     }
 
     function apriDettagliProfilo(){
-        navigation.navigate("User profile");
+        navigation.navigate("Contact profile",{name: nome, mediaProfilo: media});
     }
+
+    const [uriProfileImage, setUriProfileImage] = useState(media.value.profileImageUrl=="" ? null : media.value.profileImageUrl);
 
         //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
@@ -28,17 +34,18 @@ const ChatPreview =({navigation,nome, urlImmagineProfilo,dataUltimoMessaggio, ul
             <View style={styles.contenitoreMediaProfilo}>
                         {/* immagine SOSTITUIRE CON QUELLA DELL'UTENTE ma ovviamente non usare require ma (forse) fetch*/}
                         <TouchableOpacity onPress={()=>{apriDettagliProfilo()}} style={styles.contenitoreImmagineProfilo}>
-                                <Image source={require('../../../../../../../assets/resources/images/chat/fotoChat3.jpg')} resizeMode="cover"  style={styles.immagineProfilo}></Image>
+                                {uriProfileImage && <Image source={{uri:uriProfileImage}} resizeMode="cover"  style={styles.immagineProfilo} onError={(e)=>{setUriProfileImage(null)}}></Image>}
+                                {!uriProfileImage && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
                         </TouchableOpacity>
                         {/* pallino online */}
                         <View style={styles.onlineCircle} />
                         {/* nome */}
                         <View style={styles.contenitoreNome}>
-                            <Text style={styles.nome}>Katia</Text>
+                            <Text style={styles.nome}>{nome}</Text>
                         </View>
 
                         <View style={styles.ultimoMessaggio}>
-                            <MessageBubble messaggio={ultimoMessaggio} />
+                            <MessageBubble messaggio={content.lastMessage.value} />
                         </View>
             </View>
         </TouchableOpacity>

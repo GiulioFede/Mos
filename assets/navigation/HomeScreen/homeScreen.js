@@ -5,7 +5,6 @@ import {Ionicons,AntDesign} from '@expo/vector-icons'
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import { MosCeleste } from '../../resources/colors';
 import ChatNavigator from './chat/navigation.chat';
-import AroundYou from './around you/screen/aroundYou.screen';
 import { AutenticazioneUtente } from '../../context/firebase/autenticazione';
 import { altezzaMenuNavigazione } from '../../context/variabili_globali/variabiliGlobali';
 import ProfileNavigator from './profile/navigation.profile';
@@ -40,7 +39,6 @@ function HomeScreen({navigation}){
                         }}
                     >
                     <Tab.Screen name="Chat" component={ChatNavigator} />
-                    <Tab.Screen name="Around You" component={AroundYou} />
                     <Tab.Screen name="Profile" component={ProfileNavigator} />
                 </Tab.Navigator>
 

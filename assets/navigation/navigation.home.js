@@ -29,7 +29,7 @@ const Drawer = createDrawerNavigator();
 export default function HomeNavigator({navigation}) {
 
     //contesto
-    const {getUserInformation, getUtenteCorrente,user, logOut,scaricaUrlImmagine, setInformazioniProfiloUtente} = useContext(AutenticazioneUtente);
+    const {getUserInformation, getUtenteCorrente,user, logOut,scaricaUrlImmagine, setInformazioniProfiloUtente, getMediaProfiloUtente, getListOfConversations, setListOfConversations} = useContext(AutenticazioneUtente);
 
     //se true indica che il profilo non è stato ancora caricato
     const [isProfileLoading, setIsProfileLoading] = useState(true);
@@ -72,56 +72,68 @@ export default function HomeNavigator({navigation}) {
         let uid = getUtenteCorrente();
         //ottengo informazioni profilo
         if(uid){
+              /*
+              ottiene i dati dell'utente nel formato (dentro .data):
+                  - dateOfBirth
+                  - name
+                  - position
+                  - sex
+                  - sexPreference
+             */
           getUserInformation(uid)
             .then((info)=>{
-                console.log("ottengo info");
-                //console.log(info);
+                console.log("info ottenute");
                 if (info.exists) {
                   console.log("Home: informazioni utente recuperate");
                   console.log(info.data());
+                  //creo variabile info_utente in cui inserirò tutto come unico documento (informazioni base profilo + url media)
                   const info_utente = info.data();
+                  /*
+                  scarico il documento contenente:
+                    - profileImageUrl
+                    - gallery (array di url delle immagini di galleria)
+                  */
+                  getMediaProfiloUtente()
+                    .then((media)=>{
+                      console.log("media ottenuti");
+                      if(media.exists){
+                      info_utente.urlGalleryImages = media.data().gallery;
+                      info_utente.urlProfileImage = media.data().profileImageUrl;
+                      console.log("info complete utente:");
+                      console.log(info_utente);
+                      //info contiene le info dell'utente
+                      setInformazioniProfiloUtente(info_utente);
 
-                  const promisesUrlImages = [];
-                  if(info.data.gallery){
-                    for(let i=0; i<info.data().gallery.length; i++){
-                        promisesUrlImages.push(scaricaUrlImmagine(info.data().gallery[i]));
-                    }
-                  }
-                  //aggiungo alla promise anche di scaricare l'immagine del profilo
-                  promisesUrlImages.push(scaricaUrlImmagine(info.data().profileImageName));
-
-                    //scarico gli url delle immagini
-                    Promise.myAllSettled(promisesUrlImages)
-                      .then((url_list)=>{
-                        var arrayUrl = new Array(url_list.length);
-                        console.log("tutti gli url sono stati scaricati");
-                        for(var i=0; i<url_list.length; i++){
-                          console.log(url_list[i].status);
-                          if(url_list[i].status=="rejected")
-                            arrayUrl[i]="null";
-                          else
-                            arrayUrl[i]=url_list[i].value;
-                        }
-                        //l'ultimo url è quello del profilo
-                        console.log(arrayUrl);
-                        var urlProfilo = arrayUrl.pop();
-                        info_utente.urlGalleryImages = arrayUrl;
-                        info_utente.urlProfileImage = urlProfilo;
-                        console.log("di seguito le informazioni complete inizializzate dell'utente");
-                        console.log(info_utente);
-                      }).catch((e)=>{
-                        //di norma non si va mai al catch con promise alSettled ma siccome è una implementazione personale è meglio prevedere tale casistica
-                        console.log("è avvenuto un problema nello scaricare tutti gli url");
-                        console.log(e);
-                        var arrayUrl = new Array(promisesUrlImages.length).fill("null");
-                        info_utente.urlGalleryImages = arrayUrl;
-                        info_utente.urlProfileImage = "null";
+                                          /*
+                    ottengo il documento delle informazioni sulle conversazioni nel formato:
+                            {
+                              conversations: [
+                                  0: {
+                                      chatId: "AHNCDJ..."
+                                      uid: "YSTRN..."
+                                  },
+                                  1: {
+                                      chatId: "BHNCDJ..."
+                                      uid: "ZSTRN..."
+                                  }
+                              ]
+                          }
+                   */
+                      getListOfConversations()
+                      .then((chats)=>{
+                        console.log("Prelevo informazioni chat utente:");
+                        if(chats.exists)
+                          setListOfConversations(chats.data())
+                        console.log(chats.data())
+                      }).catch((err)=>{
+                        console.log("Errorre durante il recupero delle informazioni sulla chat dell'utente:"+err);
                       }).finally(()=>{
-                        //info contiene le info dell'utente
-                        setInformazioniProfiloUtente(info_utente);
                         setIsProfileLoading(false);
-                      })
-              
+                      });
+                    }
+                    }).catch((err)=>{
+                      console.log("Navigation.home.js: Si è verificato un problema durante il download dei media dell'utente")
+                    }) 
                     
                 } else {
                   // doc.data() will be undefined in this case

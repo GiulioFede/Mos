@@ -11,31 +11,27 @@ const larghezzaSchermo = Dimensions.get("window").width;
 const altezzaSezioneGalleria = Dimensions.get("window").height*0.47-navbarHeight;
 const dimensioneFotoGalleria = (larghezzaSchermo/2>altezzaSezioneGalleria) ? (altezzaSezioneGalleria): (larghezzaSchermo/2);
 
-function GalleriaImmagini({galleria, openDialog}){
+export default function GalleriaImmagini({galleryUrls}){
 
-        //contesto autenticazione
-        const {scaricaUrlImmagine} = useContext(AutenticazioneUtente);
 
-    console.log("GALLERIA COMPONENTE");
-    console.log(galleria);
+        console.log("GALLERIA COMPONENTE");
+        console.log(Object.values(galleryUrls));
 
         //Questa funzione renderizza ogni singola immagine della flatlist (galleria)
-       function ImmagineGalleria({item}){
-
+       function ImmagineGalleria({url}){
+            console.log(url);
             //se l'immagine viene scaricata e visualizzata allora faccio spuntare il bottone per eliminarla
-            const [isImageLoaded, setIsImageLoaded] = useState( (item.url!="null")?false:true );
+            const [isImageLoaded, setIsImageLoaded] = useState(uriGalleryImage?false:true);
+            const [uriGalleryImage, setUriGalleryImage] = useState(url=="" ? null : url);
 
             return  (
                 <View style={styles.contenitoreFotoGalleria}>
-                   
-                    {isImageLoaded && 
-                    <TouchableOpacity style={styles.bottoneEliminaFoto} onPress={()=>{openDialog(galleria.findIndex(p => p.url == item.url))}}>
-                        <Entypo name="cross" size={altezzaSezioneGalleria*0.1} color={MosViola} />
-                    </TouchableOpacity>
-                    }
                     <ActivityIndicator animating={!isImageLoaded} color={MosCeleste} style={{position:"absolute", right:0, left:0, top:0, bottom:0}} />
-                    {item.url!="null" && <Image source={{uri:item.url}} style={styles.immagineGalleria} onLoad={()=>{setIsImageLoaded(true)}} resizeMode="cover" /> }
-                    {item.url=="null" && <Text style={{position:"absolute", textAlign:"center", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
+                    {uriGalleryImage && <Image source={{uri:uriGalleryImage}} style={styles.immagineGalleria}
+                                           onLoad={()=>{setIsImageLoaded(true)}} 
+                                           resizeMode="cover" 
+                                           onError={(e) => {setIsImageLoaded(true); setUriGalleryImage(null);}}/>}
+                    {!uriGalleryImage && <Text style={{position:"absolute", textAlign:"center", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
                  </View>
             )
         }
@@ -43,16 +39,17 @@ function GalleriaImmagini({galleria, openDialog}){
 
     return (
         <FlatList
-            data={galleria}
+            data={Object.values(galleryUrls)}
             contentContainerStyle={{alignItems:'center', justifyContent:"center"}}
             horizontal
             showsHorizontalScrollIndicator={false}
-            keyExtractor={item => item.key.toString()}
-            renderItem={({ item }) => <ImmagineGalleria item={item}/>}
+            keyExtractor={(item,index) => index.toString()}
+            renderItem={({ item }) => <ImmagineGalleria url={item}/>}
+           
         />
     )
   }
-
+/*
   //questa funzione serve per dire quando renderizzare GalleriaImmagini
   function compareFunction(prevProps, nextProps){
       console.log("COMPARO PER RENDERING");
@@ -62,7 +59,7 @@ function GalleriaImmagini({galleria, openDialog}){
     return true; //altrimenti non renderizzare
   }
 
-export default memo(GalleriaImmagini,compareFunction);
+export default memo(GalleriaImmagini,compareFunction);*/
 
 const styles = StyleSheet.create({  
     immagineGalleria: {
