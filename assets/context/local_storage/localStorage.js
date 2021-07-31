@@ -1,13 +1,14 @@
 import * as FileSystem from 'expo-file-system';
 import * as SQLite from 'expo-sqlite'
 
-const db = SQLite.openDatabase("MosaicLocalDB");
-
 const SUCCESS_QUERY = "SUCCESS_QUERY";
 
 export class LocalStorage {
 
-    static createNewTableForConversation(contactUid, callbackSuccesso, callbackErrore){
+    static createNewTableForConversation(utenteCorrente, contactUid, callbackSuccesso, callbackErrore){
+
+        const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
+
         try{
             //creo tabella se non esiste
             console.log("creo tabella se non esiste");
@@ -33,9 +34,10 @@ export class LocalStorage {
 
     }
 
-    static getListOfChatMessages(contactUid, callbackSuccesso, callbackErrore){
+    static getListOfChatMessages(utenteCorrente, contactUid, callbackSuccesso, callbackErrore){
         try{
         console.log("apro database MosaicLocalDB...");
+        const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
 
         //altrimenti preleva i messaggi
         console.log("Avvio query...");
@@ -62,7 +64,10 @@ export class LocalStorage {
 
     }
 
-    static storeNewMessage(contactUid,author,date,type,value,callbackSuccesso, callbackErrore){
+    static storeNewMessage(utenteCorrente, contactUid,author,date,type,value,callbackSuccesso, callbackErrore){
+
+        const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
+
         console.log("Memorizzo nuovo messaggio");
         let update = "INSERT INTO "+contactUid+"(author,date,type,content) VALUES(?,?,?,?)";
         db.transaction(
@@ -71,7 +76,7 @@ export class LocalStorage {
                     update,
                     [author,date, type,value],
                     //in caso di successo
-                    callbackSuccesso,
+                    callbackSuccesso(tx,value), //questo è
                     //in caso di errore
                     callbackErrore
                 )
@@ -81,7 +86,10 @@ export class LocalStorage {
         )
     }
 
-    static removeTableForConversation(contactUid,callbackSuccesso, callbackErrore){
+    static removeTableForConversation(utenteCorrente, contactUid,callbackSuccesso, callbackErrore){
+
+        const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
+
         console.log("rimuovo tabella");
         let update = "DROP TABLE IF EXISTS "+contactUid;
         db.transaction(
@@ -100,17 +108,20 @@ export class LocalStorage {
         )
     }
 
-    static async saveAudioIntoFolder(folder,author, uri_cache, callbackSuccesso, callbackErrore){
-        console.log("salvo audio in "+uri_cache+" nel file system");
+    static async saveAudioIntoFolder(utenteCorrente, folder,author, uri_cache, callbackSuccesso, callbackErrore){
+
+        const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
+
+        console.log("salvo audio che attualmente si trova in "+uri_cache+" nel file system");
         //crea una cartella se non esiste
         try {
-            await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + folder, {
+            await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + utenteCorrente+"/"+folder, {
                 intermediates: true
             });
             console.log("cartella creata (se non esisteva già):");
             //scrivo il file che si trova in un uri temporanea (cache) nel database
             //quando lo scrivo utilizzo
-            const audio_string = await FileSystem.readAsStringAsync(uri_cache,{ encoding: FileSystem.EncodingType.Base64 });
+            const audio_string = await FileSystem.readAsStringAsync(uri_cache,{ encoding: FileSystem.EncodingType.Base64 }); //NB: SE NON SI CRIPTA USARE DOWNLOAD_ASINC PER SCRIVERE DIRETTAMENTE NELLA NUOVA LOCAZIONE INVECE DI FARE READ E POI WRITE
             //ho ottenuto una stringa del contenuto audio
             console.log("audio stringa letto");
             //cripto audio stringa prima di salvare
@@ -121,11 +132,11 @@ export class LocalStorage {
                 NB: non salvo la stringa nel database altrimenti ad ogni apertura di chat deve leggere miliardi di bit, piuttosto salvo
                     il file criptato e salvo nel database solo un riferimento uri per trovarlo. Sarà solo quando richiesto che lo leggerò
             */
-            const percorso= FileSystem.documentDirectory + folder+"/"+(new Date().toUTCString().replace(/ /g,""));
+            const percorso= FileSystem.documentDirectory + utenteCorrente + "/" + folder+"/"+(new Date().toUTCString().replace(/ /g,""));
             await FileSystem.writeAsStringAsync((percorso), audio_string, {encoding: FileSystem.EncodingType.Base64 });
-            console.log("file salvato con successo nel file system");
+            console.log("file salvato con successo nel file system in: "+percorso);
             //salvo nel database
-            this.storeNewMessage(folder,author,"30/07/2021","audio",percorso,
+            this.storeNewMessage(utenteCorrente,folder,author,"30/07/2021","audio",percorso,
                     callbackSuccesso,
                     callbackErrore);
         } catch (err) {

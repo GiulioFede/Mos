@@ -4,7 +4,7 @@ import {Divider, FAB, ProgressBar} from "react-native-paper"
 import {Octicons, Ionicons, MaterialIcons, FontAwesome} from "@expo/vector-icons";
 import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaSchermoInterno, fontSizeCampi, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../context/variabili_globali/variabiliGlobali"
 import { MosCeleste, MosCelesteRGBA, MosPurple, MosViola } from "../../../../../resources/colors";
-import MessageModel from "./components/messageModel";
+import MessageModel, { resetMessageModel } from "./components/messageModel";
 
 import * as firebase from 'firebase';
 import 'firebase/firestore';
@@ -19,8 +19,6 @@ import { AutenticazioneUtente } from "../../../../../context/firebase/autenticaz
 
 
 
-//Contiene info sulla registrazione. 
-let recording = new Audio.Recording();
 
 export default function ChatDetail({ navigation,route}){
 
@@ -34,12 +32,14 @@ export default function ChatDetail({ navigation,route}){
     //reference alla flat list
     const refFlatList = useRef();
 
-    function tornaIndietro(){
+    async function tornaIndietro(){
+        console.log("torno indietro");
+        await resetMessageModel();
         navigation.goBack();
     }
 
     function inviaMessaggio(){
-        LocalStorage.storeNewMessage(contactUid,
+        LocalStorage.storeNewMessage(getUtenteCorrente(),contactUid,
                                     getUtenteCorrente(),
                                     "29/07/2021",
                                     "mex",
@@ -61,14 +61,14 @@ export default function ChatDetail({ navigation,route}){
         const ottieniListaMessaggi = async () =>{
             try{
                 //da eliminare
-                //LocalStorage.removeTableForConversation(contactUid,(x,y)=>{console.log("OKKKKKK")},(x,y)=>{console.log("NOOO")});
+                //LocalStorage.removeTableForConversation(getUtenteCorrente(),contactUid,(x,y)=>{console.log("OKKKKKK")},(x,y)=>{console.log("NOOO")});
                 console.log("Prelevo messaggi con "+contactUid);
                 //creo tabella per memorizzare la conversazione (se non esiste)
-                LocalStorage.createNewTableForConversation(contactUid, //nome tabella
+                LocalStorage.createNewTableForConversation(getUtenteCorrente(),contactUid, //nome tabella
                             (transazione, resultSet) => { //cosa fare in caso di successo
                             console.log("TABELLA CREATA (SE NON ESISTEVA GIA)");
                             //una volta creata (se non esisteva), prelevare i messaggi
-                                LocalStorage.getListOfChatMessages(contactUid, //nome tabella
+                                LocalStorage.getListOfChatMessages(getUtenteCorrente(),contactUid, //nome tabella
                                     (transazione, resultSet) => { //cosa fare in caso di successo
                                     console.log("MESSAGGI PRELEVATI CON SUCCESSO");
                                     console.log(resultSet);
@@ -95,10 +95,13 @@ export default function ChatDetail({ navigation,route}){
     /*
      ::::::::::::::::::::::::::::::::::::::AUDIO VOCALE::::::::::::::::::::::::::::::::::::::
     */
+   //contiene info sul recording
+   const [recordingInfo, setRecordingInfo] = useState();
    //se true indica che la registrazione è avviata
     const [isRecording, setIsRecording] = useState(false);
     //indica la durata attuale dell'audio mentre lo si registra
     const [durataAudio, setDurataAudio] = useState(0);
+
     //avvia registrazione vocale
     async function startRecording(){
         try{
@@ -113,13 +116,18 @@ export default function ChatDetail({ navigation,route}){
             interruptionModeAndroid: INTERRUPTION_MODE_ANDROID_DO_NOT_MIX, //idem come sopra ma per android
             shouldDuckAndroid: false, //se arrivo un audio da altre app queste aspetteranno
         })
+
+        //Contiene info sulla registrazione. 
+        const newRecording = new Audio.Recording();
+        setRecordingInfo(newRecording);
+
         //creo un suono nuovo
-        await recording.prepareToRecordAsync(
+        await newRecording.prepareToRecordAsync(
             Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
         )
-        recording.setOnRecordingStatusUpdate(aggiornaAnimazioneAudioVocale);
-        recording.setProgressUpdateInterval(100);
-        await recording.startAsync();
+        newRecording.setOnRecordingStatusUpdate(aggiornaAnimazioneAudioVocale);
+        newRecording.setProgressUpdateInterval(100);
+        await newRecording.startAsync();
         //adesso sta registrando...
         console.log("Avvio registrazione...");
         setIsRecording(true);
@@ -131,18 +139,30 @@ export default function ChatDetail({ navigation,route}){
     //stop il recording di sopra
     async function stopRecording(){
         console.log("Stopping recording...");
+        try{
         //prelevo l'uri dove è stata memorizzata
-        await recording.stopAndUnloadAsync();
-        const uri = recording.getURI();
+        await recordingInfo.stopAndUnloadAsync();
+        const uri = recordingInfo.getURI();
         console.log('Recording terminata e salvata in '+uri);
         setIsRecording(false);
         //salvo audio criptato nel database
         saveAudio(uri);
+        }catch(e){
+            console.log("Si è verificato un problema");
+        }
     }
 
     function saveAudio(uri){
-        LocalStorage.saveAudioIntoFolder(contactUid,getUtenteCorrente(),uri,
-                            (tx,ris)=>{console.log("percorso salvato nel database");},
+        LocalStorage.saveAudioIntoFolder(getUtenteCorrente(),contactUid,getUtenteCorrente(),uri,
+                            (tx,local_uri)=>{
+                                console.log("percorso salvato nel database e nel file system in uri: "+local_uri);
+                                //aggiugo alla chat
+                                //creo nuovo messaggio    
+                                let newMex = {row: chat.length+1 ,author:getUtenteCorrente(), date:"29/07/2021", type:"audio",content:local_uri}
+                                let chatTmp = [...chat];
+                                chatTmp.push(newMex);
+                                setChat(chatTmp);
+                                },
                             (tx,ris)=>{console.log("percorso non salvato nel database");});
     }
 
@@ -201,6 +221,7 @@ export default function ChatDetail({ navigation,route}){
            <FlatList
             ref={refFlatList} 
             data={chat}
+            
             horizontal={false}
             showsVerticalScrollIndicator={false}
             keyExtractor={item => item.row.toString()}
