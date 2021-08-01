@@ -51,7 +51,7 @@ export async function resetMessageModel(){
 
 const ref = function MessageModel({messaggio, utenteCorrente}){
 
-
+    console.log(messaggio.row);
     const [amplitude,setAmplitude] = useState(1);
     const [tempoAudio, setTempoAudio] = useState(0);
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);
@@ -69,110 +69,186 @@ const ref = function MessageModel({messaggio, utenteCorrente}){
         console.log("Playing audio...");
         //se l'audio in riproduzione o in pausa (non cambia) NON è quello che attualmente voglio riprodurre 
         //(caso tipico quando un audio X viene riprodotto e io voglio, mentre X è in pausa o in riproduzione, caricare un audio Y).
-        if(messaggio.row != indiceFocusMessaggioAudio && indiceFocusMessaggioAudio!=-1){
+        if((messaggio.row != indiceFocusMessaggioAudio || isLoaded.current==false)  && indiceFocusMessaggioAudio!=-1){
                 console.log(messaggio.row);
                 console.log(indiceFocusMessaggioAudio);
                 //annullo l'intero messaggio audio
                 console.log("Riproduco attuale "+messaggio.row +"dal vecchio "+indiceFocusMessaggioAudio);
-                await resettaUltimoAudioMessaggio(messaggio.row);
+                await resettaUltimoAudioMessaggio();
         }
 
+        console.log("aggiorno indice");
         indiceFocusMessaggioAudio = messaggio.row;
         resettaUltimoAudioMessaggio = resetta;
        
-                //se l'audio esiste già, ossia è stato caricato e...
+        //se l'audio esiste già, ossia è stato caricato e...
         if(isLoaded.current == true){
+            console.log("audio è caricato di già");
             //...se l'audio era già in riproduzione
             if(isAudioPlaying){
+                console.log("audio era in riproduzione. Lo metto in pausa.");
                 //lo metto in pausa
                 await sound.pauseAsync();
                 clearTimeout(timeOutEvent);
             
             //...altrimenti l'audio era in pausa e quindi necessito di rimetterlo in riproduzione    
             }else {
-                const intermediate_status = await sound.playAsync();
-                //ho però bisogno di capire quanto rimane del timeout 
-                console.log("Riprendo riproduzione audio: ");
-                //prelevo durata totale audio
-                let total_duration = intermediate_status.durationMillis;
-                //prelevo quanto è trascorso di tempo dall'inizio
-                let actual_duration = intermediate_status.positionMillis;
-                //setto nuovo timeout come differenza
-                timeOutEvent = setTimeout(async ()=>{
-                    await sound.unloadAsync();
-                    setIsAudioPlaying(false);
-                    isLoaded.current = false;
-                    setTempoAudio(1);
-                    console.log("elimino listener audio (dopo pausa");
-                }, (total_duration-actual_duration))
+                console.log("audio non è stato caricato");
+                const intermediate_status = await sound.getStatusAsync();
+                if(intermediate_status.isLoaded==true){
+                    //ho però bisogno di capire quanto rimane del timeout 
+                    console.log("Riprendo riproduzione audio: ");
+                    //prelevo durata totale audio
+                    let total_duration = intermediate_status.durationMillis;
+                    //prelevo quanto è trascorso di tempo dall'inizio ma non uso la positionMillis ma tempoAudio in caso è stato spostato manualmente
+                    let new_starting_point_ms = total_duration*tempoAudio
+                    console.log("tempo audio ri-riproduzione:"+tempoAudio);
+                    //imposto nuovo starting point
+                    await sound.setPositionAsync(new_starting_point_ms);
+                    //riprendo riproduzione+
+                    await sound.playAsync();
+                    
+                    //setto nuovo timeout come differenza
+                    timeOutEvent = setTimeout(async ()=>{
+                        await resetta();
+                        console.log("elimino listener audio (dopo pausa");
+                    }, (total_duration-new_starting_point_ms))
+                }
             }
             setIsAudioPlaying(!isAudioPlaying);
         }else {
             
                 //preparo audio
                 try {
-                    
+                    console.log("preparo nuovo audio");
                     //elimino precedente evento di timeout (altrimenti quando occorre mi elimina l'attuale audio che sto caricando)
-                    clearTimeout(timeOutEvent);
-                    await sound.unloadAsync();
-                    await sound.loadAsync({uri:messaggio.content});
-                    const initial_status = await sound.playAsync();
-                    //l'audio dovrebbe essere in riproduzione...
-                    //indico cosa chiaare ogni 100ms
-                    sound.setOnPlaybackStatusUpdate(aggiornaProgressBarRiproduzioneAudio);
-                    sound.setProgressUpdateIntervalAsync(100);
-                    //mi assicuro che l'audio sia in riproduzione e caricato
-                    setIsAudioPlaying(initial_status.isPlaying);
-                    isLoaded.current = initial_status.isLoaded;
-                    //elimino listener (per sicurezza) dopo durata audio
-                    timeOutEvent = setTimeout(async()=>{
-                        await sound.unloadAsync();
-                        setIsAudioPlaying(false);
-                        isLoaded.current = false;
-                        setTempoAudio(1);
-                        console.log("elimino listener audio");
-                    }, initial_status.durationMillis)
-               
+                    let initial_status = await sound.loadAsync({uri:messaggio.content});
+                    if(initial_status.isLoaded==true){
+                        console.log(initial_status);
+                        let durata_totale = initial_status.durationMillis;
+                        console.log(durata_totale);
+                        let new_starting_point_ms = tempoAudio*durata_totale;
+                        console.log("tempo audio: "+tempoAudio);
+                        console.log(new_starting_point_ms);
+                        await sound.setPositionAsync(new_starting_point_ms);
+                        //l'audio dovrebbe essere in riproduzione...
+                        //indico cosa chiamare ogni 100ms
+                        sound.setOnPlaybackStatusUpdate(aggiornaProgressBarRiproduzioneAudio);
+                        await sound.setProgressUpdateIntervalAsync(100);
+                        await sound.playAsync();
+                        //mi assicuro che l'audio sia in riproduzione e caricato
+                        setIsAudioPlaying(initial_status.isPlaying);
+                        isLoaded.current = initial_status.isLoaded;
+                        //elimino listener (per sicurezza) dopo durata audio
+                        timeOutEvent = setTimeout(async()=>{
+                            await resetta();
+                            console.log("elimino listener audio");
+                        }, (durata_totale-new_starting_point_ms))
+                }
             }catch(error){
                 console.log("Errore durante la riproduzione audio: "+error);
             }
         }
-
-        
-        setIsAudioPlaying(!isAudioPlaying);
     }
 
     function aggiornaProgressBarRiproduzioneAudio(status){
         try{
             if(status.isLoaded==true){
-                //prelevo durata totale audio
-                let total_duration = status.durationMillis;
-                //prelevo quanto è trascorso di tempo dall'inizio
-                let actual_duration = status.positionMillis;
-                //calcolo rapporto per aggiornare progress bar
-                let percentOfTotalTime = actual_duration/total_duration;
-                setTempoAudio(percentOfTotalTime);
+                if(status.isPlaying==true){
+                    setIsAudioPlaying(true);
+                    //prelevo durata totale audio
+                    let total_duration = status.durationMillis;
+                    //prelevo quanto è trascorso di tempo dall'inizio
+                    let actual_duration = status.positionMillis;
+                    //calcolo rapporto per aggiornare progress bar
+                    let percentOfTotalTime = actual_duration/total_duration;
+                    setTempoAudio(percentOfTotalTime);
+                    console.log("aggiorno tempo di "+messaggio.row+" a "+percentOfTotalTime);
+                }else
+                    setIsAudioPlaying(false);
             }
         }catch(err){
             console.log("errore durante l'aggiornamento della progress bar");
         }
     }
 
-   async function resetta(id){
-        console.log("Io sono "+messaggio.row+" ma sono stato chiamato dal nuovo "+id);
+   async function resetta(){
         //resetto
+        console.log("chiamo resetta da "+messaggio.row);
         clearTimeout(timeOutEvent);
-        sound._clearSubscriptions();
-        await sound.stopAsync();
-        await sound.unloadAsync();
+        let status = await sound.getStatusAsync();
+        if(status.isLoaded==true){
+            sound._clearSubscriptions();
+            await sound.stopAsync();
+            await sound.unloadAsync();
+        }
         setIsAudioPlaying(false);
         isLoaded.current = false;
         setTempoAudio(0);
 
     }
 
+    //quando l'utente usa lo slider manualmente APPENA RILASCIA il punto dello slider viene richiamata tale funzione
+    async function spostaAudioAvantiIndietro(){
+        console.log("spostamento");
+        //se l'audio esiste già, ossia è stato caricato e...
+        if(isLoaded.current == true){
+            //...se l'audio era già in riproduzione
+            if(isAudioPlaying){
+                //lo metto in pausa
+                console.log("riproduco audio da");
+                /*
+                    Prendo valore slider (tempoAudio) che è una percentuale e calcolo l'equivalente in ms rispetto la durationMillis
+                */
+                let current_status = await sound.getStatusAsync();
+                let durata_totale = current_status.durationMillis;
+                let new_starting_point_ms = durata_totale*tempoAudio;
+                await sound.setPositionAsync(new_starting_point_ms);
+                await sound.playAsync();
+                //creo nuovo timeout
+                clearTimeout(timeOutEvent);
+                //elimino listener (per sicurezza) dopo durata audio
+                timeOutEvent = setTimeout(async()=>{
+                    await resetta();
+                    console.log("elimino listener audio");
+                }, (durata_totale-new_starting_point_ms))
+            }
+            //se l'audio non era in riproduzione non fare nulla
+            else {
+                console.log("...2");
+            }
+        }
+        //se l'audio non esiste non fare nulla
+        else {
+            console.log("...1");
+        }
         
+    }
 
+    /*
+        Questa funzione viene chiamata all'inizio dello sliding manuale. Quando rilascio il pallino invece viene chiamata la funzione "spostaAudioAvantiIndietro()"
+    */
+   async function pauseAudio(){
+        //se l'audio esiste già, ossia è stato caricato e...
+        if(isLoaded.current == true){
+            //...se l'audio era già in riproduzione
+            if(isAudioPlaying){
+                //lo metto in pausa
+                console.log("pausa audio");
+                await sound.pauseAsync();
+                clearTimeout(timeOutEvent);
+            }
+            //se l'audio è in pausa
+            else {
+                console.log("...3")
+            }
+        }else {
+            console.log("...4")
+        }
+    
+    }
+        
+    console.log("Situazione finale per il: "+messaggio.row+" pari a isPlaying="+isAudioPlaying+" e isLoaded="+isLoaded.current+" e tempoAudio="+tempoAudio);
     //se il messaggio è stato inviato dall'utente corrente
     if(messaggio.author==utenteCorrente){
         //se il messaggio è testuale
@@ -200,10 +276,12 @@ const ref = function MessageModel({messaggio, utenteCorrente}){
                          <View style={{backgroundColor:MosCeleste, flex:1, borderRadius:altezzaDevice*0.01, height:altezzaDevice*0.15*0.3}}>
                          <Slider
                             value = {tempoAudio}
-                            onValueChange = {(t) =>{setTempoAudio(t)}}
-                            style={{flex:1, height:altezzaDevice*0.15*0.3,}}
+                            onValueChange = {(t) =>{console.log("spostamento percentuale audio di "+ messaggio.row+" a "+t);setTempoAudio(t)}}
+                            style={{flex:1, height:altezzaDevice*0.15*0.3}}
                             thumbTintColor="white"
-                            onSlidingComplete={()=>console.log("finito")} //NB: questo metodo non significa "quando lo sliderè arrivato alla fine", ma quando, muovendo lo slider manualmente, lo rilascio
+                            //aggiorna l'audio quando l'utente va avanti con lo slider
+                            onSlidingComplete={spostaAudioAvantiIndietro} //NB: questo metodo non significa "quando lo slider arrivato alla fine", ma quando, muovendo lo slider manualmente, lo rilascio
+                            onSlidingStart = {pauseAudio}
                             maximumTrackTintColor="white"
                             minimumTrackTintColor="#52575D"
                          />
