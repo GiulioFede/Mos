@@ -13,108 +13,114 @@ export class LocalStorage {
             //creo tabella se non esiste
             console.log("creo tabella se non esiste");
             let query = 'CREATE TABLE IF NOT EXISTS '+ contactUid +'(row INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, date TEXT, type TEXT, content TEXT)'
-        db.transaction(
-            (tx)=>{
-                tx.executeSql(
-                    query,
-                    [],
-                    //in caso di successo
-                    callbackSuccesso,
-                    //in caso di errore
-                    callbackErrore
-                )
-            },
-            callbackErrore,
-            (arg)=>{ console.log("trasazione eseguita con successo:"+arg);}
-        )
+            db.transaction(
+                (tx)=>{
+                    tx.executeSql(
+                        query,
+                        [],
+                        //in caso di successo
+                        callbackSuccesso,
+                        //in caso di errore
+                        callbackErrore
+                    )
+                },
+                callbackErrore,
+                (arg)=>{ console.log("trasazione eseguita con successo:"+arg);}
+            )
 
         }catch(e){
-            return ("errore interno:"+e);
+            throw e;
         }
 
     }
 
     static getListOfChatMessages(utenteCorrente, contactUid, callbackSuccesso, callbackErrore){
         try{
-        console.log("apro database MosaicLocalDB...");
-        const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
+            console.log("apro database MosaicLocalDB...");
+            const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
 
-        //altrimenti preleva i messaggi
-        console.log("Avvio query...");
-        //prendo tutti i messaggi e li ritorno
-        let query = "SELECT * FROM "+contactUid;
-        db.transaction(
-            (tx)=>{
-                tx.executeSql(
-                    query,
-                    [],
-                    //in caso di successo
-                    callbackSuccesso,
-                    //in caso di errore
-                    callbackErrore
-                )
-            },
-            callbackErrore,
-            (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
-        )
+            //altrimenti preleva i messaggi
+            console.log("Avvio query...");
+            //prendo tutti i messaggi e li ritorno
+            let query = "SELECT * FROM "+contactUid;
+            db.transaction(
+                (tx)=>{
+                    tx.executeSql(
+                        query,
+                        [],
+                        //in caso di successo
+                        callbackSuccesso,
+                        //in caso di errore
+                        callbackErrore
+                    )
+                },
+                callbackErrore,
+                (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
+            )
 
         }catch(e){
-            return ("errore interno:"+e);
+            throw e;
         }
 
     }
 
     static storeNewMessage(utenteCorrente, contactUid,author,date,type,value,callbackSuccesso, callbackErrore){
-
-        const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
-
-        console.log("Memorizzo nuovo messaggio");
-        let update = "INSERT INTO "+contactUid+"(author,date,type,content) VALUES(?,?,?,?)";
-        db.transaction(
-            (tx)=>{
-                tx.executeSql(
-                    update,
-                    [author,date, type,value],
-                    //in caso di successo
-                    callbackSuccesso(tx,value), //questo è
-                    //in caso di errore
-                    callbackErrore
+        
+        try{
+            const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
+            console.log("Memorizzo nuovo messaggio");
+            let update = "INSERT INTO "+contactUid+"(author,date,type,content) VALUES(?,?,?,?)";
+                db.transaction(
+                    (tx)=>{
+                        tx.executeSql(
+                            update,
+                            [author,date, type,value],
+                            //in caso di successo
+                            callbackSuccesso(tx,value), //solo nel caso in cui sia audio value ha senso, contiene il percorso (chiamato da) saveAudioIntoFolder
+                            //in caso di errore
+                            callbackErrore
+                        )
+                    },
+                    callbackErrore,
+                    (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
                 )
-            },
-            callbackErrore,
-            (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
-        )
+        }catch(e){
+            throw e;
+        }
     }
 
     static removeTableForConversation(utenteCorrente, contactUid,callbackSuccesso, callbackErrore){
 
-        const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
+        try{
+            const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
 
-        console.log("rimuovo tabella");
-        let update = "DROP TABLE IF EXISTS "+contactUid;
-        db.transaction(
-            (tx)=>{
-                tx.executeSql(
-                    update,
-                    [],
-                    //in caso di successo
-                    callbackSuccesso,
-                    //in caso di errore
-                    callbackErrore
-                )
-            },
-            callbackErrore,
-            (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
-        )
+            console.log("rimuovo tabella");
+            let update = "DROP TABLE IF EXISTS "+contactUid;
+            db.transaction(
+                (tx)=>{
+                    tx.executeSql(
+                        update,
+                        [],
+                        //in caso di successo
+                        callbackSuccesso,
+                        //in caso di errore
+                        callbackErrore
+                    )
+                },
+                callbackErrore,
+                (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
+            )
+        }catch(e){
+            throw e;
+        }
     }
 
     static async saveAudioIntoFolder(utenteCorrente, folder,author, uri_cache, callbackSuccesso, callbackErrore){
 
-        const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
-
-        console.log("salvo audio che attualmente si trova in "+uri_cache+" nel file system");
-        //crea una cartella se non esiste
         try {
+            const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
+            console.log("salvo audio che attualmente si trova in "+uri_cache+" nel file system");
+            //crea una cartella se non esiste
             await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + utenteCorrente+"/"+folder, {
                 intermediates: true
             });

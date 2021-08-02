@@ -1,10 +1,11 @@
 import React,{useEffect, useState, useContext, useRef} from "react"
 import {View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, TextInput, Touchable, FlatList} from "react-native"
-import {Divider, FAB, ProgressBar} from "react-native-paper"
+import {ActivityIndicator, Divider, FAB, ProgressBar, Snackbar} from "react-native-paper"
 import {Octicons, Ionicons, MaterialIcons, FontAwesome} from "@expo/vector-icons";
 import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaSchermoInterno, fontSizeCampi, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../context/variabili_globali/variabiliGlobali"
-import { MosCeleste, MosCelesteRGBA, MosPurple, MosViola } from "../../../../../resources/colors";
-import MessageModel, { resetMessageModel } from "./components/messageModel";
+import { MosCeleste, coloreSchermataDiCaricamento, MosPurple, MosViola } from "../../../../../resources/colors";
+import MessageModel from "./components/messageModel";
+import * as FileSystem from 'expo-file-system';
 
 import * as firebase from 'firebase';
 import 'firebase/firestore';
@@ -14,8 +15,7 @@ import { Audio } from "expo-av";
 import { INTERRUPTION_MODE_ANDROID_DO_NOT_MIX, INTERRUPTION_MODE_IOS_DO_NOT_MIX, Recording } from "expo-av/build/Audio";
 import {Svg, Path, Circle, Line} from "react-native-svg";
 import { AutenticazioneUtente } from "../../../../../context/firebase/autenticazione";
-
-
+import AudioModel, { resetMessageModel } from "./components/audioModel";
 
 
 
@@ -31,29 +31,56 @@ export default function ChatDetail({ navigation,route}){
     const {contactUid} = route.params;
     //reference alla flat list
     const refFlatList = useRef();
+    //se true significa che è possibile tornare indietro, ossia che la lista dei messaggi è stata caricata (altrimenti crea eccezioni)
+    const [isChatLoaded,setIsChatLoaded] = useState(false);
+
+    //messaggio di errore
+    const [snackBarMessage, setSnackBarMessage] = useState(null);
+    const hideSnackMessage = () => setSnackBarMessage(null);
 
     async function tornaIndietro(){
-        console.log("torno indietro");
-        await resetMessageModel();
-        navigation.goBack();
+        try{
+            console.log("torno indietro");
+            await resetMessageModel();
+            navigation.goBack();
+        }catch(e){
+            console.log("chat_detail go back errore:"+e);
+        }
     }
 
     function inviaMessaggio(){
-        LocalStorage.storeNewMessage(getUtenteCorrente(),contactUid,
-                                    getUtenteCorrente(),
-                                    "29/07/2021",
-                                    "mex",
-                                    messaggio,
-                                    (tx,result)=>{
-                                        console.log("Messaggio salvato in locale");
-                                        //creo nuovo messaggio
-                                        let newMex = {row: chat.length+1 ,author:getUtenteCorrente(), date:"29/07/2021", type:"mex",content:messaggio}
-                                        let chatTmp = [...chat];
-                                        chatTmp.push(newMex);
-                                        setChat(chatTmp);
-                                        },
-                                    (tx,err)=>{console.log("Messaggio non salvato in locale: "+err)})
-
+        //controllo che ci sia sufficiente spazio libero (nella memoria interna)
+        FileSystem.getFreeDiskStorageAsync()
+            .then((bytes)=>{
+                console.log("Spazio libero: "+bytes);
+                //se si hanno a disposizione almeno 100MB di spazio libero...
+                if(bytes>104857600){
+                    try{
+                        LocalStorage.storeNewMessage(getUtenteCorrente(),contactUid,
+                                                    getUtenteCorrente(),
+                                                    "29/07/2021",
+                                                    "mex",
+                                                    messaggio,
+                                                    (tx,result)=>{
+                                                        console.log("Messaggio salvato in locale");
+                                                        //creo nuovo messaggio
+                                                        let newMex = {row: chat.length+1 ,author:getUtenteCorrente(), date:"29/07/2021", type:"mex",content:messaggio}
+                                                        let chatTmp = [...chat];
+                                                        chatTmp.push(newMex);
+                                                        setChat(chatTmp);
+                                                        },
+                                                    (tx,err)=>{ setSnackBarMessage("Non è stato possibile salvare il messaggio in locale.");
+                                                                console.log("Messaggio non salvato in locale: "+err.message)})
+                        }catch(e){
+                            setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare il messaggio.");
+                        }
+                    }else {
+                        setSnackBarMessage("Memoria insufficiente. Prova a liberare lo spazio per poter continuare la conversazione");
+                    }
+            
+            }).catch(()=>{
+                setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare il messaggio.");
+            })
     }
 
     useEffect(()=>{
@@ -89,7 +116,7 @@ export default function ChatDetail({ navigation,route}){
                 console.log("errore interno mentre si eseguiva use effect (chat_detail.js");
             }
     }
-    ottieniListaMessaggi();
+        ottieniListaMessaggi();
     },[])
 
     /*
@@ -104,36 +131,47 @@ export default function ChatDetail({ navigation,route}){
 
     //avvia registrazione vocale
     async function startRecording(){
-        try{
-        console.log("Avvio registrazione vocale...");
-        //chiedo permessi
-        await Audio.requestPermissionsAsync();
-        //setto alcune configurazioni personalizzate su Android e IOS
-        await Audio.setAudioModeAsync({
-            allowsRecordingIOS: true, //permetto su IOS la registrazione, di default è false
-            staysActiveInBackground: false, //interrompi la registrazione se si esce dall'app
-            interruptionModeIOS: INTERRUPTION_MODE_IOS_DO_NOT_MIX, //interrompi il suono delle altre app mentre si registra
-            interruptionModeAndroid: INTERRUPTION_MODE_ANDROID_DO_NOT_MIX, //idem come sopra ma per android
-            shouldDuckAndroid: false, //se arrivo un audio da altre app queste aspetteranno
+         //controllo che ci sia sufficiente spazio libero (nella memoria interna)
+         FileSystem.getFreeDiskStorageAsync()
+         .then(async(bytes)=>{
+             console.log("Spazio libero: "+bytes);
+             //se si hanno a disposizione almeno 100MB di spazio libero...
+             if(bytes>104857600){
+                try{
+                    console.log("Avvio registrazione vocale...");
+                    //chiedo permessi
+                    await Audio.requestPermissionsAsync();
+                    //setto alcune configurazioni personalizzate su Android e IOS
+                    await Audio.setAudioModeAsync({
+                        allowsRecordingIOS: true, //permetto su IOS la registrazione, di default è false
+                        staysActiveInBackground: false, //interrompi la registrazione se si esce dall'app
+                        interruptionModeIOS: INTERRUPTION_MODE_IOS_DO_NOT_MIX, //interrompi il suono delle altre app mentre si registra
+                        interruptionModeAndroid: INTERRUPTION_MODE_ANDROID_DO_NOT_MIX, //idem come sopra ma per android
+                        shouldDuckAndroid: false, //se arrivo un audio da altre app queste aspetteranno
+                    })
+
+                    //Contiene info sulla registrazione. 
+                    const newRecording = new Audio.Recording();
+                    setRecordingInfo(newRecording);
+
+                    //creo un suono nuovo
+                    await newRecording.prepareToRecordAsync(
+                        Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
+                    )
+                    newRecording.setOnRecordingStatusUpdate(aggiornaAnimazioneAudioVocale);
+                    newRecording.setProgressUpdateInterval(100);
+                    await newRecording.startAsync();
+                    //adesso sta registrando...
+                    console.log("Avvio registrazione...");
+                    setIsRecording(true);
+                }catch(err){
+                    console.log("E' avvenuto un errore "+err);
+                }
+            }else
+                setSnackBarMessage("Memoria insufficiente. Prova a liberare lo spazio per poter continuare la conversazione");
+        }).catch((e)=>{
+            setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare il messaggio.");
         })
-
-        //Contiene info sulla registrazione. 
-        const newRecording = new Audio.Recording();
-        setRecordingInfo(newRecording);
-
-        //creo un suono nuovo
-        await newRecording.prepareToRecordAsync(
-            Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
-        )
-        newRecording.setOnRecordingStatusUpdate(aggiornaAnimazioneAudioVocale);
-        newRecording.setProgressUpdateInterval(100);
-        await newRecording.startAsync();
-        //adesso sta registrando...
-        console.log("Avvio registrazione...");
-        setIsRecording(true);
-        }catch(err){
-            console.log("E' avvenuto un errore "+err);
-        }
     }
 
     //stop il recording di sopra
@@ -153,17 +191,34 @@ export default function ChatDetail({ navigation,route}){
     }
 
     function saveAudio(uri){
-        LocalStorage.saveAudioIntoFolder(getUtenteCorrente(),contactUid,getUtenteCorrente(),uri,
-                            (tx,local_uri)=>{
-                                console.log("percorso salvato nel database e nel file system in uri: "+local_uri);
-                                //aggiugo alla chat
-                                //creo nuovo messaggio    
-                                let newMex = {row: chat.length+1 ,author:getUtenteCorrente(), date:"29/07/2021", type:"audio",content:local_uri}
-                                let chatTmp = [...chat];
-                                chatTmp.push(newMex);
-                                setChat(chatTmp);
-                                },
-                            (tx,ris)=>{console.log("percorso non salvato nel database");});
+         //controllo che ci sia sufficiente spazio libero (nella memoria interna)
+         FileSystem.getFreeDiskStorageAsync()
+         .then((bytes)=>{
+             console.log("Spazio libero: "+bytes);
+             //se si hanno a disposizione almeno 100MB di spazio libero...
+             if(bytes>104857600){
+                try{
+                    LocalStorage.saveAudioIntoFolder(getUtenteCorrente(),contactUid,getUtenteCorrente(),uri,
+                                        (tx,local_uri)=>{
+                                            console.log("percorso salvato nel database e nel file system in uri: "+local_uri);
+                                            //aggiugo alla chat
+                                            //creo nuovo messaggio    
+                                            let newMex = {row: chat.length+1 ,author:getUtenteCorrente(), date:"29/07/2021", type:"audio",content:local_uri}
+                                            let chatTmp = [...chat];
+                                            chatTmp.push(newMex);
+                                            setChat(chatTmp);
+                                            },
+                                        (tx,ris)=>{
+                                            setSnackBarMessage("Si è verificato un errore. Non è stato possibile inviare l'audio vocale.");
+                                            console.log("percorso non salvato nel database");});
+                }catch(e){
+                    setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare l'audio vocale.");
+                }
+            }else
+                setSnackBarMessage("Memoria insufficiente. Prova a liberare lo spazio per poter continuare la conversazione");
+        }).catch((e)=>{
+                setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare il messaggio.");
+        })
     }
 
     function annullaRecording(){
@@ -207,7 +262,7 @@ export default function ChatDetail({ navigation,route}){
       <View style={styles.container}>
      {/* BARRA SUPERIORE */}
      <View style={styles.barraSuperiore}>
-          <TouchableOpacity onPress={tornaIndietro} style={{position:"absolute",left:0,zIndex:10, paddingLeft:Dimensions.get("window").width*0.03}}>
+          <TouchableOpacity  onPress={tornaIndietro} style={{position:"absolute",left:0,zIndex:10, paddingLeft:Dimensions.get("window").width*0.03}}>
               <Ionicons name="chevron-back" size={fontSizeTitoloBarra} color="#52575D" />
           </TouchableOpacity>
           <Text style={styles.titolo}>Laura</Text>
@@ -221,11 +276,17 @@ export default function ChatDetail({ navigation,route}){
            <FlatList
             ref={refFlatList} 
             data={chat}
-            
+            onEndReached={()=>{console.log("lista caricata"); setIsChatLoaded(true)}}
             horizontal={false}
             showsVerticalScrollIndicator={false}
             keyExtractor={item => item.row.toString()}
-            renderItem={({ item }) => <MessageModel messaggio = {item} utenteCorrente={getUtenteCorrente()}/>}
+            renderItem={({ item }) => {
+               // item.author="aaa"; //da eliminare
+                if(item.type=="mex")
+                    return <MessageModel messaggio = {item} utenteCorrente={getUtenteCorrente()}/>
+                else if(item.type=="audio")
+                    return <AudioModel messaggio = {item} utenteCorrente={getUtenteCorrente()} mostraMessaggioErrore={setSnackBarMessage}/>
+                }}
             onContentSizeChange={() => refFlatList.current.scrollToEnd()}/>
       </View> }
       <LinearGradient
@@ -321,6 +382,23 @@ export default function ChatDetail({ navigation,route}){
             }
 
       </View>
+      
+      {/*schermata caricamento chat */}
+      {isChatLoaded==false && <View style={{position:"absolute", width:larghezzaDevice, height:altezzaDevice, justifyContent: 'center', alignItems: 'center', backgroundColor:coloreSchermataDiCaricamento}}>
+                <ActivityIndicator size={fontSizeTitoloBarra} color={MosCeleste} />
+      </View>}
+
+      <Snackbar
+            visible={snackBarMessage?true:false}
+            onDismiss={hideSnackMessage}
+            action={{
+            label: 'Chiudi',
+            onPress: () => {
+                hideSnackMessage();
+            },
+            }}>
+            {snackBarMessage}
+        </Snackbar>
 
   </View>
        

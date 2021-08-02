@@ -181,6 +181,12 @@ export default function ChatScreen({navigation}){
                 >
 
                 </FlatList>
+                <FAB
+                    style={styles.newChat}
+                    small
+                    icon="plus"
+                    onPress={() => console.log('Pressed')}
+                />
             </View>
         )
     }else {
@@ -217,4 +223,11 @@ const styles = StyleSheet.create({
         borderBottomColor:"#e6e6e6",
         borderBottomWidth:0.7,
     },
+    newChat: {
+        position: 'absolute',
+        margin: 16,
+        right: 0,
+        bottom: 0,
+        backgroundColor:MosCeleste
+      },
 })
