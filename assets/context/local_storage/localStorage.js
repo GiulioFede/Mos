@@ -9,18 +9,46 @@ export class LocalStorage {
 
         const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
 
+        /* QUESTO MOSTRA GLI INDICI PRESENTI (NB: NON USARLO IN PRODUZIONE, MA TIENILO PER SAPERE SE GLI INDICI SONO STATI CREATI O MENO)*/
         try{
             //creo tabella se non esiste
-            console.log("creo tabella se non esiste");
-            let query = 'CREATE TABLE IF NOT EXISTS '+ contactUid +'(row INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, date TEXT, type TEXT, content TEXT)'
+            console.log("lista indici per tabella");
+            let query = "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type='index'";
             db.transaction(
                 (tx)=>{
                     tx.executeSql(
                         query,
                         [],
                         //in caso di successo
-                        callbackSuccesso,
+                        (tx,i)=>{console.log("indice-->");console.log(i); console.log("sopra c'è l'indice")},
                         //in caso di errore
+                        (tx,e)=>{console.log("errore durante la ricerca dell'indice:"+e)}
+                    )
+                },
+                callbackErrore,
+                (arg)=>{ console.log("trasazione eseguita con successo:"+arg);}
+            )
+
+        }catch(e){
+            throw e;
+        }
+        
+
+        try{
+            //creo tabella se non esiste
+            console.log("creo tabella se non esiste");
+            let query1 = 'CREATE TABLE IF NOT EXISTS '+ contactUid +'(row INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, date TEXT, type TEXT, content TEXT)'
+            let query2 = 'CREATE UNIQUE INDEX IF NOT EXISTS indexOf'+contactUid+' ON '+ contactUid +'(row)'
+            db.transaction(
+                (tx)=>{
+                    tx.executeSql(
+                        query1,
+                        [],
+                    );
+                    tx.executeSql(
+                        query2,
+                        [],
+                        callbackSuccesso,
                         callbackErrore
                     )
                 },
@@ -31,10 +59,9 @@ export class LocalStorage {
         }catch(e){
             throw e;
         }
-
     }
 
-    static getListOfChatMessages(utenteCorrente, contactUid, callbackSuccesso, callbackErrore){
+    static getListOfChatMessages(utenteCorrente, contactUid, offset, callbackSuccesso, callbackErrore){
         try{
             console.log("apro database MosaicLocalDB...");
             const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
@@ -42,7 +69,7 @@ export class LocalStorage {
             //altrimenti preleva i messaggi
             console.log("Avvio query...");
             //prendo tutti i messaggi e li ritorno
-            let query = "SELECT * FROM "+contactUid;
+            let query = "SELECT * FROM "+contactUid+" ORDER BY row DESC LIMIT 10 OFFSET "+offset;
             db.transaction(
                 (tx)=>{
                     tx.executeSql(

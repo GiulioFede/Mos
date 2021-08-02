@@ -1,5 +1,5 @@
 import React,{useEffect, useState, useContext, useRef} from "react"
-import {View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, TextInput, Touchable, FlatList} from "react-native"
+import {View, Text, StyleSheet, TouchableOpacity, Dimensions, Keyboard, TextInput, FlatList, BackHandler} from "react-native"
 import {ActivityIndicator, Divider, FAB, ProgressBar, Snackbar} from "react-native-paper"
 import {Octicons, Ionicons, MaterialIcons, FontAwesome} from "@expo/vector-icons";
 import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaSchermoInterno, fontSizeCampi, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../context/variabili_globali/variabiliGlobali"
@@ -33,6 +33,8 @@ export default function ChatDetail({ navigation,route}){
     const refFlatList = useRef();
     //se true significa che è possibile tornare indietro, ossia che la lista dei messaggi è stata caricata (altrimenti crea eccezioni)
     const [isChatLoaded,setIsChatLoaded] = useState(false);
+    //tiene il conto del numero di messaggi mostrati
+    const numeroMessaggiMostrati = useRef(0);
 
     //messaggio di errore
     const [snackBarMessage, setSnackBarMessage] = useState(null);
@@ -49,6 +51,10 @@ export default function ChatDetail({ navigation,route}){
     }
 
     function inviaMessaggio(){
+        console.log("lunghezza chat:"+chat.length);
+        if( chat.length>0)console.log("ultima row:"+chat[0].row);
+        const nuovaChiave = chat.length>0?(chat[0].row+1):1;
+        console.log("salvo messaggio con key:"+nuovaChiave);
         //controllo che ci sia sufficiente spazio libero (nella memoria interna)
         FileSystem.getFreeDiskStorageAsync()
             .then((bytes)=>{
@@ -64,10 +70,14 @@ export default function ChatDetail({ navigation,route}){
                                                     (tx,result)=>{
                                                         console.log("Messaggio salvato in locale");
                                                         //creo nuovo messaggio
-                                                        let newMex = {row: chat.length+1 ,author:getUtenteCorrente(), date:"29/07/2021", type:"mex",content:messaggio}
-                                                        let chatTmp = [...chat];
-                                                        chatTmp.push(newMex);
+                                                        let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:"29/07/2021", type:"mex",content:messaggio}
+                                                        let chatTmp = [newMex,...chat];
+                                                        //chatTmp.push(newMex);
                                                         setChat(chatTmp);
+                                                        //scrollo in basso
+                                                        refFlatList.current.scrollToOffset({animated:true, offset: chat.length-1})
+                                                        Keyboard.dismiss();
+                                                        setMessaggio("");
                                                         },
                                                     (tx,err)=>{ setSnackBarMessage("Non è stato possibile salvare il messaggio in locale.");
                                                                 console.log("Messaggio non salvato in locale: "+err.message)})
@@ -84,40 +94,76 @@ export default function ChatDetail({ navigation,route}){
     }
 
     useEffect(()=>{
+
+
+        const bh = BackHandler.addEventListener('hardwareBackPress',tornaIndietro);
+
         console.log("Sto prelevando tutti i messaggi scambiati con l'utente corrente...");
-        const ottieniListaMessaggi = async () =>{
+        const ottieniPrimi10Messaggi = () =>{
             try{
                 //da eliminare
                 //LocalStorage.removeTableForConversation(getUtenteCorrente(),contactUid,(x,y)=>{console.log("OKKKKKK")},(x,y)=>{console.log("NOOO")});
-                console.log("Prelevo messaggi con "+contactUid);
+                console.log("Prelevo primi 10 messaggi con "+contactUid);
                 //creo tabella per memorizzare la conversazione (se non esiste)
                 LocalStorage.createNewTableForConversation(getUtenteCorrente(),contactUid, //nome tabella
-                            (transazione, resultSet) => { //cosa fare in caso di successo
-                            console.log("TABELLA CREATA (SE NON ESISTEVA GIA)");
+                            (transazione, cod) => { //cosa fare in caso di successo
+                            console.log(":TABELLA CREATA (SE NON ESISTEVA GIA)");
                             //una volta creata (se non esisteva), prelevare i messaggi
                                 LocalStorage.getListOfChatMessages(getUtenteCorrente(),contactUid, //nome tabella
+                                    0, //offset (voglio gli ultimi 10 messaggi)
                                     (transazione, resultSet) => { //cosa fare in caso di successo
-                                    console.log("MESSAGGI PRELEVATI CON SUCCESSO");
-                                    console.log(resultSet);
-                                    //inizializzo la chat
-                                    setChat(resultSet.rows._array);
+                                        console.log("MESSAGGI PRELEVATI CON SUCCESSO");
+                                        console.log(resultSet);
+                                        //inizializzo la chat
+                                        setChat(resultSet.rows._array);
+                                        numeroMessaggiMostrati.current = 10;
+                                        setIsChatLoaded(true);
                                     },
                                     (transazione, errore) => { //cosa fare in caso di errore
-                                    console.log("ERRORE: MESSAGGI NON PRELEVATI");
+                                        console.log("ERRORE: MESSAGGI NON PRELEVATI");
+                                        setIsChatLoaded(true);
                                     }
                             )
                             },
-                            (transazione, errore) => { //cosa fare in caso di errore
-                            console.log("CREAZIONE TABELLA FALLITO");
+                            (transazione, cod) => { //cosa fare in caso di errore
+                                console.log(cod+":CREAZIONE TABELLA FALLITO");
+                                setIsChatLoaded(true);
                             }
                             
                 )
             }catch(err){
-                console.log("errore interno mentre si eseguiva use effect (chat_detail.js");
+                console.log("errore interno mentre si eseguiva use effect (chat_detail.js):"+err);
+                setIsChatLoaded(true);
             }
     }
-        ottieniListaMessaggi();
+
+        ottieniPrimi10Messaggi();
+
+        return () => BackHandler.removeEventListener('hardwareBackPress', tornaIndietro);
     },[])
+
+    function caricaSuccessivi10Messaggi(){
+
+        //controllo che l'ultimo messaggio non abbia row 1, altrimenti sono già alla fine ed è inutile richiedere valori
+        if(chat[chat.length-1].row==1) return;
+        setIsChatLoaded(false); 
+        LocalStorage.getListOfChatMessages(getUtenteCorrente(),contactUid, //nome tabella
+            (numeroMessaggiMostrati.current), //offset (voglio gli ultimi 10 messaggi)
+            (transazione, resultSet) => { //cosa fare in caso di successo
+                console.log("SUCCESSIVI 10 MESSAGGI PRELEVATI CON SUCCESSO");
+                //aggiorno chat la chat
+                console.log(resultSet);
+                let chatTmp = [...chat,...resultSet.rows._array];
+                setChat(chatTmp);
+                numeroMessaggiMostrati.current = numeroMessaggiMostrati.current + 10;
+                setIsChatLoaded(true);
+            },
+            (transazione, errore) => { //cosa fare in caso di errore
+                console.log("ERRORE: SUCCESSIVI MESSAGGI NON PRELEVATI");
+            }
+        )
+
+    }
 
     /*
      ::::::::::::::::::::::::::::::::::::::AUDIO VOCALE::::::::::::::::::::::::::::::::::::::
@@ -198,15 +244,17 @@ export default function ChatDetail({ navigation,route}){
              //se si hanno a disposizione almeno 100MB di spazio libero...
              if(bytes>104857600){
                 try{
+                    const nuovaChiave = chat.length>0?(chat[0].row+1):1;
                     LocalStorage.saveAudioIntoFolder(getUtenteCorrente(),contactUid,getUtenteCorrente(),uri,
                                         (tx,local_uri)=>{
                                             console.log("percorso salvato nel database e nel file system in uri: "+local_uri);
                                             //aggiugo alla chat
                                             //creo nuovo messaggio    
-                                            let newMex = {row: chat.length+1 ,author:getUtenteCorrente(), date:"29/07/2021", type:"audio",content:local_uri}
-                                            let chatTmp = [...chat];
-                                            chatTmp.push(newMex);
+                                            let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:"29/07/2021", type:"audio",content:local_uri}
+                                            let chatTmp = [newMex,...chat];
                                             setChat(chatTmp);
+                                            //scrollo in basso
+                                            refFlatList.current.scrollToOffset({animated:true, offset: chat.length-1})
                                             },
                                         (tx,ris)=>{
                                             setSnackBarMessage("Si è verificato un errore. Non è stato possibile inviare l'audio vocale.");
@@ -252,10 +300,6 @@ export default function ChatDetail({ navigation,route}){
 
     }
 
-    /*
-            ANIMAZIONE AUDIO SINE WAVES
-    */
-
 
     
     return (
@@ -275,19 +319,21 @@ export default function ChatDetail({ navigation,route}){
       <View style={styles.areaMessaggi}>
            <FlatList
             ref={refFlatList} 
+            inverted={true}
             data={chat}
-            onEndReached={()=>{console.log("lista caricata"); setIsChatLoaded(true)}}
+            onEndReachedThreshold={0.1}
+            onEndReached={()=>{console.log("lista caricata"); caricaSuccessivi10Messaggi();}} //quando si raggiunge il top si caricano i successivi 10 mex
             horizontal={false}
             showsVerticalScrollIndicator={false}
             keyExtractor={item => item.row.toString()}
             renderItem={({ item }) => {
-               // item.author="aaa"; //da eliminare
+               console.log("children key:"+item.row.toString());
                 if(item.type=="mex")
                     return <MessageModel messaggio = {item} utenteCorrente={getUtenteCorrente()}/>
                 else if(item.type=="audio")
                     return <AudioModel messaggio = {item} utenteCorrente={getUtenteCorrente()} mostraMessaggioErrore={setSnackBarMessage}/>
                 }}
-            onContentSizeChange={() => refFlatList.current.scrollToEnd()}/>
+            />
       </View> }
       <LinearGradient
           // Background Linear Gradient
@@ -336,8 +382,8 @@ export default function ChatDetail({ navigation,route}){
 
         {/*SE NON STA REGISTRANDO...mostro icona invia messaggio*/}
         {isRecording==false &&
-        <TouchableOpacity onPress={inviaMessaggio} style={styles.inviaMessaggio}>
-                <FontAwesome name = "location-arrow" size={fontSizeTitoloBarra} color={MosCeleste} />
+        <TouchableOpacity onPress={inviaMessaggio} style={styles.inviaMessaggio} disabled={messaggio==""?true:false}>
+                <FontAwesome name = "location-arrow" size={fontSizeTitoloBarra} color={messaggio==""?"rgba(27, 98, 253,0.3)":MosCeleste} />
         </TouchableOpacity>
         }
 
@@ -360,6 +406,7 @@ export default function ChatDetail({ navigation,route}){
             <TextInput
                 style={styles.input}
                 maxLength={25}
+                
                 onChangeText={(text)=>{setMessaggio(text)}}
                 value={messaggio}
                 placeholder="Scrivi un breve messaggio..."
@@ -384,8 +431,8 @@ export default function ChatDetail({ navigation,route}){
       </View>
       
       {/*schermata caricamento chat */}
-      {isChatLoaded==false && <View style={{position:"absolute", width:larghezzaDevice, height:altezzaDevice, justifyContent: 'center', alignItems: 'center', backgroundColor:coloreSchermataDiCaricamento}}>
-                <ActivityIndicator size={fontSizeTitoloBarra} color={MosCeleste} />
+      {isChatLoaded==false && <View style={{position:"absolute", width:larghezzaDevice, height:altezzaDevice, justifyContent: 'center', alignItems: 'center'}}>
+                <ActivityIndicator size={fontSizeTitoloBarra} color={MosPurple} /> 
       </View>}
 
       <Snackbar

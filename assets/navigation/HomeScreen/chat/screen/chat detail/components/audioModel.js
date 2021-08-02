@@ -51,8 +51,6 @@ export async function resetMessageModel(){
 
 export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioErrore}){
 
-    console.log("Uri audio numero "+messaggio.row+" -->"+messaggio.content);
-    console.log(messaggio);
     const [amplitude,setAmplitude] = useState(1);
     const [tempoAudio, setTempoAudio] = useState(0);
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);
