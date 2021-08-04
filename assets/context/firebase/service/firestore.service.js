@@ -2,7 +2,7 @@ import React from "react";
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 import 'firebase/functions'
-
+const bucketName = "mos-test-db748.appspot.com"; // NB: CAMBIA 'mos-test-db748' QUANDO CAMBI NOME DATABASE
 
 export function _creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso){
    console.log("servizio: crea nuovo utente................................................................................");
@@ -365,6 +365,177 @@ export function _isProfiloCompletato(uid){
             var mediaDocument = db.collection("users").doc(uid).collection("media").doc(visibility); 
             return mediaDocument.get();
        }
+
+
+
+    /*
+            METODI PER LA MESSAGISTICA
+    */
+/*
+    //invia un messaggio
+    export async function _inviaNuovoMessaggio(chatId, contactUid, type, value){
+        console.log("invio messaggio...")
+        var db = firebase.firestore();
+        
+        //se il messaggio è un semplice testo
+        if(type=="mex"){
+            return db.collection("chats") //nella sezione chats
+                     .doc(chatId) //nella conversazione chatId
+                     .collection(contactUid) //nel canale destinato al contatto col quale si sta messaggiando
+                     .add({
+                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                         type: type,
+                         value: value
+                     });
+        }
+        else if (type=="audio"){
+            try{
+                //salvo sullo storage
+                //in questo caso 'value' contiene l'uri locale (in cache) del file audio
+                console.log("carico su firebase storage l'audio in "+value);
+                let file = await fetch(value);
+                let blob = await file.blob();
+                let storage = firebase.storage();
+                let name = getRandomString(10);
+                let token = getRandomString(10);
+                console.log("token:"+token);
+                let destinationFolderRef = storage.ref("chats/"+chatId+"/"+name+".m4a");
+                //aggiungo il file 
+                await destinationFolderRef.put(blob);
+                let downloadUrl = await destinationFolderRef.getDownloadURL();
+                //in caso di successo invio anche su firestore un riferimento
+                return db.collection("chats") //nella sezione chats
+                     .doc(chatId) //nella conversazione chatId
+                     .collection(contactUid) //nel canale destinato al contatto col quale si sta messaggiando
+                     .add({
+                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                         type: type,
+                         value: downloadUrl
+                     });
+            }catch(e){
+                throw e;
+            }
+                
+        }
+    }*/
+    var array_of_requests = [];
+    var array_of_new_requests = [];
+    export async function _inviaNuovoMessaggio( chatId, 
+                                                contactUid, 
+                                                type, 
+                                                value,
+                                                callbackSuccess,
+                                                callbackFailure){
+
+            if(array_of_requests.length==0){
+                array_of_requests.push([chatId,contactUid,type,value,{'onSuccess': function()  {callbackSuccess();}},{'onSuccess': function()  {callbackFailure();}}]);
+                    try{
+                        while(1){
+                            console.log("eseguo richieste di invio messaggi");
+                            await array_of_requests.reduce( async(oldPromise,request_params) =>{
+                                try{
+                                    await oldPromise;
+                                    console.log("SUCCESSO: ESEGUO RICHIESTA ARRAY_REQUESTS");
+                                    console.log(request_params[0]+","+request_params[1]+","+request_params[2]+","+request_params[3]);
+                                    console.log(request_params[4]);
+                                    //invio messaggio
+                                    await _inviaMessaggio(request_params[0],request_params[1],request_params[2],request_params[3]);
+                                    console.log("messaggio inviato");
+                                    //se è andato tutto bene eseguo la callback di successo
+                                    await request_params[4]['onSuccess']();
+                                    //indico alla successiva iterazione che è andato tutto bene
+                                    Promise.resolve((1));
+                                }catch(e){
+                                        console.log("messaggio non inviato:"+e);
+                                        //se è andato male eseguo la callback di fallimento
+                                        request_params[5];
+                                        //indico alla successiva iterazione che è andato male
+                                        //Promise.reject(0);
+                                        callbackFailure();
+                                    }
+                                },Promise.resolve(1));
+                                //
+                                console.log("FINE esecuzione richieste messaggi");
+                                array_of_requests = [];
+                                if(array_of_new_requests.length==0) break;
+                                else {
+                                    array_of_requests = [...array_of_new_requests];
+                                    array_of_new_requests = [];
+                                }
+                            }
+                    }catch(err){
+                        console.log("errore durante l'esecuzione di firestore.service._inviaNuovoMessaggio:"+err);
+                        callbackFailure();
+                    }finally{
+                        array_of_requests = [];
+                    }
+                }else 
+                    array_of_new_requests.push([chatId,contactUid,type,value,{'onSuccess': function()  {callbackSuccess();}},{'onSuccess': function()  {callbackFailure();}}]);
+        }
+
+    export async function _inviaMessaggio(chatId, 
+                                    contactUid, 
+                                    type, 
+                                    value){
+        console.log("invio messaggio...")
+        var db = firebase.firestore();
+        
+        //se il messaggio è un semplice testo
+        if(type=="mex"){
+            try{
+                return db.collection("chats") //nella sezione chats
+                     .doc(chatId) //nella conversazione chatId
+                     .collection(contactUid) //nel canale destinato al contatto col quale si sta messaggiando
+                     .add({
+                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                         type: type,
+                         value: value
+                     });
+            }catch(e){
+                throw e;
+            }
+        }
+        else if (type=="audio"){
+            try{
+                //salvo sullo storage
+                //in questo caso 'value' contiene l'uri locale (in cache) del file audio
+                console.log("carico su firebase storage l'audio in "+value);
+                let file = await fetch(value);
+                let blob = await file.blob();
+                let storage = firebase.storage();
+                let name = getRandomString(10);
+                let token = getRandomString(10);
+                console.log("token:"+token);
+                let destinationFolderRef = storage.ref("chats/"+chatId+"/"+name+".m4a");
+                //aggiungo il file 
+                await destinationFolderRef.put(blob);
+                let downloadUrl = await destinationFolderRef.getDownloadURL();
+                //in caso di successo invio anche su firestore un riferimento
+                return db.collection("chats") //nella sezione chats
+                     .doc(chatId) //nella conversazione chatId
+                     .collection(contactUid) //nel canale destinato al contatto col quale si sta messaggiando
+                     .add({
+                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                         type: type,
+                         value: downloadUrl
+                     });
+            }catch(e){
+                throw e;
+            }
+                
+        }
+    }
+
+
+
+    function getRandomString(length) {
+        var randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var result = '';
+        for ( var i = 0; i < length; i++ ) {
+            result += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
+        }
+        return result;
+    }
 
 
     

@@ -1,5 +1,5 @@
 import React,{useEffect, useState, useContext, useRef} from "react"
-import {View, Text, StyleSheet, TouchableOpacity, Dimensions, Keyboard, TextInput, FlatList, BackHandler} from "react-native"
+import {View, Text, StyleSheet, TouchableOpacity, Dimensions, Keyboard,KeyboardAvoidingView, TextInput, FlatList, BackHandler} from "react-native"
 import {ActivityIndicator, Divider, FAB, ProgressBar, Snackbar} from "react-native-paper"
 import {Octicons, Ionicons, MaterialIcons, FontAwesome} from "@expo/vector-icons";
 import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaSchermoInterno, fontSizeCampi, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../context/variabili_globali/variabiliGlobali"
@@ -9,32 +9,33 @@ import * as FileSystem from 'expo-file-system';
 
 import * as firebase from 'firebase';
 import 'firebase/firestore';
-import { LocalStorage } from "../../../../../context/local_storage/localStorage";
+//import { LocalStorage } from "../../../../../context/local_storage/localStorage";
+import local_storage from "../../../../../context/local_storage/localStorage";
 import { LinearGradient } from "expo-linear-gradient";
 import { Audio } from "expo-av";
 import { INTERRUPTION_MODE_ANDROID_DO_NOT_MIX, INTERRUPTION_MODE_IOS_DO_NOT_MIX, Recording } from "expo-av/build/Audio";
 import {Svg, Path, Circle, Line} from "react-native-svg";
 import { AutenticazioneUtente } from "../../../../../context/firebase/autenticazione";
 import AudioModel, { resetMessageModel } from "./components/audioModel";
-
-
-
+import ListaMessaggi from "./components/listaMessaggi";
+import RecordingKeyboard from "./components/recordingKeyboard";
 
 export default function ChatDetail({ navigation,route}){
-
     const [messaggio, setMessaggio] = useState("");
     //conterrà l'intera chat
     const [chat, setChat] = useState([]);
     //contesto autenticazione
-    const {getUtenteCorrente} = useContext(AutenticazioneUtente);
+    const {getUtenteCorrente, inviaNuovoMessaggio} = useContext(AutenticazioneUtente);
     //uid utente
     const {contactUid} = route.params;
     //reference alla flat list
     const refFlatList = useRef();
     //se true significa che è possibile tornare indietro, ossia che la lista dei messaggi è stata caricata (altrimenti crea eccezioni)
     const [isChatLoaded,setIsChatLoaded] = useState(false);
-    //tiene il conto del numero di messaggi mostrati
-    const numeroMessaggiMostrati = useRef(0);
+
+    const ultimaRow = useRef(0);
+    //contiene le row da passare alla flat list per indicargli di aggiornare lo stato in "succeed"
+    const [arrayOfRowsToUpdateState, setarrayOfRowsToUpdateState] = useState({});
 
     //messaggio di errore
     const [snackBarMessage, setSnackBarMessage] = useState(null);
@@ -50,38 +51,53 @@ export default function ChatDetail({ navigation,route}){
         }
     }
 
-    function inviaMessaggio(){
-        console.log("lunghezza chat:"+chat.length);
-        if( chat.length>0)console.log("ultima row:"+chat[0].row);
-        const nuovaChiave = chat.length>0?(chat[0].row+1):1;
-        console.log("salvo messaggio con key:"+nuovaChiave);
+    async function inviaMessaggio(){ 
         //controllo che ci sia sufficiente spazio libero (nella memoria interna)
         FileSystem.getFreeDiskStorageAsync()
-            .then((bytes)=>{
+            .then(async(bytes)=>{
                 console.log("Spazio libero: "+bytes);
                 //se si hanno a disposizione almeno 100MB di spazio libero...
                 if(bytes>104857600){
                     try{
-                        LocalStorage.storeNewMessage(getUtenteCorrente(),contactUid,
-                                                    getUtenteCorrente(),
-                                                    "29/07/2021",
-                                                    "mex",
-                                                    messaggio,
-                                                    (tx,result)=>{
-                                                        console.log("Messaggio salvato in locale");
-                                                        //creo nuovo messaggio
-                                                        let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:"29/07/2021", type:"mex",content:messaggio}
-                                                        let chatTmp = [newMex,...chat];
-                                                        //chatTmp.push(newMex);
-                                                        setChat(chatTmp);
-                                                        //scrollo in basso
-                                                        refFlatList.current.scrollToOffset({animated:true, offset: chat.length-1})
-                                                        Keyboard.dismiss();
-                                                        setMessaggio("");
-                                                        },
-                                                    (tx,err)=>{ setSnackBarMessage("Non è stato possibile salvare il messaggio in locale.");
-                                                                console.log("Messaggio non salvato in locale: "+err.message)})
-                        }catch(e){
+                        Keyboard.dismiss();
+                        setMessaggio("");
+                        ultimaRow.current = ultimaRow.current + 1;
+                        const nuovaChiave = ultimaRow.current;
+                        let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:"29/07/2021", type:"mex",content:messaggio,state:"in-progress"}
+                        let chatTmp = [newMex,...chat];
+                        setChat(chatTmp);
+                        //invio messaggio a firebase
+                        inviaNuovoMessaggio("jWeGrG0ewsMicCGSeATI",contactUid,"mex", messaggio,
+                            async ()=>{
+                                await local_storage.storeNewMessage(getUtenteCorrente()+contactUid+"",getUtenteCorrente(),"29/07/2021","mex",messaggio, "succeed");
+                                console.log("Messaggio salvato in locale");
+                                if(isMounted.current==true){
+                                    //indico alla flat list la row da aggiornare come succeed
+                                    let newarrayOfRowsToUpdateState = {};
+                                    Object.assign(newarrayOfRowsToUpdateState,arrayOfRowsToUpdateState);
+                                    newarrayOfRowsToUpdateState[nuovaChiave] = "succeed"; 
+                                    setarrayOfRowsToUpdateState(newarrayOfRowsToUpdateState);
+                                    //scrollo in basso
+                                    refFlatList.current.scrollToOffset({animated:true, offset: chat.length-1});
+                                }
+                            },
+                            (e) =>{
+                                console.log("errore durante l'invio del messaggio :"+e);
+                                if(isMounted.current==true){
+                                    setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare il messaggio.");
+                                    //indico alla flat list la row da aggiornare come succeed
+                                    let newarrayOfRowsToUpdateState = {};
+                                    Object.assign(newarrayOfRowsToUpdateState,arrayOfRowsToUpdateState);
+                                    newarrayOfRowsToUpdateState[nuovaChiave] = "failed"; 
+                                    setarrayOfRowsToUpdateState(newarrayOfRowsToUpdateState);
+                                    //scrollo in basso
+                                    refFlatList.current.scrollToOffset({animated:true, offset: chat.length-1});
+                                }
+                            }
+                        );
+        
+                    }catch(e){
+                            console.log("errore durante l'invio del messaggio:"+e);
                             setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare il messaggio.");
                         }
                     }else {
@@ -93,53 +109,66 @@ export default function ChatDetail({ navigation,route}){
             })
     }
 
+    const isMounted = useRef(false);
+
     useEffect(()=>{
-
-
+        isMounted.current = true;
         const bh = BackHandler.addEventListener('hardwareBackPress',tornaIndietro);
 
         console.log("Sto prelevando tutti i messaggi scambiati con l'utente corrente...");
-        const ottieniPrimi10Messaggi = () =>{
+        
+        async function ottieniPrimi10Messaggi() {
+            //se la promise interna ha un errore lo catturo
             try{
-                //da eliminare
-                //LocalStorage.removeTableForConversation(getUtenteCorrente(),contactUid,(x,y)=>{console.log("OKKKKKK")},(x,y)=>{console.log("NOOO")});
-                console.log("Prelevo primi 10 messaggi con "+contactUid);
-                //creo tabella per memorizzare la conversazione (se non esiste)
-                LocalStorage.createNewTableForConversation(getUtenteCorrente(),contactUid, //nome tabella
-                            (transazione, cod) => { //cosa fare in caso di successo
-                            console.log(":TABELLA CREATA (SE NON ESISTEVA GIA)");
-                            //una volta creata (se non esisteva), prelevare i messaggi
-                                LocalStorage.getListOfChatMessages(getUtenteCorrente(),contactUid, //nome tabella
-                                    0, //offset (voglio gli ultimi 10 messaggi)
-                                    (transazione, resultSet) => { //cosa fare in caso di successo
-                                        console.log("MESSAGGI PRELEVATI CON SUCCESSO");
-                                        console.log(resultSet);
-                                        //inizializzo la chat
-                                        setChat(resultSet.rows._array);
-                                        numeroMessaggiMostrati.current = 10;
-                                        setIsChatLoaded(true);
-                                    },
-                                    (transazione, errore) => { //cosa fare in caso di errore
-                                        console.log("ERRORE: MESSAGGI NON PRELEVATI");
-                                        setIsChatLoaded(true);
-                                    }
-                            )
-                            },
-                            (transazione, cod) => { //cosa fare in caso di errore
-                                console.log(cod+":CREAZIONE TABELLA FALLITO");
-                                setIsChatLoaded(true);
-                            }
-                            
-                )
+                //da eliminare (la prima solo)
+                //await local_storage.removeTableForConversation(getUtenteCorrente()+contactUid+"");
+                await local_storage.createNewTableForConversation(getUtenteCorrente()+contactUid+"");
+                await local_storage.createNewIndexForTableForConversation(getUtenteCorrente()+contactUid+"");
+                
+                //in ogni caso dopo ottieni la lista dei messaggi
+                console.log("ottengo lista..");
+                local_storage.getListOfChatMessages(getUtenteCorrente()+contactUid+"", 0)
+                    .then((lista_messaggi)=>{
+                        try{
+                            let lista_messaggi_array = JSON.parse(lista_messaggi);
+                            const lista_iniziale = [...lista_messaggi_array];
+                            //console.log(lista_messaggi);
+                            setChat(lista_iniziale);
+                            /*
+                                Prendere l'ultimaRow, invece della lenght dell'array, aiuta a non utilizzare la stessa chiave. 
+                            */
+                            if(lista_iniziale.length>0)
+                                ultimaRow.current = lista_iniziale[0].row;
+                            else
+                                ultimaRow.current = 0;
+                            setIsChatLoaded(true);
+                        }catch(e){
+                            console.log("errore durante il caricamento:"+e);
+                            setSnackBarMessage("error");
+                        }
+                    }).catch((e)=>{
+                        console.log("errore interno mentre si eseguiva use effect (chat_detail.js):"+e);
+                        setSnackBarMessage("Si è verificato un errore");
+                        setIsChatLoaded(true);
+                    })
+                    
+                
             }catch(err){
                 console.log("errore interno mentre si eseguiva use effect (chat_detail.js):"+err);
+                setSnackBarMessage("Si è verificato un errore");
                 setIsChatLoaded(true);
             }
+            
     }
 
+        //dato che la funzione è async e non uso .then() allora verrà eseguita in maniera asincrona
         ottieniPrimi10Messaggi();
 
-        return () => BackHandler.removeEventListener('hardwareBackPress', tornaIndietro);
+        return () => {
+            BackHandler.removeEventListener('hardwareBackPress', tornaIndietro);
+            isMounted.current = false;
+        }
+        
     },[])
 
     function caricaSuccessivi10Messaggi(){
@@ -147,21 +176,19 @@ export default function ChatDetail({ navigation,route}){
         //controllo che l'ultimo messaggio non abbia row 1, altrimenti sono già alla fine ed è inutile richiedere valori
         if(chat[chat.length-1].row==1) return;
         setIsChatLoaded(false); 
-        LocalStorage.getListOfChatMessages(getUtenteCorrente(),contactUid, //nome tabella
-            (numeroMessaggiMostrati.current), //offset (voglio gli ultimi 10 messaggi)
-            (transazione, resultSet) => { //cosa fare in caso di successo
+        local_storage.getListOfChatMessages(getUtenteCorrente()+contactUid+"",ultimaRow.current)
+            .then((lista_messaggi)=>{
                 console.log("SUCCESSIVI 10 MESSAGGI PRELEVATI CON SUCCESSO");
                 //aggiorno chat la chat
-                console.log(resultSet);
-                let chatTmp = [...chat,...resultSet.rows._array];
+                //console.log(lista_messaggi);
+                let lista_messaggi_array = JSON.parse(lista_messaggi);
+                let chatTmp = [...chat,...lista_messaggi_array];
                 setChat(chatTmp);
-                numeroMessaggiMostrati.current = numeroMessaggiMostrati.current + 10;
+                ultimaRow.current = ultimaRow.current + Object.keys(lista_messaggi_array).length;
                 setIsChatLoaded(true);
-            },
-            (transazione, errore) => { //cosa fare in caso di errore
-                console.log("ERRORE: SUCCESSIVI MESSAGGI NON PRELEVATI");
-            }
-        )
+            }).catch((e)=>{
+
+            })
 
     }
 
@@ -176,7 +203,7 @@ export default function ChatDetail({ navigation,route}){
     const [durataAudio, setDurataAudio] = useState(0);
 
     //avvia registrazione vocale
-    async function startRecording(){
+    function startRecording(){
          //controllo che ci sia sufficiente spazio libero (nella memoria interna)
          FileSystem.getFreeDiskStorageAsync()
          .then(async(bytes)=>{
@@ -190,25 +217,27 @@ export default function ChatDetail({ navigation,route}){
                     //setto alcune configurazioni personalizzate su Android e IOS
                     await Audio.setAudioModeAsync({
                         allowsRecordingIOS: true, //permetto su IOS la registrazione, di default è false
+                        playsInSilentModeIOS: true,
                         staysActiveInBackground: false, //interrompi la registrazione se si esce dall'app
-                        interruptionModeIOS: INTERRUPTION_MODE_IOS_DO_NOT_MIX, //interrompi il suono delle altre app mentre si registra
+                         //interrompi il suono delle altre app mentre si registra
                         interruptionModeAndroid: INTERRUPTION_MODE_ANDROID_DO_NOT_MIX, //idem come sopra ma per android
-                        shouldDuckAndroid: false, //se arrivo un audio da altre app queste aspetteranno
+                        shouldDuckAndroid: true, //se arrivo un audio da altre app queste aspetteranno
                     })
 
                     //Contiene info sulla registrazione. 
                     const newRecording = new Audio.Recording();
-                    setRecordingInfo(newRecording);
-
                     //creo un suono nuovo
                     await newRecording.prepareToRecordAsync(
-                        Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
+                        Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY,
+                        Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX
                     )
+                    
                     newRecording.setOnRecordingStatusUpdate(aggiornaAnimazioneAudioVocale);
                     newRecording.setProgressUpdateInterval(100);
                     await newRecording.startAsync();
                     //adesso sta registrando...
                     console.log("Avvio registrazione...");
+                    setRecordingInfo(newRecording);
                     setIsRecording(true);
                 }catch(err){
                     console.log("E' avvenuto un errore "+err);
@@ -224,43 +253,85 @@ export default function ChatDetail({ navigation,route}){
     async function stopRecording(){
         console.log("Stopping recording...");
         try{
-        //prelevo l'uri dove è stata memorizzata
-        await recordingInfo.stopAndUnloadAsync();
-        const uri = recordingInfo.getURI();
-        console.log('Recording terminata e salvata in '+uri);
-        setIsRecording(false);
-        //salvo audio criptato nel database
-        saveAudio(uri);
+            //prelevo l'uri dove è stata memorizzata
+            await recordingInfo.stopAndUnloadAsync();
+            const uri = recordingInfo.getURI();
+            setRecordingInfo(undefined);
+            console.log('Recording terminata e salvata in '+uri);
+            //salvo audio nel database
+            saveAudio(uri);
         }catch(e){
-            console.log("Si è verificato un problema");
+            console.log("Si è verificato un problema:"+e);
+            setRecordingInfo(undefined);
+            setIsRecording(false);
+            setSnackBarMessage("Si è verificato un problema.");
         }
     }
-
+    
     function saveAudio(uri){
          //controllo che ci sia sufficiente spazio libero (nella memoria interna)
          FileSystem.getFreeDiskStorageAsync()
-         .then((bytes)=>{
+         .then(async(bytes)=>{
              console.log("Spazio libero: "+bytes);
              //se si hanno a disposizione almeno 100MB di spazio libero...
              if(bytes>104857600){
                 try{
-                    const nuovaChiave = chat.length>0?(chat[0].row+1):1;
-                    LocalStorage.saveAudioIntoFolder(getUtenteCorrente(),contactUid,getUtenteCorrente(),uri,
-                                        (tx,local_uri)=>{
-                                            console.log("percorso salvato nel database e nel file system in uri: "+local_uri);
-                                            //aggiugo alla chat
-                                            //creo nuovo messaggio    
-                                            let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:"29/07/2021", type:"audio",content:local_uri}
-                                            let chatTmp = [newMex,...chat];
-                                            setChat(chatTmp);
-                                            //scrollo in basso
-                                            refFlatList.current.scrollToOffset({animated:true, offset: chat.length-1})
-                                            },
-                                        (tx,ris)=>{
-                                            setSnackBarMessage("Si è verificato un errore. Non è stato possibile inviare l'audio vocale.");
-                                            console.log("percorso non salvato nel database");});
-                }catch(e){
+                    ultimaRow.current = ultimaRow.current + 1;
+                    const nuovaChiave = ultimaRow.current;
+                    //aggiugo alla chat
+                    //creo nuovo messaggio    
+                    let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:"29/07/2021", type:"audio",content:uri, state:"in-progress"}
+                    let chatTmp = [newMex,...chat];
+                    setChat(chatTmp);
+                    //scrollo in basso
+                    refFlatList.current.scrollToOffset({animated:true, offset: chat.length-1});
+                    setIsRecording(false);
+                    console.log("(in-progress)--> invio audio "+nuovaChiave+" in remoto...");
+                    //salvo audio in remoto, ma uso approccio asincrono per liberare la UI. Se avviene qualche errore tolgo quello appena inserito
+                    inviaNuovoMessaggio("jWeGrG0ewsMicCGSeATI",contactUid,"audio", uri,
+                        async(ris) =>{
+                            //l'audio è stato salvato con successo, lo lascio cosi com'è
+                            console.log("salvato in remoto. Salvo in locale...");
+                            //salvo in locale
+                            //mi ritorna il percorso dove ha salvato l'audio. Di default salva l'audio con stato "in-progress" a indicare che non ha ancora ricevuto conferma di salvataggio nel database
+                            let local_uri = await local_storage.saveAudioIntoFolder(getUtenteCorrente(),contactUid,getUtenteCorrente(),uri);
+                            console.log("percorso salvato nel database e nel file system in uri: "+local_uri);
+                            //aggiorno UI
+                            console.log("Il componente è montato? "+isMounted.current);
+                            //aggiorno database locale
+                            try{
+                                //aggiorno la UI con la spunta cosi da indicare che è stato caricato definitivamente
+                                if(isMounted.current==true){
+                                    //indico alla flat list la row da aggiornare come succeed
+                                    let newarrayOfRowsToUpdateState = {};
+                                    Object.assign(newarrayOfRowsToUpdateState,arrayOfRowsToUpdateState);
+                                    newarrayOfRowsToUpdateState[nuovaChiave] = "succeed"; 
+                                    setarrayOfRowsToUpdateState(newarrayOfRowsToUpdateState);
+                                }
+                            }catch(e){
+                                setSnackBarMessage("E' avvenuto un errore durante il salvataggio dell'audio in locale:");
+                                console.log("errore durante l'aggiornamento dello stato dell'audio:"+e);
+                            }
+                        },
+                        (err) =>{
+                            try{
+                                //l'audio non è stato salvato. Lo elimino dalla lista
+                                console.log("non salvato in remoto. Aggiorno stato come fallito in locale");
+                                if(isMounted.current==true){
+                                    setSnackBarMessage("E' avvenuto un errore durante l'invio dell'audio vocale.");
+                                    //indico alla flat list la row da aggiornare come succeed
+                                    let newarrayOfRowsToUpdateState = {};
+                                    Object.assign(newarrayOfRowsToUpdateState,arrayOfRowsToUpdateState);
+                                    newarrayOfRowsToUpdateState[nuovaChiave] = "failed"; 
+                                    setarrayOfRowsToUpdateState(newarrayOfRowsToUpdateState);
+                                }
+                            }catch(error1){
+                                console.log("è avvenuto un errore durante l'aggiornamento a 'failed' dell'audio in locale:"+error1);
+                            }
+                        })
+                }catch(error2){
                     setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare l'audio vocale.");
+                    console.log(error2);
                 }
             }else
                 setSnackBarMessage("Memoria insufficiente. Prova a liberare lo spazio per poter continuare la conversazione");
@@ -269,6 +340,9 @@ export default function ChatDetail({ navigation,route}){
         })
     }
 
+    function getChat(){
+        console.log(cons);
+    }
     function annullaRecording(){
 
     }
@@ -280,13 +354,14 @@ export default function ChatDetail({ navigation,route}){
     const [amplitude, setAmplitude] = useState(0.9);
     
     function aggiornaAnimazioneAudioVocale(status){
-        console.log("AGGIORNAMENTO AUDIO VOCALE");
-        console.log(status);
+       // console.log("AGGIORNAMENTO AUDIO VOCALE");
+       // console.log(status);
 
         //AGGIORNO PROGRESS BAR
         //prelevo tempo (siccome progress bar ha massimo a 1 allora dato che il massimo consentito è di 1 secondo (60k ms) lo divido per 60k)
         let secondi = parseInt(status.durationMillis)/60000;
-        setDurataAudio(secondi);  
+        setDurataAudio(secondi); 
+        /* 
         let power = 0;
         //AGGIORNO LINE WAVES
         if(parseInt(status.metering)>-120)
@@ -296,12 +371,11 @@ export default function ChatDetail({ navigation,route}){
         let amplitude1 = (power/160)/3;
         let amplitude2 = (power/160);
         let amplitude3 = (power/160)/2;
-        setAmplitude(power/160/2);
+        setAmplitude(power/160/2);*/
 
     }
 
 
-    
     return (
       <View style={styles.container}>
      {/* BARRA SUPERIORE */}
@@ -315,94 +389,33 @@ export default function ChatDetail({ navigation,route}){
           </TouchableOpacity>
       </View>
 
-      {
-      <View style={styles.areaMessaggi}>
-           <FlatList
-            ref={refFlatList} 
-            inverted={true}
-            data={chat}
-            onEndReachedThreshold={0.1}
-            onEndReached={()=>{console.log("lista caricata"); caricaSuccessivi10Messaggi();}} //quando si raggiunge il top si caricano i successivi 10 mex
-            horizontal={false}
-            showsVerticalScrollIndicator={false}
-            keyExtractor={item => item.row.toString()}
-            renderItem={({ item }) => {
-               console.log("children key:"+item.row.toString());
-                if(item.type=="mex")
-                    return <MessageModel messaggio = {item} utenteCorrente={getUtenteCorrente()}/>
-                else if(item.type=="audio")
-                    return <AudioModel messaggio = {item} utenteCorrente={getUtenteCorrente()} mostraMessaggioErrore={setSnackBarMessage}/>
-                }}
-            />
-      </View> }
+     <ListaMessaggi refFlatList={refFlatList} 
+                    lista_messaggi={chat} 
+                    caricaSuccessivi10Messaggi={caricaSuccessivi10Messaggi} 
+                    getUtenteCorrente={getUtenteCorrente} 
+                    setSnackBarMessage={setSnackBarMessage}
+                    rowsToUpdate = {arrayOfRowsToUpdateState} /> 
+     
       <LinearGradient
-          // Background Linear Gradient
+          // Background Linear Gradient sopra chat
           colors={["rgba(119, 39, 236,0.1)",'transparent']}
           style={{position: 'absolute',top:altezzaBarraScreen,width: larghezzaDevice,height: 50}}
         />
       
 
         <LinearGradient
-          // Background Linear Gradient
+          // Background Linear Gradient sotto chat
           colors={['transparent', "rgba(119, 39, 236,0.1)"]}
           style={{position: 'absolute',bottom:altezzaMenuNavigazione*1.5,width: larghezzaDevice,height: 50}}
         />
-        {/*SE STA REGISTRANDO...faccio comparire lo schermo nero*/}
-           {isRecording==true && <View style={styles.backgroundRecording}>
-            <Svg width={larghezzaDevice} height={altezzaDevice} viewBox="0 0 1 1">
-                <Path d={"M 0.1 "+amplitude/5*0.2+" L 0.1 -"+amplitude/5*0.2} stroke={MosViola} strokeWidth="0.02" opacity="0.1"  />
-                <Path d={"M 0.9 "+amplitude/5*0.2+" L 0.9 -"+amplitude/5*0.2} stroke={MosViola} strokeWidth="0.02" opacity="0.1"  />
-                <Path d={"M 0.2 "+amplitude/4*0.2+" L 0.2 -"+amplitude/4*0.2} stroke={MosViola} strokeWidth="0.02" opacity="0.3"  />
-                <Path d={"M 0.8 "+amplitude/4*0.2+" L 0.8 -"+amplitude/4*0.2} stroke={MosViola} strokeWidth="0.02" opacity="0.3"  />
-                <Path d={"M 0.3 "+amplitude/3*0.2+" L 0.3 -"+amplitude/3*0.2} stroke={MosPurple} strokeWidth="0.02" opacity="0.5"  />
-                <Path d={"M 0.7 "+amplitude/3*0.2+" L 0.7 -"+amplitude/3*0.2} stroke={MosPurple} strokeWidth="0.02" opacity="0.5"  />
-                <Path d={"M 0.4 "+amplitude/2*0.2+" L 0.4 -"+amplitude/2*0.2} stroke={MosPurple} strokeWidth="0.02" opacity="0.7"  />
-                <Path d={"M 0.6 "+amplitude/2*0.2+" L 0.6 -"+amplitude/2*0.2} stroke={MosPurple} strokeWidth="0.02" opacity="0.7"  />
-                <Path d={"M 0.5 "+amplitude*0.2+" L 0.5 -"+amplitude*0.2} stroke={MosCeleste} strokeWidth="0.02" opacity="0.9"  />
 
-
-
-                <Path d="M 0 0 L 1 0" stroke={MosCeleste} strokeWidth="0.02" opacity="0.1"  />
-                <Path d="M 0 0 L 1 0" stroke={MosCeleste} strokeWidth="0.01" opacity="0.3"  />
-                <Path d="M 0 0 L 1 0" stroke={MosCeleste} strokeWidth="0.005" opacity="0.6"  />
-                <Path d="M 0 0 L 1 0" stroke={MosPurple} strokeWidth="0.022" opacity="0.1"  />
-                <Path d="M 0 0 L 1 0" stroke={MosPurple} strokeWidth="0.009" opacity="0.3"  />
-                <Path d="M 0 0 L 1 0" stroke={MosPurple} strokeWidth="0.004" opacity="0.6"  /> 
-                <Path d="M 0 0 L 1 0" stroke={MosViola} strokeWidth="0.02" opacity="0.05"  />
-                <Path d="M 0 0 L 1 0" stroke={MosViola} strokeWidth="0.08" opacity="0.03"  />
-                <Path d="M 0 0 L 1 0" stroke={MosViola} strokeWidth="0.03" opacity="0.06"  /> 
-                <Path d="M 0 0 L 1 0" stroke="white" strokeWidth="0.001" opacity="1"  /> 
-
-            </Svg>
-            </View>
-        }
-
-      {/*TASTIERA*/}
-      <View style={styles.tastiera}>
-
-        {/*SE NON STA REGISTRANDO...mostro icona invia messaggio*/}
-        {isRecording==false &&
-        <TouchableOpacity onPress={inviaMessaggio} style={styles.inviaMessaggio} disabled={messaggio==""?true:false}>
-                <FontAwesome name = "location-arrow" size={fontSizeTitoloBarra} color={messaggio==""?"rgba(27, 98, 253,0.3)":MosCeleste} />
-        </TouchableOpacity>
-        }
-
-        {/*SE STA REGISTRANDO...mostro icona "annulla audio"*/}
-        {isRecording==true &&
-        <TouchableOpacity onPress={annullaRecording} style={styles.pulsanteAudioAnnullaRecording}>
-            <FontAwesome name="remove" size={fontSizeTitoloBarra*0.8} color="red" />
-        </TouchableOpacity>
-        }
-
-        {/*SE STA REGISTRANDO...mostro barra countdown audio max 60secondi*/}
-        {isRecording==true &&
-        <View style={styles.areaAnimazioneAudio}>
-             <ProgressBar progress={durataAudio} color={MosCeleste} />
-        </View>
-        }
-
-        {/*SE NON STA REGISTRANDO...mostro input area messaggio*/}
-        {isRecording==false &&
+      {//se non sta registrando mostro la classica tastiera 
+        isRecording==false
+        &&
+        <View style={styles.tastiera}>
+            <TouchableOpacity onPress={inviaMessaggio} style={styles.inviaMessaggio} disabled={messaggio==""?true:false}>
+                    <FontAwesome name = "location-arrow" size={fontSizeTitoloBarra} color={messaggio==""?"rgba(27, 98, 253,0.3)":MosCeleste} />
+            </TouchableOpacity>
             <TextInput
                 style={styles.input}
                 maxLength={25}
@@ -412,23 +425,17 @@ export default function ChatDetail({ navigation,route}){
                 placeholder="Scrivi un breve messaggio..."
                 keyboardType="default"
             />
-        }
-
-            
-            {/*SE NON STA REGISTRANDO...*/}
-                {isRecording==false &&
-                <TouchableOpacity onPress={startRecording} style={styles.pulsanteAudio}>
+            <TouchableOpacity onPress={startRecording} style={styles.pulsanteAudio}>
                     <MaterialIcons name="keyboard-voice" size={fontSizeTitoloBarra} color="white" />
-                </TouchableOpacity>
-                }
-            {/*SE STA REGISTRANDO...*/}
-                {isRecording==true &&
-                <TouchableOpacity onPress={stopRecording} style={styles.pulsanteAudioInRecording}>
-                    <Ionicons name="ios-stop" size={fontSizeTitoloBarra*0.8} color="white" />
-                </TouchableOpacity>
-            }
+            </TouchableOpacity>
+        </View>
+      }
 
-      </View>
+      {//se sta registrando mostro la schermata di registrazione
+          isRecording == true
+          &&
+          <RecordingKeyboard />
+      }
       
       {/*schermata caricamento chat */}
       {isChatLoaded==false && <View style={{position:"absolute", width:larghezzaDevice, height:altezzaDevice, justifyContent: 'center', alignItems: 'center'}}>
@@ -474,17 +481,15 @@ const styles = StyleSheet.create({
         backgroundColor:"#fff"
     },
     areaMessaggi: {
-        height:altezzaSchermoInterno-altezzaBarraScreen-altezzaMenuNavigazione*1.5,
-        backgroundColor:"#fff"
+        flex:1,
+        backgroundColor:"#fff",
     },
     tastiera:{
-        position:"absolute",
-        bottom:0,
+        flex:0.15,
         flexDirection: 'row',
         justifyContent:"center",
         alignItems:"center",
         width: larghezzaDevice,
-        height: altezzaMenuNavigazione*1.5,
         backgroundColor:"#fff"
     },
     input:{

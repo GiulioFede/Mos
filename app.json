@@ -4,9 +4,9 @@
     "slug": "Mos",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon/logoMos.jpg",
+    "icon": "./assets/icon/tinder.png",
     "splash": {
-      "image": "./assets/icon/splashlogoMos.png",
+      "image": "./assets/icon/tinder.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,13 +17,21 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon/logoMos.jpg",
+        "foregroundImage": "./assets/icon/tinder.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "com.giuliofederico.Mos",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"

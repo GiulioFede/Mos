@@ -11,8 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto} from "./service/firestore.service";
-import { getCurrentUser } from "expo-google-sign-in";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto, _inviaNuovoMessaggio} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -102,7 +101,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     getNomeImmagineDaUrl,
                     getListOfConversations,
                     getChatSummaryInformation,
-                    getMediaProfiloContatto
+                    getMediaProfiloContatto,
+                    inviaNuovoMessaggio
                 }}
                 >
                 {children}
@@ -330,4 +330,18 @@ export const AutenticazioneUtenteProvider = ({children}) => {
   */
   function getMediaProfiloContatto(uid, visibility){
       return _getMediaProfiloContatto(uid,visibility);
+  }
+
+  /*
+            METODI PER LA MESSAGGISTICA
+  */
+
+  //invia un messaggio a un contactUid
+  function inviaNuovoMessaggio(chatId, contactUid, type, value, callbackSuccess, callbackFailure){
+      try{
+       return _inviaNuovoMessaggio(chatId, contactUid, type, value, callbackSuccess, callbackFailure);
+      }catch(e){
+          console.log("errore in inviaNuovoMessaggio");
+          throw e;
+      }
   }

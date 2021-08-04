@@ -12,11 +12,10 @@ import { ActivityIndicator } from 'react-native-paper';
 import { altezzaDevice, fontSizeCampi, larghezzaDevice } from '../../../../../../context/variabili_globali/variabiliGlobali';
 import { MosCeleste, MosPurple, MosViola } from '../../../../../../resources/colors';
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
-import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
-import { Feather } from '@expo/vector-icons'; 
+import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway'; 
 
 
-const ref = function MessageModel({messaggio, utenteCorrente}){
+const ref = function RecordingKeyboard({messaggio, utenteCorrente}){
 
 
     //carico font
@@ -24,39 +23,13 @@ const ref = function MessageModel({messaggio, utenteCorrente}){
     let [Raleway2] = useFonts2({Raleway_400Regular});
     if(!Raleway || !Raleway2)
         return <View></View>
-
     
-    //se il messaggio è stato inviato dall'utente corrente
-    if(messaggio.author==utenteCorrente){
-            return (
-
-                <View style={styles.container}>
-                    <View style={styles.areaMessaggio}>
-                        <Text style={styles.mexUtenteCorrente}>{messaggio.content}</Text>
-                        <View style={{flexDirection:"row", alignSelf:"flex-end"}}>     
-                                <Text style={styles.timestampOrarioUtenteCorrente}>15:31</Text>
-                                <View style={{justifyContent:"center"}}>
-                                    {messaggio.state=="in-progress" && <ActivityIndicator size={fontSizeCampi*0.8} color={MosCeleste} />}
-                                    {messaggio.state=="failed" && <Feather name="x" size={fontSizeCampi*0.8} color="red" />}
-                                </View>
-                        </View>
-                        <View style={styles.bordoInferioreUtenteCorrente}/>
-                    </View>
-                </View>
-            )
-    }
-    //se il messaggio è stato inviato dal contatto
-    else {
     return (
-            <View style={styles.container}>
-                <View style={styles.areaMessaggio}>
-                    <Text style={styles.mex}>{messaggio.content}</Text>
-                    <Text style={styles.timestampOra}>15:32</Text>
-                    <View style={styles.bordoInferiore}/>
-                </View>
-            </View>
-        )
-    }
+        <View>
+            <Text>Recording Keyboard</Text>
+        </View>
+    )
+
 }
 
 export default ref;

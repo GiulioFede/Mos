@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import * as SQLite from 'expo-sqlite'
 
+/*
 const SUCCESS_QUERY = "SUCCESS_QUERY";
 
 export class LocalStorage {
@@ -9,7 +10,7 @@ export class LocalStorage {
 
         const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente);
 
-        /* QUESTO MOSTRA GLI INDICI PRESENTI (NB: NON USARLO IN PRODUZIONE, MA TIENILO PER SAPERE SE GLI INDICI SONO STATI CREATI O MENO)*/
+        // QUESTO MOSTRA GLI INDICI PRESENTI (NB: NON USARLO IN PRODUZIONE, MA TIENILO PER SAPERE SE GLI INDICI SONO STATI CREATI O MENO)
         try{
             //creo tabella se non esiste
             console.log("lista indici per tabella");
@@ -160,12 +161,16 @@ export class LocalStorage {
             //cripto audio stringa prima di salvare
             console.log("audio stringa criptato");
             //....(cripare stringa)
-            /*
+            
                 salvo file criptato
                 NB: non salvo la stringa nel database altrimenti ad ogni apertura di chat deve leggere miliardi di bit, piuttosto salvo
                     il file criptato e salvo nel database solo un riferimento uri per trovarlo. Sarà solo quando richiesto che lo leggerò
-            */
-            const percorso= FileSystem.documentDirectory + utenteCorrente + "/" + folder+"/"+(new Date().toUTCString().replace(/ /g,""));
+            
+           //prelevo formato di salvataggio
+           
+           let indexOfFormat = uri_cache.lastIndexOf(".");
+           let formato = uri_cache.substring(indexOfFormat); //es--> .mp4
+            const percorso= FileSystem.documentDirectory + utenteCorrente + "/" + folder+"/"+(new Date().toUTCString().replace(/ /g,""))+formato;
             await FileSystem.writeAsStringAsync((percorso), audio_string, {encoding: FileSystem.EncodingType.Base64 });
             console.log("file salvato con successo nel file system in: "+percorso);
             //salvo nel database
@@ -180,4 +185,276 @@ export class LocalStorage {
     }
 
    
+}
+*/
+
+const db = SQLite.openDatabase("MosaicLocalDB.db");
+
+const removeTableForConversation = async (nomeTabella) => {
+    return new Promise((resolve, reject) =>{
+        try{
+            
+            let update = "DROP TABLE IF EXISTS "+nomeTabella;
+            db.transaction(
+                (tx)=>{
+                    tx.executeSql(
+                        update,
+                        [],
+                        //in caso di successo
+                        (_, result) => { resolve(result)},
+                        //in caso di errore
+                        (_, error) => { reject(error)}
+                    )
+                },
+                (error) => reject(error),
+                (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
+            )
+        }catch(e){
+            throw e;
+        }
+    }) 
+
+}
+
+/*
+    Crea una nuova tabella. La colonna 'state', valido solo per gli audio, può assumere 3 possibili valori:
+        1) in-progress: indica che l'audio è stato salvato in locale ma non ancora in remoto
+        2) failed: indica che l'audio è stato salvato in locale ma è fallito in remoto
+        3) succeed: indica che l'audio è stato salvato in locale è anche in remoto
+*/
+
+const createNewTableForConversation = async(nomeTabella) => {
+        return new Promise((resolve, reject)=>{
+            try{
+                //creo tabella se non esiste
+                console.log("creo tabella se non esiste");
+                let query1 = 'CREATE TABLE IF NOT EXISTS '+ nomeTabella +'(row INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, date TEXT, type TEXT, content TEXT, state TEXT);';             
+                db.transaction(
+                        (tx)=>{
+                            tx.executeSql(
+                                query1,
+                                [],
+                                (_,result)=>{ resolve("tabella creata")},
+                                (_,error) => { console.log("tabella non creata")}
+                            )
+                        },
+                        (error) => { console.log("tabella non creata")},
+                        ()=>{ console.log("trasazione eseguita con successo:");}
+                    )
+
+            }catch(e){
+                throw e;
+            }
+        })
+    }
+
+    /*QUESTO MOSTRA GLI INDICI PRESENTI (NB: NON USARLO IN PRODUZIONE, MA TIENILO PER SAPERE SE GLI INDICI SONO STATI CREATI O MENO)
+    try{
+        //creo tabella se non esiste
+        console.log("lista indici per tabella");
+        let query = "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type='index'";
+        db.transaction(
+            (tx)=>{
+                tx.executeSql(
+                    query,
+                    [],
+                    //in caso di successo
+                    (tx,i)=>{console.log("indice-->");console.log(i); console.log("sopra c'è l'indice")},
+                    //in caso di errore
+                    (tx,e)=>{console.log("errore durante la ricerca dell'indice:"+e)}
+                )
+            },
+            callbackErrore,
+            (arg)=>{ console.log("trasazione eseguita con successo:"+arg);}
+        )
+
+    }catch(e){
+        throw e;
+    }
+    */
+    
+
+const checkIfTableExists = async(nomeTabella) => {
+    return new Promise((resolve, reject)=>{
+        try{
+            let query = "SELECT name FROM sqlite_master WHERE type='table' AND name='"+nomeTabella+"';"
+            db.transaction(
+                (tx) => {
+                    tx.executeSql(
+                        query,
+                        [],
+                        (_, result) => {if(result.rows._array[0]) resolve(true); else resolve(false)},
+                        (_, err) => {reject(err)}
+                    )
+                },
+                (e) => {reject(e)},
+                () => {console.log("transazione eseguita con successo")}
+            )
+        }catch(e){
+            throw e;
+        }
+    });
+}
+
+
+const createNewIndexForTableForConversation = async(nomeTabella) => {
+    return new Promise((resolve, reject)=>{
+        try{
+            //creo tabella se non esiste
+            let query1 = 'CREATE UNIQUE INDEX IF NOT EXISTS indexOf'+nomeTabella+' ON '+ nomeTabella +'(row)';
+            db.transaction(
+                (tx)=>{
+                    tx.executeSql(
+                        query1,
+                        [],
+                        (_,result)=>{ resolve("indice creato")},
+                        (_,error) => { reject("indice non creato")}
+                    )
+                },
+                (error) => { reject(error)},
+                ()=>{ console.log("trasazione eseguita con successo:");}
+            )
+
+        }catch(e){
+            throw e;
+        }
+
+    })
+}
+
+const getListOfChatMessages = async (nomeTabella, offset) => {
+    return new Promise((resolve, reject) => {
+        try{
+
+            console.log("Avvio query...");
+            let query = "SELECT * FROM "+nomeTabella+" ORDER BY row DESC LIMIT 10 OFFSET "+offset;
+            db.transaction(
+                (tx)=>{
+                    tx.executeSql(
+                        query,
+                        [],
+                        //in caso di successo
+                        (_,{ rows: { _array } }) => { //console.log(_array); 
+                                                      resolve(JSON.stringify(_array))},
+                        //in caso di errore
+                        (_, error) => { reject("messaggi non prelevati")}
+                    )
+                },
+                (error) =>{reject("messaggi non prelevati")},
+                ()=>{ console.log("transazione eseguita con successo:");}
+            )
+    
+        }catch(e){
+            throw e;
+        }
+
+    }) 
+}
+
+//Lo stato "state" è valido solo per gli audio vocali
+
+const storeNewMessage = async(nomeTabella,author,date,type,value, state) => {
+    return new Promise((resolve, reject) => {
+        try{
+            //const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente+".db");
+            console.log("Memorizzo nuovo messaggio");
+            let update = "INSERT INTO "+nomeTabella+"(author,date,type,content,state) VALUES(?,?,?,?,?)";
+                db.transaction(
+                    (tx)=>{
+                        tx.executeSql(
+                            update,
+                            [author,date, type,value,state],
+                            //in caso di successo
+                            (_, result) => {resolve(result)},
+                            //in caso di errore
+                            (_, error) => {reject(error)}
+                        )
+                    },
+                    (error) => {reject(error)},
+                    (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
+                )
+        }catch(e){
+            throw e;
+        }
+    })
+}
+
+const saveAudioIntoFolder = async(utenteCorrente, folder,author, uri_cache) =>{
+    return new Promise(async(resolve, reject) =>{
+        try {
+            //const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente+".db");
+            console.log("salvo audio che attualmente si trova in "+uri_cache+" nel file system");
+            //crea una cartella se non esiste
+            await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + utenteCorrente+"/"+folder, {
+                intermediates: true
+            });
+            
+            console.log("cartella creata (se non esisteva già):");
+            //scrivo il file che si trova in un uri temporanea (cache) nel database
+            //quando lo scrivo utilizzo
+            const audio_string = await FileSystem.readAsStringAsync(uri_cache,{ encoding: FileSystem.EncodingType.Base64 }); //NB: SE NON SI CRIPTA USARE DOWNLOAD_ASINC PER SCRIVERE DIRETTAMENTE NELLA NUOVA LOCAZIONE INVECE DI FARE READ E POI WRITE
+            //ho ottenuto una stringa del contenuto audio
+            console.log("audio stringa letto");
+            //cripto audio stringa prima di salvare
+            console.log("audio stringa criptato");
+            //....(cripare stringa)
+            /*
+                salvo file criptato
+                NB: non salvo la stringa nel database altrimenti ad ogni apertura di chat deve leggere miliardi di bit, piuttosto salvo
+                    il file criptato e salvo nel database solo un riferimento uri per trovarlo. Sarà solo quando richiesto che lo leggerò
+            */
+           //prelevo formato di salvataggio
+
+            let indexOfFormat = uri_cache.lastIndexOf(".");
+            let formato = uri_cache.substring(indexOfFormat); //es--> .mp4
+            const percorso= FileSystem.documentDirectory + utenteCorrente + "/" + folder+"/"+(new Date().toUTCString().replace(/ /g,""))+formato;
+            await FileSystem.writeAsStringAsync((percorso), audio_string, {encoding: FileSystem.EncodingType.Base64 });
+            console.log("file salvato con successo nel file system in: "+percorso);
+            //salvo nel database (mi ritorna il)
+            await storeNewMessage(utenteCorrente+folder+"",author,"30/07/2021","audio",percorso,"succeed");
+            console.log(FileSystem.documentDirectory);
+            resolve(percorso);
+        } catch (err) {
+            console.log("errore durante il salvataggio dell'audio: "+err);
+            throw err;
+        }
+        
+
+    })
+}
+
+const updateAudioState = async(nomeTabella,rowAudio, new_state) => {
+    return new Promise((resolve, reject) => {
+        try{
+            console.log("Aggiorno stato audio");
+            let update = "UPDATE "+nomeTabella+" SET state='"+new_state+"' WHERE row="+rowAudio;
+                db.transaction(
+                    (tx)=>{
+                        tx.executeSql(
+                            update,
+                            [],
+                            //in caso di successo
+                            (_, result) => {resolve(result)},
+                            //in caso di errore
+                            (_, error) => {reject(error)}
+                        )
+                    },
+                    (error) => {reject(error)},
+                    (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
+                )
+        }catch(e){
+            throw e;
+        }
+    })
+}
+
+export default local_storage = {
+    checkIfTableExists,
+    removeTableForConversation,
+    createNewTableForConversation,
+    createNewIndexForTableForConversation,
+    getListOfChatMessages,
+    storeNewMessage,
+    saveAudioIntoFolder,
+    updateAudioState
 }

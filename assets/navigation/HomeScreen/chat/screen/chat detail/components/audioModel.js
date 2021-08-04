@@ -1,5 +1,5 @@
 // Import react
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useState } from 'react'
 
 // Import react-native components
 import {
@@ -13,10 +13,10 @@ import { MosCeleste, MosPurple, MosViola } from '../../../../../../resources/col
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import Svg, { Path } from 'react-native-svg';
-import { useState } from 'react/cjs/react.development';
-import {Entypo} from '@expo/vector-icons'
+import {Entypo, Feather} from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { Audio } from 'expo-av';
+import { ActivityIndicator } from 'react-native-paper';
 
 /*
     NB: La funzione MessageModel viene utilizzata da tutti gli elementi della flat list. Però (importantissimo) le variabili globali
@@ -56,12 +56,6 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);
     const isLoaded = useRef(false);
 
-
-    //carico font
-    let [Raleway] = useFonts({Raleway_200ExtraLight});
-    let [Raleway2] = useFonts2({Raleway_400Regular});
-    if(!Raleway || !Raleway2)
-        return <View></View>
 
         
     async function playAudio(){
@@ -116,11 +110,18 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
                 }
                 //setIsAudioPlaying(!isAudioPlaying);
             }else {
-                
+                    
                     //preparo audio
                         console.log("preparo nuovo audio");
+                        //questa parte, per quanto insensata, risolve un bug su IOS. Per registrare l'audio ho bisogno di 'allowsRecordingIOS=false
+                        //ma per riprodurlo ho bisogno di settarlo come false.
+                        await Audio.setAudioModeAsync({
+                            allowsRecordingIOS: false,
+                          
+                          });
                         //elimino precedente evento di timeout (altrimenti quando occorre mi elimina l'attuale audio che sto caricando)
                         let initial_status = await sound.loadAsync({uri:messaggio.content});
+                        await sound.setVolumeAsync(1);
                         if(initial_status.isLoaded==true){
                             console.log(initial_status);
                             let durata_totale = initial_status.durationMillis;
@@ -267,7 +268,11 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
         }
     
     }
-        
+            //carico font
+    let [Raleway] = useFonts({Raleway_200ExtraLight});
+    let [Raleway2] = useFonts2({Raleway_400Regular});
+    if(!Raleway || !Raleway2)
+        return <View></View>
     //se il messaggio audio è stato inviato dall'utente corrente
             return (
             <View style={styles.container}>
@@ -290,8 +295,14 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
                                     minimumTrackTintColor="#52575D"
                                 />
                             </View>
-                        </View>     
-                            <Text style={styles.timestampOrarioAudioUtenteCorrente}>15:31</Text>
+                        </View>
+                            <View style={{flexDirection:"row", alignSelf:"flex-end"}}>     
+                                <Text style={styles.timestampOrarioAudioUtenteCorrente}>15:31</Text>
+                                <View style={{justifyContent:"center"}}>
+                                    {messaggio.state=="in-progress" && <ActivityIndicator size={fontSizeCampi*0.8} color={MosCeleste} />}
+                                    {messaggio.state=="failed" && <Feather name="x" size={fontSizeCampi*0.8} color="red" />}
+                                </View>
+                            </View>
                             <View style={styles.bordoInferioreUtenteCorrente}/>
                     </View>
             }
@@ -377,7 +388,8 @@ const styles = StyleSheet.create({
         fontFamily: "Raleway_200ExtraLight",
         color: "#52575D",
         fontSize:fontSizeCampi,
-        textAlign:"right"
+        alignSelf:"center",
+        textAlignVertical:"center"
     },
     bordoInferioreUtenteCorrente: {
         borderBottomColor:MosCeleste,
