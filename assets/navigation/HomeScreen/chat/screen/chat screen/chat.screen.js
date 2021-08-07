@@ -8,6 +8,7 @@ import { useIsDrawerOpen } from '@react-navigation/drawer';
 import { FAB, Snackbar, ActivityIndicator, Dialog, Portal } from 'react-native-paper';
 import { altezzaBarraScreen, altezzaDevice, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste } from "../../../../../resources/colors";
+import {ChatUpdates} from "../context/chatContext";
 
 //qui è dove simulo l'array contenente le preview delle chat NB: ci deve essere anche l'urlImmagineProfilo che però
 //non posso dare in quanto il componente ChatPreview vuole l'url statico se usa require.
@@ -111,7 +112,7 @@ export default function ChatScreen({navigation}){
                 for(var i = 0; i < listOfConversations["conversations"].length; i++) {
                     //sfrutto questo ciclo per salvarmi i sommari delle conversazioni
                     let conversation = listOfConversations["conversations"][i];
-                    chatsSummaryTmp.push({key:i.toString(), value: summaries[i].data(), contactName:conversation.contactName, contactUid:conversation.uid });
+                    chatsSummaryTmp.push({key:i.toString(),chatId:conversation.chatId,  value: summaries[i].data(), contactName:conversation.contactName, contactUid:conversation.uid });
                     //TODO-->NB: QUI BISOGNERA' SCEGLIERE UNA LOGICA PER CAPIRE QUALE LIVELLO DI VISIBILITà ADOTTARE, PER ADESSO METTO SEMPRE A 0
                     const livelloDiVisibilità = "0";
                     promisesMediaContatti.push(getMediaProfiloContatto(conversation.uid, livelloDiVisibilità));
@@ -136,7 +137,7 @@ export default function ChatScreen({navigation}){
                         console.log("Si è verificato un errore durrante il recupero dei media dei contatti: "+err);
                     })
             }).catch((err)=>{
-                console.log("Si è verificato un errore durrante il recupero delle informazioni sommarie sulle conversazioni: "+err);
+                console.log("Si è verificato un errore durante il recupero delle informazioni sommarie sulle conversazioni: "+err);
             })
         console.log(listOfConversations);
         
@@ -172,6 +173,7 @@ export default function ChatScreen({navigation}){
                     renderItem={({item})=>(
                         <ChatPreview
                                     navigation ={navigation}
+                                    chatId = {item.chatId}
                                     nome = {item.contactName}
                                     contactUid = {item.contactUid}
                                     content = {item.value}

@@ -5,6 +5,7 @@ import ChatScreen from "./screen/chat screen/chat.screen";
 import ChatDetail from "./screen/chat detail/chat_detail";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/core";
 import ContactProfile from "./screen/contact profile/contactProfile";
+import { ChatUpdates } from "./screen/context/chatContext";
 
 const chatStack = createStackNavigator();
 
@@ -22,6 +23,7 @@ const ChatNavigator = ({navigation,route}) => {
             navigation.setOptions({tabBarVisible: false});
     },[navigation,route])
     return (
+        <ChatUpdates>
         <chatStack.Navigator 
         screenOptions={{headerTitleAlign: "center",//per centrare i titoli degli screen
                         ...TransitionPresets.SlideFromRightIOS
@@ -48,6 +50,7 @@ const ChatNavigator = ({navigation,route}) => {
             />
 
         </chatStack.Navigator>
+        </ChatUpdates>
     )
 }
 

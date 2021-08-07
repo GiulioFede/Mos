@@ -28,6 +28,35 @@ var timeOutEvent = null;
 var indiceFocusMessaggioAudio = -1; //indica l'i-esimo messaggio audio che è in riproduzione o in pausa
 var resettaUltimoAudioMessaggio= null; //contiene il riferimento della funzione resetta delll'ultimo messaggio audio riprodotto o in pausa
 
+let date = new Date();
+
+function getDate(mostraNuovaData, myDate){
+    if(mostraNuovaData==true){
+        date = new Date(myDate);
+        console.log("ritorno data");
+        let data_str = date.getFullYear()+"/"+date.getMonth()+"/"+date.getDay();
+        return( 
+            <Text style={styles.dataCentrale}>{data_str}</Text>
+        )
+    }
+}
+
+function getTimestamp(myDate, isAuthor){
+    date = new Date(myDate);
+    let time_str = date.getHours()+":"+date.getMinutes();
+    if(isAuthor){
+        console.log("ritorno timestamp");
+        return( 
+            <Text style={styles.timestampOrarioAudioUtenteCorrente}>{time_str}</Text>
+        )
+    }else {
+        console.log("ritorno timestamp");
+        return( 
+            <Text style={[styles.timestampOrarioAudioUtenteCorrente,{alignSelf:"flex-start", textAlign:"left",alignSelf:"flex-start"}]}>{time_str}</Text>
+        )
+    }
+}
+
 
 export async function resetMessageModel(){
     console.log("resetto flat list");
@@ -49,14 +78,14 @@ export async function resetMessageModel(){
     }
 }
 
-export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioErrore}){
+export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioErrore, mostraNuovaData}){
 
     const [amplitude,setAmplitude] = useState(1);
     const [tempoAudio, setTempoAudio] = useState(0);
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);
     const isLoaded = useRef(false);
 
-
+    console.log("mostra nuova data per "+messaggio.row+"?: "+mostraNuovaData);
         
     async function playAudio(){
         try{
@@ -268,6 +297,7 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
         }
     
     }
+
             //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
     let [Raleway2] = useFonts2({Raleway_400Regular});
@@ -275,7 +305,9 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
         return <View></View>
     //se il messaggio audio è stato inviato dall'utente corrente
             return (
+                <>
             <View style={styles.container}>
+                {getDate(mostraNuovaData,messaggio.date)}
                 {messaggio.author==utenteCorrente &&
                     <View style={styles.areaAudio}>
                         <View style={styles.areaRiproduzione}>
@@ -297,7 +329,7 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
                             </View>
                         </View>
                             <View style={{flexDirection:"row", alignSelf:"flex-end"}}>     
-                                <Text style={styles.timestampOrarioAudioUtenteCorrente}>15:31</Text>
+                                {getTimestamp(messaggio.date,true)}
                                 <View style={{justifyContent:"center"}}>
                                     {messaggio.state=="in-progress" && <ActivityIndicator size={fontSizeCampi*0.8} color={MosCeleste} />}
                                     {messaggio.state=="failed" && <Feather name="x" size={fontSizeCampi*0.8} color="red" />}
@@ -325,12 +357,13 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
                                 minimumTrackTintColor="#52575D"
                             />
                          </View>
-                    </View>     
-                        <Text style={[styles.timestampOrarioAudioUtenteCorrente,{textAlign:"left"}]}>15:31</Text>
+                    </View>
+                        {getTimestamp(messaggio.date,false)}     
                         <View style={[styles.bordoInferiore,{alignSelf:"flex-start"}]}/>
                 </View>
             }
             </View>
+            </>
             )
 }
 
@@ -398,4 +431,11 @@ const styles = StyleSheet.create({
         paddingTop:15,
         alignSelf:"flex-end"
     },
+    dataCentrale:{
+        paddingBottom:40,
+        textAlign:"center",
+        fontFamily: "Raleway_200ExtraLight",
+        color: "#52575D",
+        fontSize:fontSizeCampi*1.5
+    }
   });

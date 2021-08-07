@@ -351,19 +351,52 @@ const getListOfChatMessages = async (nomeTabella, offset) => {
     }) 
 }
 
+/*
+    Memorizzati ci sono alcuni messaggi con state 'in-progress' o 'failed'. Questa funzione viene chiamata solo
+    quando la chat viene aperta per la prima volta ad ogni nuovo riavvio dell'app. Serve a pulire i 
+    vecchi messaggi (ossia quelli generati prima che il telefono killasse l'app) e che non sono mai stati inviati
+*/
+const cleanChatFromFailedMessages = async (nomeTabella) => {
+    return new Promise((resolve, reject) => {
+        try{
+            console.log("Avvio pulizia messaggi...");
+            let query = "DELETE FROM "+nomeTabella+" WHERE state='in-progress' OR state='failed'" ;
+            db.transaction(
+                (tx)=>{
+                    tx.executeSql(
+                        query,
+                        [],
+                        //in caso di successo
+                        (_,{ rows: { _array } }) => { //console.log(_array); 
+                                                      resolve("tabella pulita")},
+                        //in caso di errore
+                        (_, error) => { reject("tabella non pulita")}
+                    )
+                },
+                (error) =>{reject("tabella non pulita")},
+                ()=>{ console.log("transazione eseguita con successo:");}
+            )
+    
+        }catch(e){
+            throw e;
+        }
+
+    }) 
+}
+
 //Lo stato "state" è valido solo per gli audio vocali
 
-const storeNewMessage = async(nomeTabella,author,date,type,value, state) => {
+const storeNewMessage = async(nomeTabella,key,author,date,type,value, state) => {
     return new Promise((resolve, reject) => {
         try{
             //const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente+".db");
             console.log("Memorizzo nuovo messaggio");
-            let update = "INSERT INTO "+nomeTabella+"(author,date,type,content,state) VALUES(?,?,?,?,?)";
+            let update = "INSERT INTO "+nomeTabella+"(row,author,date,type,content,state) VALUES(?,?,?,?,?,?)";
                 db.transaction(
                     (tx)=>{
                         tx.executeSql(
                             update,
-                            [author,date, type,value,state],
+                            [key,author,date, type,value,state],
                             //in caso di successo
                             (_, result) => {resolve(result)},
                             //in caso di errore
@@ -379,9 +412,10 @@ const storeNewMessage = async(nomeTabella,author,date,type,value, state) => {
     })
 }
 
-const saveAudioIntoFolder = async(utenteCorrente, folder,author, uri_cache) =>{
+const saveAudioIntoFolder = async(utenteCorrente, folder,key, author,date, uri_cache) =>{
     return new Promise(async(resolve, reject) =>{
         try {
+            console.log("parametri: "+utenteCorrente+","+folder+","+key+","+author+","+date+","+uri_cache);
             //const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente+".db");
             console.log("salvo audio che attualmente si trova in "+uri_cache+" nel file system");
             //crea una cartella se non esiste
@@ -389,7 +423,12 @@ const saveAudioIntoFolder = async(utenteCorrente, folder,author, uri_cache) =>{
                 intermediates: true
             });
             
-            console.log("cartella creata (se non esisteva già):");
+            console.log("cartella creata (se non esisteva già):"+date);
+            //creo percorso di destinazione
+            const percorso= FileSystem.documentDirectory + utenteCorrente + "/" + folder+"/"+(author+"_"+date+"").replace(/ /g,"")+".aac";
+            console.log("salvo nel percorso: "+percorso);
+            //se l'audio è stato inviato dall'utente corrente
+            if(utenteCorrente==author){
             //scrivo il file che si trova in un uri temporanea (cache) nel database
             //quando lo scrivo utilizzo
             const audio_string = await FileSystem.readAsStringAsync(uri_cache,{ encoding: FileSystem.EncodingType.Base64 }); //NB: SE NON SI CRIPTA USARE DOWNLOAD_ASINC PER SCRIVERE DIRETTAMENTE NELLA NUOVA LOCAZIONE INVECE DI FARE READ E POI WRITE
@@ -405,17 +444,26 @@ const saveAudioIntoFolder = async(utenteCorrente, folder,author, uri_cache) =>{
             */
            //prelevo formato di salvataggio
 
-            let indexOfFormat = uri_cache.lastIndexOf(".");
-            let formato = uri_cache.substring(indexOfFormat); //es--> .mp4
-            const percorso= FileSystem.documentDirectory + utenteCorrente + "/" + folder+"/"+(new Date().toUTCString().replace(/ /g,""))+formato;
+            //let indexOfFormat = uri_cache.lastIndexOf(".");
+            //let formato = uri_cache.substring(indexOfFormat); //es--> .mp4
             await FileSystem.writeAsStringAsync((percorso), audio_string, {encoding: FileSystem.EncodingType.Base64 });
+            //salvo nel database
+            await storeNewMessage(utenteCorrente+folder+"",key,author,date+"","audio",percorso,"in-progress");
             console.log("file salvato con successo nel file system in: "+percorso);
-            //salvo nel database (mi ritorna il)
-            await storeNewMessage(utenteCorrente+folder+"",author,"30/07/2021","audio",percorso,"succeed");
+            }
+            else {
+                let uri = await FileSystem.downloadAsync(
+                    uri_cache,
+                    percorso
+                );
+            //salvo nel database
+            await storeNewMessage(utenteCorrente+folder+"",key,author,date+"","audio",percorso,"succeed");
+            }
             console.log(FileSystem.documentDirectory);
             resolve(percorso);
         } catch (err) {
             console.log("errore durante il salvataggio dell'audio: "+err);
+            reject();
             throw err;
         }
         
@@ -423,11 +471,11 @@ const saveAudioIntoFolder = async(utenteCorrente, folder,author, uri_cache) =>{
     })
 }
 
-const updateAudioState = async(nomeTabella,rowAudio, new_state) => {
+const updateMessageState = async(nomeTabella,row, new_state) => {
     return new Promise((resolve, reject) => {
         try{
-            console.log("Aggiorno stato audio");
-            let update = "UPDATE "+nomeTabella+" SET state='"+new_state+"' WHERE row="+rowAudio;
+            console.log("Aggiorno stato messaggio");
+            let update = "UPDATE "+nomeTabella+" SET state='"+new_state+"' WHERE row="+row;
                 db.transaction(
                     (tx)=>{
                         tx.executeSql(
@@ -456,5 +504,6 @@ export default local_storage = {
     getListOfChatMessages,
     storeNewMessage,
     saveAudioIntoFolder,
-    updateAudioState
+    updateMessageState,
+    cleanChatFromFailedMessages
 }

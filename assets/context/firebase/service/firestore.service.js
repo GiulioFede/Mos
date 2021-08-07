@@ -3,6 +3,7 @@ import * as firebase from 'firebase';
 import 'firebase/firestore';
 import 'firebase/functions'
 const bucketName = "mos-test-db748.appspot.com"; // NB: CAMBIA 'mos-test-db748' QUANDO CAMBI NOME DATABASE
+import NetInfo from '@react-native-community/netinfo';
 
 export function _creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso){
    console.log("servizio: crea nuovo utente................................................................................");
@@ -427,19 +428,25 @@ export function _isProfiloCompletato(uid){
                                                 callbackSuccess,
                                                 callbackFailure){
 
+            //se manca la connessione chiamo subito la callback di failure
+            let connection_state = await NetInfo.fetch();
+            if(connection_state.isConnected==false) callbackFailure();
+
             if(array_of_requests.length==0){
                 array_of_requests.push([chatId,contactUid,type,value,{'onSuccess': function()  {callbackSuccess();}},{'onSuccess': function()  {callbackFailure();}}]);
                     try{
+                        let served = 0;
                         while(1){
                             console.log("eseguo richieste di invio messaggi");
                             await array_of_requests.reduce( async(oldPromise,request_params) =>{
                                 try{
+                                    served++;
                                     await oldPromise;
                                     console.log("SUCCESSO: ESEGUO RICHIESTA ARRAY_REQUESTS");
                                     console.log(request_params[0]+","+request_params[1]+","+request_params[2]+","+request_params[3]);
                                     console.log(request_params[4]);
                                     //invio messaggio
-                                    await _inviaMessaggio(request_params[0],request_params[1],request_params[2],request_params[3]);
+                                    await _inviaMessaggio(request_params[0],request_params[1],request_params[2],request_params[3], served);
                                     console.log("messaggio inviato");
                                     //se è andato tutto bene eseguo la callback di successo
                                     await request_params[4]['onSuccess']();
@@ -457,7 +464,9 @@ export function _isProfiloCompletato(uid){
                                 //
                                 console.log("FINE esecuzione richieste messaggi");
                                 array_of_requests = [];
-                                if(array_of_new_requests.length==0) break;
+                                if(array_of_new_requests.length==0){
+                                    break;
+                                } 
                                 else {
                                     array_of_requests = [...array_of_new_requests];
                                     array_of_new_requests = [];
@@ -476,7 +485,8 @@ export function _isProfiloCompletato(uid){
     export async function _inviaMessaggio(chatId, 
                                     contactUid, 
                                     type, 
-                                    value){
+                                    value,
+                                    served){
         console.log("invio messaggio...")
         var db = firebase.firestore();
         
@@ -489,7 +499,8 @@ export function _isProfiloCompletato(uid){
                      .add({
                          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                          type: type,
-                         value: value
+                         value: value,
+                         served: served
                      });
             }catch(e){
                 throw e;
@@ -517,9 +528,11 @@ export function _isProfiloCompletato(uid){
                      .add({
                          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                          type: type,
-                         value: downloadUrl
+                         value: downloadUrl,
+                         served: served
                      });
             }catch(e){
+                console.log(e);
                 throw e;
             }
                 
@@ -535,6 +548,23 @@ export function _isProfiloCompletato(uid){
             result += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
         }
         return result;
+    }
+
+    export function _ottieniAscoltatoreNuoviMessaggi(chatID,channelID, lastTimestampStored){
+        //ascolto documenti in una raccolta
+        let db = firebase.firestore();
+        //se lastTimestampStored == "-1" significa che la chat è appena iniziata
+        if(lastTimestampStored=="-1")
+            return db.collection("chats")
+            .doc(chatID)
+            .collection(channelID)
+            .orderBy("timestamp");
+        else
+            return db.collection("chats")
+                    .doc(chatID)
+                    .collection(channelID)
+                    .where("timestamp",">",new Date(lastTimestampStored))
+                    .orderBy("timestamp");
     }
 
 

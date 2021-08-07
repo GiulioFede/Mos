@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto, _inviaNuovoMessaggio} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto, _inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -102,7 +102,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     getListOfConversations,
                     getChatSummaryInformation,
                     getMediaProfiloContatto,
-                    inviaNuovoMessaggio
+                    inviaNuovoMessaggio,
+                    ottieniAscoltatoreNuoviMessaggi
                 }}
                 >
                 {children}
@@ -344,4 +345,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
           console.log("errore in inviaNuovoMessaggio");
           throw e;
       }
+  }
+
+  function ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored){
+      return _ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored);
   }

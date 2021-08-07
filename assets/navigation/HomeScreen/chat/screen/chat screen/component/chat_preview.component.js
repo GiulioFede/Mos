@@ -6,14 +6,14 @@ import MessageBubble from "./message_bubble";
 import { altezzaDevice, fontSizeCampi, fontSizeSottoTitolo, fontSizeTitolo, fontSizeTitoloPiccolo } from "../../../../../../context/variabili_globali/variabiliGlobali";
 
 
-const ChatPreview =({navigation,nome,contactUid, content, media}) => {
+const ChatPreview =({navigation,chatId, nome,contactUid, content, media}) => {
 
-    console.log("PROFILE IMAHE URL");
-    console.log(media);
+    console.log("Chat ID-->");
+    console.log(chatId);
 
     function apriDettagliChat(){
         console.log("apro dettagli chat con utente "+contactUid);
-        navigation.navigate("Chat detail",{contactUid: contactUid});
+        navigation.navigate("Chat detail",{chatId: chatId, contactUid: contactUid});
     }
 
     function apriDettagliProfilo(){
