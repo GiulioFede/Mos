@@ -1,6 +1,7 @@
 import React from "react";
 import {View, Text, StyleSheet,Animated, useWindowDimensions} from 'react-native';
 import { altezzaSchermoInterno } from "../../../context/variabili_globali/variabiliGlobali";
+import { MosCeleste } from "../../../resources/colors";
 
 export default function IndicatoreSlide({data, scrollX}){
 
@@ -35,6 +36,7 @@ const styles = StyleSheet.create({
         borderRadius:5,
         backgroundColor:"white",
         marginHorizontal:8,
-        alignSelf:"center"
+        alignSelf:"center",
+        backgroundColor:MosCeleste
     }
 })

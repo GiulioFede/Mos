@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto, _inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -84,7 +84,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     controllaCodiceDiVerificaTelefonoEAggiornaNumero,
                     registraNuovoUtente,
                     inviaEmailDiVerifica,
-                    creaNuovoUtente,
+                    creaNuovoUtente,//vecchio, prendi quello sotto
+                    creaNuovoProfiloUtente, //nuovo
                     aggiornaImmagineProfilo,
                     isProfiloCompletato,
                     getUrlImmagineProfiloUtente,
@@ -103,7 +104,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     getChatSummaryInformation,
                     getMediaProfiloContatto,
                     inviaNuovoMessaggio,
-                    ottieniAscoltatoreNuoviMessaggi
+                    ottieniAscoltatoreNuoviMessaggi,
+                    getAllMediaOfCurrentUser
                 }}
                 >
                 {children}
@@ -218,9 +220,37 @@ export const AutenticazioneUtenteProvider = ({children}) => {
    }
 
    //-------------------- METODI PER LA CREAZIONE DI UN NUOVO UTENTE ---------------------------------
-    function creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso){
+   //vecchio 
+   function creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso){
         console.log("autenticazione: crea nuovo utente");
         return _creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso);
+    }
+    //nuovo
+    function creaNuovoProfiloUtente(base64,
+                                    name,
+                                    date_of_birth,
+                                    biological_sex,
+                                    gender_identity,
+                                    gender_preference,
+                                    self_description,
+                                    hash,
+                                    lat,
+                                    lng){
+        try{
+            console.log("creaNuovoProfiloUtente....");
+            return _creaNuovoProfiloUtente( base64,
+                                            name,
+                                            date_of_birth,
+                                            biological_sex,
+                                            gender_identity,
+                                            gender_preference,
+                                            self_description,
+                                            hash,
+                                            lat,
+                                            lng);
+        }catch(e){
+            throw e;
+        }
     }
 
     function aggiornaImmagineProfilo(idUser, blob){
@@ -245,9 +275,9 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     }
 
     //NEW
-    function eliminaImmagineDiGalleria(url, nome){
-        console.log("elimino immagine di galleria di nome "+nome+" e url:"+url);
-        return _eliminaImmagineDiGalleria(url,nome);
+    function eliminaImmagineDiGalleria(nome){
+        console.log("elimino immagine di galleria di nome "+nome);
+        return _eliminaImmagineDiGalleria(nome);
     }
 
     function cambiaImmagineDiProfilo(idUser, blob){
@@ -263,7 +293,11 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     //NEW:Caricare una nuova immagine di profilo (isForProfile=true e in tal caso nomeImmagine ha senso) oppure di galleria (isForProfile=false)
     function caricaNuovaImmagine(base64, isForProfile, nomeImmagine){
         console.log("carico nuova immagine");
-        return _caricaNuovaImmagine(base64, isForProfile, nomeImmagine);
+        try{
+            return _caricaNuovaImmagine(base64, isForProfile, nomeImmagine);
+        }catch(e){
+            throw e;
+        }
     }
 
     //NEW: ottieni url immagine
@@ -331,6 +365,10 @@ export const AutenticazioneUtenteProvider = ({children}) => {
   */
   function getMediaProfiloContatto(uid, visibility){
       return _getMediaProfiloContatto(uid,visibility);
+  }
+
+  function getAllMediaOfCurrentUser(){
+      return _getAllMediaOfCurrentUser();
   }
 
   /*

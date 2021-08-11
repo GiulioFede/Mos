@@ -13,7 +13,8 @@ import { AutenticazioneUtente } from '../context/firebase/autenticazione';
 import InformazioniPersonali from './Informazioni Personali/informazioniPersonali';
 import { altezzaDevice, larghezzaDevice } from '../context/variabili_globali/variabiliGlobali';
 import { MosCeleste } from '../resources/colors';
-
+import local_storage from '../context/local_storage/localStorage';
+import * as FileSystem from 'expo-file-system';
 
 
 const Drawer = createDrawerNavigator();
@@ -29,7 +30,7 @@ const Drawer = createDrawerNavigator();
 export default function HomeNavigator({navigation}) {
 
     //contesto
-    const {getUserInformation, getUtenteCorrente,user, logOut,scaricaUrlImmagine, setInformazioniProfiloUtente, getMediaProfiloUtente, getListOfConversations, setListOfConversations} = useContext(AutenticazioneUtente);
+    const {getUserInformation, getUtenteCorrente,user, logOut,scaricaUrlImmagine, setInformazioniProfiloUtente, getMediaProfiloUtente, getListOfConversations, setListOfConversations, getAllMediaOfCurrentUser} = useContext(AutenticazioneUtente);
 
     //se true indica che il profilo non è stato ancora caricato
     const [isProfileLoading, setIsProfileLoading] = useState(true);
@@ -64,90 +65,85 @@ export default function HomeNavigator({navigation}) {
       );
     }
 
-    //all'avvio carico il profilo utente
-    useEffect(()=>{
-      try{
-        //ottengo utente
-        console.log("carico profilo utente");
-        let uid = getUtenteCorrente();
-        //ottengo informazioni profilo
-        if(uid){
-              /*
-              ottiene i dati dell'utente nel formato (dentro .data):
-                  - dateOfBirth
-                  - name
-                  - position
-                  - sex
-                  - sexPreference
-             */
-          getUserInformation(uid)
-            .then((info)=>{
-                console.log("info ottenute");
-                if (info.exists) {
-                  console.log("Home: informazioni utente recuperate");
-                  console.log(info.data());
-                  //creo variabile info_utente in cui inserirò tutto come unico documento (informazioni base profilo + url media)
-                  const info_utente = info.data();
-                  /*
-                  scarico il documento contenente:
-                    - profileImageUrl
-                    - gallery (array di url delle immagini di galleria)
-                  */
-                  getMediaProfiloUtente()
-                    .then((media)=>{
-                      console.log("media ottenuti");
-                      if(media.exists){
-                      info_utente.urlGalleryImages = media.data().gallery;
-                      info_utente.urlProfileImage = media.data().profileImageUrl;
-                      console.log("info complete utente:");
-                      console.log(info_utente);
-                      //info contiene le info dell'utente
-                      setInformazioniProfiloUtente(info_utente);
+ //all'avvio carico il profilo utente
+ useEffect(()=>{
+  try{
+    //ottengo utente
+    console.log("carico profilo utente");
+    let uid = getUtenteCorrente();
+    //ottengo informazioni profilo
+    if(uid){
+          /*
+          ottiene i dati dell'utente nel formato (dentro .data):
+              - dateOfBirth
+              - name
+              - position
+              - sex
+              - sexPreference
+         */
+      getUserInformation(uid)
+        .then((info)=>{
+            console.log("info ottenute");
+            if (info.exists) {
+              console.log("Home: informazioni utente recuperate");
+              console.log(info.data());
+              //creo variabile info_utente in cui inserirò tutto come unico documento (informazioni base profilo + url media)
+              const info_utente = info.data();
+              
+              getAllMediaOfCurrentUser().then((media)=>{
+             // getMediaProfiloUtente()
+               // .then((media)=>{
+                  console.log("media ottenuti");
+                  info_utente.urlGalleryImages = media.gallery;
+                  info_utente.urlProfileImage = media.profileImageUrl;
+                  console.log("info complete utente:");
+                  console.log(info_utente);
+                  //info contiene le info dell'utente
+                  setInformazioniProfiloUtente(info_utente);
 
-                                          /*
-                    ottengo il documento delle informazioni sulle conversazioni nel formato:
-                            {
-                              conversations: [
-                                  0: {
-                                      chatId: "AHNCDJ..."
-                                      uid: "YSTRN..."
-                                  },
-                                  1: {
-                                      chatId: "BHNCDJ..."
-                                      uid: "ZSTRN..."
-                                  }
-                              ]
-                          }
-                   */
-                      getListOfConversations()
-                      .then((chats)=>{
-                        console.log("Prelevo informazioni chat utente:");
-                        if(chats.exists)
-                          setListOfConversations(chats.data())
-                        console.log(chats.data())
-                      }).catch((err)=>{
-                        console.log("Errorre durante il recupero delle informazioni sulla chat dell'utente:"+err);
-                      }).finally(()=>{
-                        setIsProfileLoading(false);
-                      });
-                    }
-                    }).catch((err)=>{
-                      console.log("Navigation.home.js: Si è verificato un problema durante il download dei media dell'utente")
-                    }) 
-                    
-                } else {
-                  // doc.data() will be undefined in this case
-                  console.log("No such document!");
-                }
-            }).catch((e)=>{
-              console.log("Navigation.home.js: Si è verificato un problema durante il recupero delle info dell'utente")
-              console.log(e);
-            })
-        }
-      }catch(e){
-        console.log("si è verificato un errore:"+e);
-      }
-    },[user])
+                                      /*
+                ottengo il documento delle informazioni sulle conversazioni nel formato:
+                        {
+                          conversations: [
+                              0: {
+                                  chatId: "AHNCDJ..."
+                                  uid: "YSTRN..."
+                              },
+                              1: {
+                                  chatId: "BHNCDJ..."
+                                  uid: "ZSTRN..."
+                              }
+                          ]
+                      }
+               */
+                  getListOfConversations()
+                  .then((chats)=>{
+                    console.log("Prelevo informazioni chat utente:");
+                    if(chats.exists)
+                      setListOfConversations(chats.data())
+                    console.log(chats.data())
+                  }).catch((err)=>{
+                    console.log("Errorre durante il recupero delle informazioni sulla chat dell'utente:"+err);
+                  }).finally(()=>{
+                    setIsProfileLoading(false);
+                  });
+                }).catch((err)=>{
+                  console.log("Navigation.home.js: Si è verificato un problema durante il download dei media dell'utente:"+err)
+                }) 
+            } else {
+              // doc.data() will be undefined in this case
+              console.log("No such document!");
+            }
+            
+        }).catch((e)=>{
+          console.log("Navigation.home.js: Si è verificato un problema durante il recupero delle info dell'utente")
+          console.log(e);
+        })
+    }
+  }catch(e){
+    console.log("si è verificato un errore:"+e);
+  }
+},[user])
 
     //se il profilo sta ancora caricando...
     if(isProfileLoading){

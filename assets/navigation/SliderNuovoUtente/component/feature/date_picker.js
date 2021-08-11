@@ -69,6 +69,6 @@ const styles = StyleSheet.create({
   data: {
     fontSize:fontSizeSottoTitolo,
     fontFamily: "Raleway_200ExtraLight",
-    color: "white",
+    color: MosCeleste,
   }
 })

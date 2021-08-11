@@ -1,7 +1,7 @@
 import React, {useState,useEffect,useContext, useRef} from "react";
-import {View, Text,StyleSheet, FlatList,Animated, KeyboardAvoidingView,ScrollView, useWindowDimensions, BackHandler} from "react-native";
+import {View, Text,StyleSheet, FlatList,Animated, KeyboardAvoidingView,ScrollView, useWindowDimensions, BackHandler, Dimensions, TouchableOpacity} from "react-native";
 import {Snackbar, ActivityIndicator} from "react-native-paper";
-import { ColoreBarraDiStato } from "../../context/variabili_globali/variabiliGlobali";
+import { altezzaDevice, ColoreBarraDiStato, iconSize, larghezzaDevice } from "../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste } from "../../resources/colors";
 import IndicatoreSlide from "./component/indicatore_slide";
 import ProgressiveButton from "./component/progressive_button";
@@ -9,15 +9,17 @@ import SlidePage from "./component/slide_page";
 import * as ImageManipulator from 'expo-image-manipulator';
 import slider_data from './resources/slider_data';
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
+import { Ionicons } from '@expo/vector-icons';
+import { geohashForLocation } from "geofire-common";
 
 export default function SliderNuovoUtente({route, navigation}){ //NB: route.params.uid contiene l'uid col quale salvare l'utente (e' uguale all'uid di autenticazione)
 
     //contesto autenticazione
-    var {creaNuovoUtente, logOut, caricaNuovaImmagine} = useContext(AutenticazioneUtente);
+    var {creaNuovoProfiloUtente, logOut, caricaNuovaImmagine} = useContext(AutenticazioneUtente);
     //estraggo argomenti dalla funzione
     var {uid} = route.params;
 
-    var coloreBarra = useContext(ColoreBarraDiStato);
+    //var coloreBarra = useContext(ColoreBarraDiStato);
     const {width, height} = useWindowDimensions();
 
     const scrollX = useRef(new Animated.Value(0)).current;
@@ -31,9 +33,11 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
     //qui mantengo tutti i valori che mi servono per creare l'utente
     let name = useRef("");
     let dataDiNascita = useRef("");
-    let posizione = useRef("");
+    let posizione = useRef([]);
     let sesso = useRef("");
+    let identitaDiGenere = useRef("");
     let preferenzaSesso = useRef("");
+    let descrizione = useRef("");
     let uriImmagineProfilo = useRef("");
 
     //funzioni per modificare i dati sopra
@@ -63,7 +67,7 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
             setSnackError("Devi avere almeno 14 anni per usare Mosaic.");
         }
         else {
-            dataDiNascita.current=data.getDate()+"/"+(data.getMonth()+1)+"/"+data.getFullYear();
+            dataDiNascita.current=data.toString();//getDate()+"/"+(data.getMonth()+1)+"/"+data.getFullYear();
             setShowForwardArrow(true);
         }
     }
@@ -78,9 +82,22 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
         setShowForwardArrow(true);
     }
 
+    function setIdentitaDiGenere(identita){
+        identitaDiGenere.current = identita;
+        setShowForwardArrow(true);
+    }
+
     function setPreferenzaSesso(sexPreference){
         preferenzaSesso.current = sexPreference;
         setShowForwardArrow(true);
+    }
+
+    function setDescrizioneUtente(desc){
+        descrizione.current = desc;
+        if(descrizione.current != "")
+            setShowForwardArrow(true);
+        else
+            setShowForwardArrow(false);
     }
 
     function setUriImmagineProfilo(uri){
@@ -92,21 +109,64 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
     const [isCreazioneUtenteLoading, setIsCreazioneUtenteIsLoading] = useState(false);
   
     function creaNuovoProfilo(){
-        console.log("creazione profilo:"+name.current+","+dataDiNascita.current+","+posizione.current+","+sesso.current+","+preferenzaSesso.current+","+uriImmagineProfilo.current);
+        console.log("creazione profilo:"+name.current+","+dataDiNascita.current+","+posizione.current+","+sesso.current+","+identitaDiGenere.current+","+preferenzaSesso.current+","+uriImmagineProfilo.current);
         //ultimo check di sicurezza
-        if(!uid || uid.length==0 || name.current.length==0 || dataDiNascita.current.length==0 || posizione.current.length == 0 || sesso.current.length==0 || preferenzaSesso.current.length==0 || uriImmagineProfilo.current.length==0){
+        if(!uid || uid.length==0 || name.current.length==0 || dataDiNascita.current.length==0 || posizione.current.length == 0 || sesso.current.length==0 || identitaDiGenere.current=="" || preferenzaSesso.current.length==0 || descrizione.current.length==0 || uriImmagineProfilo.current.length==0){
             console.log("Errore generico:"+e);
             setSnackError("Si è verificato un problema. Riprova più tardi.");
             return;
         }
 
         setIsCreazioneUtenteIsLoading(true);
-        coloreBarra.setColore("white");
+        try{
+            console.log("genero hash:");
+            //genero hash dalla posizione
+            let hash = geohashForLocation([posizione.current[0], posizione.current[1]]);
+            console.log(hash);
+            console.log("manipolo immagine");
+            //1) manipolo l'immagine per ridurne le dimensioni a meno di 1MB cosi da velocizzare lato server la trasformazione
+            ImageManipulator.manipulateAsync(
+                                uriImmagineProfilo.current,
+                                [{ resize: { width: 800, height: 800 } }],
+                                { format: 'jpeg',base64: true })
+                            .then(async(immagineManipolata)=>{
+                                try{
+                                    console.log("immagine manipolata. Creo profilo...");
+                                    await creaNuovoProfiloUtente(immagineManipolata.base64,
+                                                                 name.current,  
+                                                                 dataDiNascita.current,
+                                                                 sesso.current,
+                                                                 identitaDiGenere.current,
+                                                                 preferenzaSesso.current,
+                                                                 descrizione.current,
+                                                                 hash, 
+                                                                 posizione.current[0],
+                                                                 posizione.current[1]
+                                    );
+                                    console.log("CREAZIONE PROFILO RIUSCITA!!!");
+                                    setIsCreazioneUtenteIsLoading(false);
+                                    navigation.navigate("Home");    
+                                }catch(e){
+                                    console.log("errore durante la creazione del profilo:"+e);
+                                    setSnackError("Si è verificato un problema durante la creazione del profilo. Riprovare più tardi.");
+                                    setIsCreazioneUtenteIsLoading(false);
+                                }                           
 
+                            }).catch((e)=>{
+                                setSnackError("Si è verificato un problema. Riprova più tardi.");
+                                console.log("slider_nuovo_utente.js : errore-->"+e);
+                                setIsCreazioneUtenteIsLoading(false);
+                            })
+        }catch(e){
+            console.log("errore durante la creazione del profilo:"+e);
+            setSnackError("Si è verificato un problema durante la creazione del profilo. Riprovare più tardi.");
+            setIsCreazioneUtenteIsLoading(false);
+        }
+        //coloreBarra.setColore("white");
+           /*
         try{
                 
-            console.log("creazione nuovo profilo...");
-            
+            console.log("creazione nuovo profilo..."); 
             creaNuovoUtente(uid,
                 name.current,
                 dataDiNascita.current,
@@ -146,7 +206,7 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
 
                     }).catch((e)=>{
                         setIsCreazioneUtenteIsLoading(false);
-                        coloreBarra.setColore(MosCeleste);
+                        //coloreBarra.setColore(MosCeleste);
                         var messaggio = "Si è verificato un problema. Riprova più tardi.";
                         var code = e.code;
 
@@ -156,10 +216,11 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                     });
             }catch(e){
                 setIsCreazioneUtenteIsLoading(false);
-                coloreBarra.setColore(MosCeleste);
+                //coloreBarra.setColore(MosCeleste);
                 console.log("Errore generico:"+e);
                 setSnackError("Si è verificato un problema. Riprova più tardi.");
             }
+            */
             
     }
 
@@ -177,18 +238,22 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
             slidesRef.current.scrollToIndex({index: currentIndex+1});
         }else 
             console.log("last item");
-
-        console.log(currentIndex+":"+name+","+dataDiNascita);
-        console.log(name);
+        console.log("Nuovo inserimento");
+        console.log("indice corrente:"+currentIndex);
+        console.log("valore:"+descrizione.current);
         if(currentIndex==0 && dataDiNascita.current=="") //se sono in data ed è vuota non permettere di andare avanti
             setShowForwardArrow(false);
         if(currentIndex==1 && posizione.current=="")
             setShowForwardArrow(false);
         if(currentIndex==2 && sesso.current=="")
             setShowForwardArrow(false);
-        if(currentIndex==3 && preferenzaSesso.current=="")
+        if(currentIndex==3 && identitaDiGenere.current=="")
             setShowForwardArrow(false);
-        if(currentIndex==4 && uriImmagineProfilo.current=="")
+        if(currentIndex==4 && preferenzaSesso.current=="")
+            setShowForwardArrow(false);
+        if(currentIndex==5 && descrizione.current=="")
+            setShowForwardArrow(false);
+        if(currentIndex==6 && uriImmagineProfilo.current=="")
             setShowForwardArrow(false);
 
         //se l'indice corrente è diverso da 1 mostro la freccia indietro
@@ -222,10 +287,10 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
 
     //detect quando preme il bottone indietro
     useEffect(()=>{
-        coloreBarra.setColore(MosCeleste);
+        //coloreBarra.setColore(MosCeleste);
 
         const backAction = () => {
-            coloreBarra.setColore("white");
+            //coloreBarra.setColore("white");
             //eseguo il logout
             logOut().then((ok)=>{}).catch((e)=>{});
             navigation.navigate("LoginScreen");
@@ -245,9 +310,18 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                 keyboardVerticalOffset={20}
                 behavior= {(Platform.OS === 'ios')? "padding" : null}
             >
-            <View style={{flex:3, justifyContent:"center", alignItems:"center"}} >
-                <ScrollView>
+            <View style={{flex:1, justifyContent:"center", alignItems:"center"}} >
+            <ScrollView style={{flex:1}}>
+                {/* BARRA SUPERIORE */}
+                <View style={styles.barraSuperiore}>
+                        <TouchableOpacity onPress={() => {navigation.navigate("LoginScreen")}}>
+                                <Ionicons name="chevron-back" size={iconSize} color={MosCeleste} style={{paddingLeft:24}} />
+                        </TouchableOpacity>
+                </View>
+                <View style={{flex:0.5}}>
+                    <View style={{flex:0.4, maxHeight:altezzaDevice*0.7}}>
                         <FlatList
+                            style={{flex:1}}
                             data = {slider_data}
                             renderItem = {({item}) => 
                                                 <SlidePage 
@@ -256,12 +330,15 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                                                     setDataUtente={setDataDiNascita}
                                                     setPosizioneUtente={setPosizione}
                                                     setSessoUtente = {setSesso}
+                                                    setIdentitaDiGenere = {setIdentitaDiGenere}
                                                     setPreferenzaSessoUtente = {setPreferenzaSesso}
+                                                    setDescrizioneUtente = {setDescrizioneUtente}
                                                     setUriImmagine = {setUriImmagineProfilo}
                                                     creaProfilo = {creaNuovoProfilo}
                                                     setError = {setSnackError}
                                                     setCreazioneUtenteLoading = {setIsCreazioneUtenteIsLoading}
-                                                />}
+                                                />
+                                                }
                             horizontal
                             pagingEnabled
                             showsHorizontalScrollIndicator={false}
@@ -276,13 +353,15 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                             viewabilityConfig={viewConfig}
                             ref={slidesRef}
                         />
-                    <IndicatoreSlide data={slider_data} scrollX={scrollX}/> 
-                    <ProgressiveButton  percentage={(currentIndex+1)*(100/slider_data.length)} 
-                                        scrollSlide={scrollSlider}
-                                        scrollBack={scrollBack}
-                                        showLeftArrow={showLeftArrow}
-                                        showForwardArrow={showForwardArrow}/>
-
+                    </View>
+                    <View style={{flexGrow:1}}>
+                        <IndicatoreSlide data={slider_data} scrollX={scrollX}/> 
+                        <ProgressiveButton  percentage={(currentIndex+1)*(100/slider_data.length)} 
+                                            scrollSlide={scrollSlider}
+                                            scrollBack={scrollBack}
+                                            showLeftArrow={showLeftArrow}
+                                            showForwardArrow={showForwardArrow}/>
+                    </View>
                     {/*MOSTRA L'ERRORE SE SI RIEMPIE UN CAMPO IN MODO ERRATO */}
                     <Snackbar
                         visible={snackError ? true : false}
@@ -298,6 +377,7 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                         {snackError}
                     </Snackbar>
                  
+               </View>
                </ScrollView>
             </View>
             </KeyboardAvoidingView>
@@ -307,6 +387,8 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
             { isCreazioneUtenteLoading &&
                      <View style={{width:width, height:height,position:"absolute",zIndex: 100, backgroundColor:"rgba(255, 255, 255,0.9)", justifyContent:"center", alignItems:"center"}}>
                             <ActivityIndicator animating={true} color={MosCeleste} />
+                            <Text style={{width:larghezzaDevice*0.6, textAlign:"center", paddingTop:10}}>Creazione del profilo in corso...</Text>
+                            <Text style={{width:larghezzaDevice*0.6, textAlign:"center", paddingTop:20}}>Le tempistiche sono necessarie per garantire la privacy dei tuoi dati.</Text>
                      </View>
             }
         </View>
@@ -318,6 +400,12 @@ const styles = StyleSheet.create({
         flex:1,
         justifyContent:"center",
         alignItems:"center",
-        backgroundColor:MosCeleste
-    }
+        backgroundColor:"#fff"
+    },
+    barraSuperiore:{
+        width:Dimensions.get("window").width,
+        paddingTop:iconSize,
+        paddingBottom:iconSize,
+        flex:0.05
+    },
 })

@@ -272,7 +272,215 @@ const createNewTableForConversation = async(nomeTabella) => {
         throw e;
     }
     */
-    
+
+
+    /*
+        Crea una tabella per contenere le informazioni media del profilo. Ogni riga si riferisce a una immagine e contiene le seguenti informazioni:
+            - imageName: nome dell'immagine (se di profilo sarà sempre e solo profileImage1 o profileImage2)
+            - internal_path_0, internal_path_25, internal_path_50, internal_path_75, internal_path_100: percorso locale dove trovare l'immagine in tutte le sue versioni
+    */
+const createNewTableForProfileMedia = async(nomeTabella) => {
+        return new Promise((resolve, reject)=>{
+            try{
+                //creo tabella se non esiste
+                console.log("creo tabella se non esiste");
+                let query1 = 'CREATE TABLE IF NOT EXISTS '+ nomeTabella +'_media(imageName TEXT,internal_path_0 TEXT, internal_path_25 TEXT, internal_path_50 TEXT, internal_path_75 TEXT, internal_path_100 TEXT);';             
+                db.transaction(
+                        (tx)=>{
+                            tx.executeSql(
+                                query1,
+                                [],
+                                (_,result)=>{ resolve("tabella creata")},
+                                (_,error) => { console.log("tabella non creata")}
+                            )
+                        },
+                        (error) => { console.log("tabella non creata")},
+                        ()=>{ console.log("trasazione eseguita con successo:");}
+                    )
+
+            }catch(e){
+                throw e;
+            }
+        })
+    }
+
+const deleteMediaFolder = async(nomeUtente) => {
+    try{
+        await FileSystem.deleteAsync(FileSystem.documentDirectory + nomeUtente+"/media",{idempotent:true});
+    }catch(e){
+        throw e;
+    }
+}
+
+const deleteMediaTable = async(nomeUtente) =>{
+    return new Promise((resolve, reject) =>{
+        try{
+            
+            let update = "DROP TABLE IF EXISTS "+nomeUtente+"_media";
+            db.transaction(
+                (tx)=>{
+                    tx.executeSql(
+                        update,
+                        [],
+                        //in caso di successo
+                        (_, result) => { resolve(result)},
+                        //in caso di errore
+                        (_, error) => { reject(error)}
+                    )
+                },
+                (error) => reject(error),
+                (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
+            )
+        }catch(e){
+            throw e;
+        }
+    }) 
+
+}
+
+const saveImageLocally = async(userUid, url) => {
+
+    return new Promise(async(resolve, reject)=>{
+        try{
+            //NB:eliminarla, crearla quando si crea il profilo
+            await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + userUid+"/media", {
+                intermediates: true
+                });
+            //controllo che l'immagine non esiste già
+            let hash_url = stringToHash(url);
+            console.log("controllo esistenza immagine hash "+hash_url+" in locale...");
+            let info = await FileSystem.getInfoAsync(FileSystem.documentDirectory + userUid+"/media/"+hash_url, {md5:false, size:false});
+            //se non esiste, la salvo e ritorno l'uri locale
+            if(info.exists==false){
+                        console.log("immagine non esistente in locale. La salvo...");
+                        let new_image = await FileSystem.downloadAsync(url,FileSystem.documentDirectory + userUid+"/media/"+hash_url);
+                        console.log("salvata in "+new_image.uri);
+                        resolve(new_image.uri);
+            }
+            //se invece esiste ritorna l'uri locale
+            else {
+                console.log("immagine esistente in "+info.uri);
+                resolve(info.uri);
+            }
+        }catch(e){
+            throw e;
+        }
+    })
+}
+
+const removeImageLocally = async(userUid,url) =>{
+    return new Promise(async(resolve, reject)=>{
+        try{
+            let hash_url = stringToHash(url);
+            console.log("Elimino immagine salvata in locale con nome "+hash_url);
+            await FileSystem.deleteAsync(FileSystem.documentDirectory + userUid+"/media/"+hash_url, {idempotent:true});
+            console.log("Immagine in locale eliminata");
+            resolve(1);
+        }catch(e){
+            throw e;
+        }
+    })
+}
+
+// Convert to 32bit integer
+function stringToHash(string) {
+                  
+    var hash = 0;
+      
+    if (string.length == 0) return hash;
+      
+    for (i = 0; i < string.length; i++) {
+        char = string.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+      
+    return hash;
+}
+
+const addNewImage = async(userUid, 
+                          nomeImmagine, 
+                          local_uri_0,
+                          url_25,
+                          url_50,
+                          url_75,
+                          url_100 ) => {
+
+        try{
+
+            //crea una cartella se non esiste
+            await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + userUid+"/media", {
+                    intermediates: true
+                    });
+        console.log("scarico le 5 versioni...");
+        //scarico le 5 versioni della foto
+        const download_photos = [
+            FileSystem.copyAsync({from:local_uri_0, to: FileSystem.documentDirectory+userUid+"/media/"+nomeImmagine+".jpg"}),
+            FileSystem.downloadAsync(url_25,FileSystem.documentDirectory+userUid+"/media/"+nomeImmagine+"_25.jpg"),
+            FileSystem.downloadAsync(url_50,FileSystem.documentDirectory+userUid+"/media/"+nomeImmagine+"_50.jpg"),
+            FileSystem.downloadAsync(url_75,FileSystem.documentDirectory+userUid+"/media/"+nomeImmagine+"_75.jpg"),
+            FileSystem.downloadAsync(url_100,FileSystem.documentDirectory+userUid+"/media/"+nomeImmagine+"_100.jpg"),
+        ];
+
+       let local_uri = await Promise.all(download_photos);
+       console.log("immagini scaricate localmente in:");
+       console.log(local_uri);
+       return new Promise((resolve, reject)=>{
+        try{
+            //aggiungo immagine nella tabella
+            console.log("aggiungo immagine");
+            let insert_image = "INSERT INTO "+userUid+"_media(imageName,internal_path_0, internal_path_25, internal_path_50, internal_path_75, internal_path_100) VALUES(?,?,?,?,?,?)";          
+            db.transaction(
+                    (tx)=>{
+                        tx.executeSql(
+                            insert_image,
+                            [nomeImmagine,FileSystem.documentDirectory+userUid+"/media/"+nomeImmagine+".jpg",local_uri[1].uri,local_uri[2].uri,local_uri[3].uri,local_uri[4].uri],
+                            (_,result)=>{ resolve("immagine aggiunta")},
+                            (_,error) => { console.log("immagine non aggiunta")}
+                        )
+                    },
+                    (error) => { console.log("immagine non aggiunta")},
+                    ()=>{ console.log("trasazione eseguita con successo:");}
+                )
+
+        }catch(e){
+            throw e;
+        }
+    })
+    }catch(e){
+        console.log("errore local storage (addNewImage):"+e);
+        throw e;
+    }
+}
+
+const getMediaProfilo = async(nomeUtente) =>{
+    return new Promise((resolve, reject)=>{
+        try{
+            //da eliminare entrambe (+ async sopra)
+            //await deleteMediaFolder(nomeUtente);
+            //await deleteMediaTable(nomeUtente);
+
+            let query = "SELECT * FROM "+nomeUtente+"_media;";
+            db.transaction(
+                (tx)=>{
+                    tx.executeSql(
+                        query,
+                        [],
+                        //in caso di successo
+                        (_,{ rows: { _array } }) => { //console.log(_array); 
+                                                      resolve(JSON.stringify(_array))},
+                        //in caso di errore
+                        (_, error) => { reject("galleria non prelevata")}
+                    )
+                },
+                (error) =>{reject("galleria non prelevata")},
+                ()=>{ console.log("transazione eseguita con successo:");}
+            )
+        }catch(e){
+            throw e;
+        }
+    });
+}
 
 const checkIfTableExists = async(nomeTabella) => {
     return new Promise((resolve, reject)=>{
@@ -505,5 +713,12 @@ export default local_storage = {
     storeNewMessage,
     saveAudioIntoFolder,
     updateMessageState,
-    cleanChatFromFailedMessages
+    cleanChatFromFailedMessages,
+    createNewTableForProfileMedia,
+    addNewImage,
+    getMediaProfilo,
+    deleteMediaTable,
+    deleteMediaFolder,
+    saveImageLocally,
+    removeImageLocally
 }

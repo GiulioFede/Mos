@@ -9,6 +9,8 @@ import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/rale
 import { DatePicker } from "./components/datePicker";
 import * as Location from 'expo-location';
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
+import { geohashForLocation } from "geofire-common";
+import AreaSceltaGenere from "./components/areaSceltaGenere";
 
 export default function InformazioniPersonali({ navigation }) {
 
@@ -20,7 +22,7 @@ export default function InformazioniPersonali({ navigation }) {
 
     const scrollView = useRef();
 
-    //indica dove è stata fatta la modifica
+    //indica dove è stata fatta la modifica (dataDiNascita, descrizione, posizione, identità di genere)
     var indiciModifiche = useRef([false,false,false,false,false]);
 
     const [auth, setAuth] = useState((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]);
@@ -28,14 +30,15 @@ export default function InformazioniPersonali({ navigation }) {
 
     const [nome, setNome] = useState("");
 
-    const [dataDiNascita, setDataDiNascita] = useState("26/04/1996");
+    const [descrizione, setDescrizione] = useState(informazioniProfiloUtente.self_description);
+
+    const [dataDiNascita, setDataDiNascita] = useState(informazioniProfiloUtente.date_of_birth);
     const [erroreData, setErroreData] = useState(null);
 
     const [isLocationLoading, setIsLocationLoading] = useState("");
+
     var posizioneUtente = useRef("");
 
-    const [sesso, setSesso] = useState("maschio");
-    const [orientamentoSessuale, setOrientamentoSessuale] = useState("eterosessuale");
     const [isDatePickerOpened, setIsDatePickerOpened] = useState(false);
 
     //messaggio snack
@@ -115,8 +118,9 @@ function aggiornaPhoneNumber(){
 }
 
     function notificaModifiche(){
-        for(var i=0; i<4; i++){
+        for(var i=0; i<5; i++){
             if(indiciModifiche.current[i]==true){
+                console.log("modifica "+i);
                 scrollView.current.scrollToEnd({animated: true});
                 return;
             }
@@ -133,11 +137,12 @@ function aggiornaPhoneNumber(){
         }
         else {
             setErroreData(null);
-            let data_str = data.getDate()+"/"+(data.getMonth()+1)+"/"+data.getFullYear();
+            let data_str = data+"";//.getDate()+"/"+(data.getMonth()+1)+"/"+data.getFullYear();
+            console.log("setto data di nascita in modificaDataDiNascita uguale a "+data_str);
             setDataDiNascita(data_str);
-            console.log(informazioniProfiloUtente.dateOfBirth+","+data_str);
+            //console.log(informazioniProfiloUtente.date_of_birth+","+data_str);
             //avverto che è avvenuta una modifica se questa è diversa dalla precedente
-            if(informazioniProfiloUtente.dateOfBirth!=data_str){
+            if(informazioniProfiloUtente.date_of_birth!=data_str){
                 indiciModifiche.current[0]=true;
                 notificaModifiche();
             }else {
@@ -149,6 +154,12 @@ function aggiornaPhoneNumber(){
 
     function apriDatePicker(){
         setIsDatePickerOpened(true);
+    }
+
+    const [apriArea, setApriArea] = useState(false);
+    const [apriArea2, setApriArea2] = useState(false);
+    function apriAreaSceltaGenere(){
+
     }
 
     //LOCATION::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -192,12 +203,12 @@ function aggiornaPhoneNumber(){
                                     .then((pos)=>{
                                         setIsLocationLoading("aggiornata");
                                         //ottieni la posizione
-                                        const user_position = pos.coords.latitude+","+pos.coords.longitude;
+                                        const user_position = [pos.coords.latitude,pos.coords.longitude];
                                         console.log(pos);
                                         console.log(user_position);
                                         posizioneUtente.current=user_position;
                                         //avverto che è avvenuta una modifica
-                                        indiciModifiche.current[1]=true;
+                                        indiciModifiche.current[2]=true;
                                         notificaModifiche();
                                     }).catch((e)=>{
                                         setIsLocationLoading("");
@@ -231,25 +242,57 @@ function aggiornaPhoneNumber(){
         notificaModifiche();
     }
 
-    function modificaOrientamentoSessuale(tipo){
-        console.log(tipo+","+informazioniProfiloUtente.sexPreference);
-        if(tipo==informazioniProfiloUtente.sexPreference)
-            indiciModifiche.current[3]=false;
+    function modificaDescrizione(){
+        //se era diversa da prima
+        if(descrizione != informazioniProfiloUtente.self_description)
+            indiciModifiche.current[1]=true;
         else
-            indiciModifiche.current[3]=true;
+            indiciModifiche.current[1]=false;
+        notificaModifiche();
+    }
+
+    const [identitaDiGenere, setIdentitaDiGenere] = useState(informazioniProfiloUtente.gender_identity);
+    function modificaIdentitaDiGenere(newGender){
+        setIdentitaDiGenere(newGender);
+        //se è diversa dalla precedente
+        if(newGender != informazioniProfiloUtente.gender_identity)
+            indiciModifiche.current[3] = true;
+        else
+            indiciModifiche.current[3] = false;
+        
+        notificaModifiche();
+    }
+
+    
+    const [orientamentoSessuale, setOrientamentoSessuale] = useState("");
+    function modificaOrientamentoSessuale(tipo){
+        console.log("attrazione:"+tipo);
+        setOrientamentoSessuale(tipo);
+
+        if(tipo==informazioniProfiloUtente.gender_preference)
+            indiciModifiche.current[4]=false;
+        else
+            indiciModifiche.current[4]=true;
 
         notificaModifiche();
     }
 
+    console.log("data di birh:"+dataDiNascita);
     function salvaDettagliUtente(){
 
         var doc = {};
-        for(var i=0; i<4; i++){
+        for(var i=0; i<5; i++){
             if(indiciModifiche.current[i]==true){
-                if(i==0) doc["dateOfBirth"]=dataDiNascita;
-                else if(i==1) doc["position"]=posizioneUtente.current;
-                else if(i==2) doc["sex"]=sesso;
-                else if(i==3) doc["sexOrientation"]=orientamentoSessuale;
+                if(i==0) doc["date_of_birth"]=dataDiNascita+"";
+                else if(i==1) doc["self_description"] = descrizione;
+                else if(i==2) {
+                    doc["location.lat"]=posizioneUtente.current[0];
+                    doc["location.lng"]=posizioneUtente.current[1];
+                    let hash = geohashForLocation([posizioneUtente.current[0], posizioneUtente.current[1]]);
+                    doc["location.geohash"] = hash;
+                }
+                else if(i==3) doc["gender_identity"]= identitaDiGenere;
+                else if(i==4) doc["gender_preference"]=orientamentoSessuale;
             }
         }
 
@@ -262,12 +305,13 @@ function aggiornaPhoneNumber(){
                     .then((ris)=>{
                         setIsLoading(false);
                         //aggiorno autenticazione
-                        for(var i=0; i<4; i++){
+                        for(var i=0; i<5; i++){
                             if(indiciModifiche.current[i]==true){
-                                if(i==0) informazioniProfiloUtente.dateOfBirth=dataDiNascita;
-                                else if(i==1) informazioniProfiloUtente.position=posizioneUtente.current;
-                                else if(i==2) informazioniProfiloUtente.sex=sesso;
-                                else if(i==3) informazioniProfiloUtente.sexOrientation=orientamentoSessuale;
+                                if(i==0) informazioniProfiloUtente.date_of_birth=dataDiNascita+"";
+                                else if(i==1) informazioniProfiloUtente.self_description = descrizione;
+                                else if(i==2) informazioniProfiloUtente.position=posizioneUtente.current;
+                                else if(i==3) informazioniProfiloUtente.gender_identity=identitaDiGenere;
+                                else if(i==4) informazioniProfiloUtente.gender_preference=orientamentoSessuale;
                             }
                         }
                         //resetto
@@ -290,10 +334,11 @@ function aggiornaPhoneNumber(){
     function resetta(){
         //prima resetto tutti i campi con l'ultima modifica salvata
         setAuth((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]);
-        setDataDiNascita(informazioniProfiloUtente.dateOfBirth);
+        //setDataDiNascita(informazioniProfiloUtente.dateOfBirth);
         setIsLocationLoading("");
-        setSesso(informazioniProfiloUtente.sex);
-        setOrientamentoSessuale(informazioniProfiloUtente.sexPreference);
+        setDataDiNascita(informazioniProfiloUtente.date_of_birth);
+        setIdentitaDiGenere(informazioniProfiloUtente.gender_identity);
+        setOrientamentoSessuale(informazioniProfiloUtente.gender_preference);
 
         //resetto tutti gli errori
         scrollView.current.scrollTo({y: 0});
@@ -324,14 +369,24 @@ function aggiornaPhoneNumber(){
           //inizializzo elementi
           setAuth((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]);
           setNome(informazioniProfiloUtente.name);
-          setDataDiNascita(informazioniProfiloUtente.dateOfBirth);
+          setDescrizione(informazioniProfiloUtente.self_description);
+          //let dataDiNascitaTMP = new Date(informazioniProfiloUtente.date_of_birth);
+          console.log("setto data di nascita:"+informazioniProfiloUtente.date_of_birth);
+          setDataDiNascita(informazioniProfiloUtente.date_of_birth);
           setIsLocationLoading("");
-          setSesso(informazioniProfiloUtente.sex);
-          setOrientamentoSessuale(informazioniProfiloUtente.sexPreference);
+          setIdentitaDiGenere(informazioniProfiloUtente.gender_identity);
+          setOrientamentoSessuale(informazioniProfiloUtente.gender_preference);
       
           return () => backHandler.remove();
 
     },[informazioniProfiloUtente, informazioniAutenticazioneUtente]) //metto come dipendenza l'informazione del profilo utente cosi da richiamare useEffect ogni volta che un nuovo utente (o anche il vecchio che riaccede di nuovo) ricarico gli elementi nuovi
+
+
+    function getFormattedData(){
+        let dataDiNascitaTMP = new Date(dataDiNascita);
+        console.log("ritorno di "+dataDiNascita+" il valore: "+dataDiNascitaTMP.getDate()+"/"+(dataDiNascitaTMP.getMonth()+1)+"/"+dataDiNascitaTMP.getFullYear());
+        return dataDiNascitaTMP.getDate()+"/"+(dataDiNascitaTMP.getMonth()+1)+"/"+dataDiNascitaTMP.getFullYear()
+    }
 
         //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
@@ -413,13 +468,34 @@ function aggiornaPhoneNumber(){
                         <TouchableOpacity onPress={apriDatePicker}>
                             <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
                                 <Text
-                                        style={styles.campo}
-                                        defaultValue={dataDiNascita} >{dataDiNascita}</Text>
+                                        style={[styles.campo,{color:MosViola}]}
+                                        defaultValue={"..."}> {getFormattedData()} </Text>
                                 {erroreData && <Text style={[styles.errore,{marginTop:10}]}>{erroreData}</Text>}
                             </View>
                         </TouchableOpacity>
                         <DatePicker setData={modificaDataDiNascita} isVisible={isDatePickerOpened} setIsVisible={setIsDatePickerOpened} />
                         <Divider />
+
+                        {/*DESCRIZIONE*/}
+                        <View style={{ flex:0.8, width:"100%",marginBottom:10}}>
+                                <Text style={[styles.titoloCampo,{marginTop:20}]}>Descrizione</Text>
+                                <View style={{paddingLeft:Dimensions.get("window").width*0.03}}>
+                                    <TextInput
+                                        style={styles.campo}
+                                        autoCapitalize="none"
+                                        onChangeText={text => setDescrizione(text)}
+                                        onSubmitEditing={()=>modificaDescrizione()}
+                                        onBlur={()=> modificaDescrizione()} //focus perso
+                                        value={descrizione}
+                                        keyboardType="name-phone-pad"
+                                        multiline={true}
+                                        placeholder='...'
+                                        underlineColorAndroid='transparent'
+                                        maxLength={150}
+                                    />
+                                </View>
+                            </View>
+                            <Divider />
 
                         {/*AGGIORNA LA TUA POSIZIONE*/}
                         <Text style={[styles.titoloCampo,{marginTop:20}]}>Aggiorna la tua posizione</Text>
@@ -439,36 +515,43 @@ function aggiornaPhoneNumber(){
                         { isLocationLoading=="loading" && <ActivityIndicator animating={true} color={MosCeleste}/>}
                         </View>
                         <Divider />
+
                         {/*SESSO*/}
                         <Text style={[styles.titoloCampo,{marginTop:20}]}>Sesso</Text>
-                        <View>
-                            <View style={{ padding:Dimensions.get("window").height*0.01, flexDirection:"row", alignItems:"center"}}>
-                                <Text style={styles.campo}>Maschio </Text>
-                                <Checkbox status={sesso=="maschio" ? 'checked' : 'unchecked'} uncheckedColor="#52575D" color={MosCeleste}  onPress={() => { setSesso("maschio"); modificaSesso("maschio");}}/>
-                            </View>
-                            <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10, flexDirection:"row", alignItems:"center"}}>
-                                <Text style={styles.campo}>Femmina </Text>
-                                <Checkbox status={sesso=="femmina" ? 'checked' : 'unchecked'} uncheckedColor="#52575D" color={MosCeleste}  onPress={() => { setSesso("femmina"); modificaSesso("femmina");}}/>
-                            </View>
+                        <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
+                            <TextInput autoCapitalize="none"
+                                    editable={false}
+                                    style={styles.campo}
+                                    defaultValue={informazioniProfiloUtente.biological_sex} />
+                            <Text style={styles.sottoCampo}>(non modificabile)</Text>
                         </View>
                         <Divider />
-                        {/*ORIENTAMENTO SESSUALE*/}
-                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Orientamento sessuale</Text>
-                        <View>
-                            <View style={{ padding:Dimensions.get("window").height*0.01, flexDirection:"row", alignItems:"center"}}>
-                                <Text style={styles.campo}>Eterosessuale </Text>
-                                <Checkbox status={(orientamentoSessuale=="eterosessuale") ? 'checked' : 'unchecked'} uncheckedColor="#52575D" color={MosCeleste}  onPress={() => { setOrientamentoSessuale("eterosessuale"); modificaOrientamentoSessuale("eterosessuale")}}/>
+                        
+                        {/* IDENTITA' DI GENERE */}
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Identità di genere</Text>
+                        <TouchableOpacity onPress={()=>{setApriArea(true)}}>
+                            <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
+                                <Text
+                                        style={[styles.campo,{color:MosViola}]}
+                                        defaultValue={"..."}> {identitaDiGenere} </Text>
                             </View>
-                            <View style={{ padding:Dimensions.get("window").height*0.01,flexDirection:"row", alignItems:"center"}}>
-                                <Text style={styles.campo}>Omosessuale </Text>
-                                <Checkbox status={(orientamentoSessuale=="omosessuale") ? 'checked' : 'unchecked'} uncheckedColor="#52575D" color={MosCeleste}  onPress={() => { setOrientamentoSessuale("omosessuale");  modificaOrientamentoSessuale("omosessuale")}}/>
+                        </TouchableOpacity>
+                        <AreaSceltaGenere apriArea={apriArea} setApriArea={setApriArea} setIdentitaDiGenere={modificaIdentitaDiGenere} />
+
+                        <Divider/>
+
+                        {/* ORIENTAMENTO SESSUALE */}
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Da chi sei più attratto?</Text>
+                        <TouchableOpacity onPress={()=>{setApriArea2(true)}}>
+                            <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
+                                <Text
+                                        style={[styles.campo,{color:MosViola}]}
+                                        defaultValue={"..."}> {orientamentoSessuale} </Text>
                             </View>
-                            <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10, flexDirection:"row", alignItems:"center"}}>
-                                <Text style={styles.campo}>Bisessuale </Text>
-                                <Checkbox status={(orientamentoSessuale=="bisessuale") ? 'checked' : 'unchecked'} uncheckedColor="#52575D" color={MosCeleste}  onPress={() => { setOrientamentoSessuale("bisessuale");  modificaOrientamentoSessuale("bisessuale")}}/>
-                            </View>
-                        </View>
-                        <Divider />
+                        </TouchableOpacity>
+                        <AreaSceltaGenere apriArea={apriArea2} setApriArea={setApriArea2} setIdentitaDiGenere={modificaOrientamentoSessuale} />
+
+                        <Divider/>
 
                     {/*BOTTONE PER SALVARE*/}
                     <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10, textAlign:"center"}]} onPress={salvaDettagliUtente}><Text style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>SALVA DETTAGLI</Text></TouchableOpacity>
@@ -483,7 +566,7 @@ function aggiornaPhoneNumber(){
                 visible={snackMessage}
                 onDismiss={()=>{setSnackMessage(null)}}
                 action={{
-                label: 'Undo',
+                label: 'Chiudi',
                 onPress: () => {
                     // Do something
                 },

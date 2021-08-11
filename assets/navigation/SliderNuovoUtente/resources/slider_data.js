@@ -5,7 +5,7 @@ export default [
     {
         id: '1',
         title: "Benvenuto su Mosaic.",
-        subTitle: "Come ti chiami?",
+        subTitle: "Qual è il tuo nome?",
         info: "Inserisci solo il tuo nome. Sarai poi tu stesso a rivelarti."
     },
     {
@@ -22,24 +22,36 @@ export default [
     },
     {
         id: '4',
-        title: "Qual è il tuo sesso?",
+        title: "Qual è il tuo sesso biologico?",
         subTitle: "",
         info: "Conoscere il tuo sesso ci aiuterà a mostrarti solo alle persone che hanno tale preferenza. "
     },
     {
         id: '5',
-        title: "Qual è il tuo orientamento sessuale ?",
+        title: "Qual è la tua identità di genere?",
         subTitle: "",
         info: "Conoscere il tuo orientamento sessuale ci aiuterà a mostrarti solo alle persone che rispettano le tue preferenze. "
     },
     {
         id: '6',
-        title: "Fai il tuo primo selfie per Mosaic :)",
+        title: "Da chi sei più attratto?",
+        subTitle: "",
+        info: "Conoscere il tuo orientamento sessuale ci aiuterà a mostrarti solo alle persone che rispettano le tue preferenze. "
+    },
+    {
+        id: '7',
+        title: "Aggiungi una breve descrizione di te.",
+        subTitle: "Non entrare troppo nei particolari, dirai molto di più durante le conversazioni.",
+        info: "Conoscere il tuo orientamento sessuale ci aiuterà a mostrarti solo alle persone che rispettano le tue preferenze. "
+    },
+    {
+        id: '8',
+        title: "Fai il tuo primo selfie per Mosaic ;)",
         subTitle: "",
         info: "Potrai cambiare la tua foto quando vorrai. "
     },
     {
-        id: '7',
+        id: '9',
         title: "Fantastico!",
         subTitle: "Sei pronto a creare il tuo profilo per Mosaic?",
         info: "Alcuni dei passaggi fatti potrai modificarli anche dopo. "

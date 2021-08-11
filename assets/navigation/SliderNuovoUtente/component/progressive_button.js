@@ -51,17 +51,17 @@ export default function ProgressiveButton({percentage, scrollSlide, scrollBack, 
             <Svg width={size} height={size} style={{ justifyContent:"center", alignItems:"center"}} >
                 <G rotation="-90" origin={center} >
                 <Circle stroke="rgb(255,255,255,0.2)" cx={center} cy={center} r={radius} strokeWidth={strokeWidth} />
-                <Circle ref={progressRef} stroke="white" cx={center} cy={center} r={radius} strokeWidth={strokeWidth} strokeDasharray={circumference} />
+                <Circle ref={progressRef} stroke={MosCeleste} cx={center} cy={center} r={radius} strokeWidth={strokeWidth} strokeDasharray={circumference} />
                 </G>
             </Svg>
             { showForwardArrow &&
                 <TouchableOpacity onPress={scrollSlide} style={styles.button} activeOpacity={0.6}>
-                    <MaterialIcons name="arrow-forward-ios" size={altezzaSchermoInterno*0.03} color="white" />
+                    <MaterialIcons name="arrow-forward-ios" size={altezzaSchermoInterno*0.03} color={MosCeleste} />
                 </TouchableOpacity>
             }
             {showLeftArrow &&
             <TouchableOpacity onPress={scrollBack} style={styles.leftButton} activeOpacity={0.6}>
-                <MaterialIcons name="arrow-back-ios" size={altezzaSchermoInterno*0.03} color="white" />
+                <MaterialIcons name="arrow-back-ios" size={altezzaSchermoInterno*0.03} color={MosCeleste} />
             </TouchableOpacity>
             }
         </View>
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
         flex:1,
         height: altezzaSchermoInterno*0.06,
         justifyContent:"center",
-        alignItems:"center",
+        alignItems:"center"
     },
     button: {
         position:"absolute",

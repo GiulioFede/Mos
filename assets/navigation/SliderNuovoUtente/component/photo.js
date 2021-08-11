@@ -128,12 +128,12 @@ export default function PhotoManager({setErrore, setUriUtente}){
     return (
         <View>
             <TouchableOpacity onPress={apriCamera}>
-                <Text style={[styles.campiDaCompilare,{backgroundColor:"white", color:MosCeleste, padding:10,marginBottom:10, borderRadius:20}]}>SCATTA UNA FOTO</Text>
+                <Text style={[styles.campiDaCompilare,{backgroundColor:MosCeleste, color:"white", padding:10,marginBottom:10, borderRadius:20, textAlign:"center"}]}>SCATTA UNA FOTO</Text>
             </TouchableOpacity>
 
 
             <TouchableOpacity onPress={apriGalleria} >
-                <Text style={[styles.campiDaCompilare,{backgroundColor:"white", color:MosCeleste, padding:10, borderRadius:20}]}>SCEGLI DA GALLERIA</Text>
+                <Text style={[styles.campiDaCompilare,{backgroundColor:MosCeleste, color:"white", padding:10, borderRadius:20, textAlign:"center"}]}>SCEGLI DA GALLERIA</Text>
             </TouchableOpacity>
     </View>
     )

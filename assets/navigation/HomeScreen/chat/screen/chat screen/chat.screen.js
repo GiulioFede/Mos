@@ -95,51 +95,56 @@ export default function ChatScreen({navigation}){
         //2) Scarico la lista dei documenti delle conversazioni riassuntive
         console.log("Lista conversazioni");
         console.log(listOfConversations);
-        const promises = []; //qui inserisco tutte le promise per i summary delle chat
-        for(var i = 0; i < listOfConversations["conversations"].length; i++) {
-            let conversation = listOfConversations["conversations"][i];
-            promises.push(getChatSummaryInformation(conversation.chatId));
-        }
-        //attendo tutte le promise
-        Promise.all(promises)
-            .then((summaries)=>{
-                console.log("Tutte le informazioni sommarie delle conversazioni sono state scaricate");
-                //qui tutte le informazioni sommarie sono state caricate. Li inserisco nell'array che userò ovunque (sfrutto ciclo for sotto)
-                console.log(summaries[0].data());
-                //Prelevo media utente
-                const promisesMediaContatti = []; //qui inserisco tutte le promise 
-                const chatsSummaryTmp = [];
-                for(var i = 0; i < listOfConversations["conversations"].length; i++) {
-                    //sfrutto questo ciclo per salvarmi i sommari delle conversazioni
-                    let conversation = listOfConversations["conversations"][i];
-                    chatsSummaryTmp.push({key:i.toString(),chatId:conversation.chatId,  value: summaries[i].data(), contactName:conversation.contactName, contactUid:conversation.uid });
-                    //TODO-->NB: QUI BISOGNERA' SCEGLIERE UNA LOGICA PER CAPIRE QUALE LIVELLO DI VISIBILITà ADOTTARE, PER ADESSO METTO SEMPRE A 0
-                    const livelloDiVisibilità = "0";
-                    promisesMediaContatti.push(getMediaProfiloContatto(conversation.uid, livelloDiVisibilità));
-                }
+        //se possiede delle conversazioni...
+        if(listOfConversations!=null && listOfConversations["conversations"].length>0){
+            const promises = []; //qui inserisco tutte le promise per i summary delle chat
+            for(var i = 0; i < listOfConversations["conversations"].length; i++) {
+                let conversation = listOfConversations["conversations"][i];
+                promises.push(getChatSummaryInformation(conversation.chatId));
+            }
+            //attendo tutte le promise
+            Promise.all(promises)
+                .then((summaries)=>{
+                    console.log("Tutte le informazioni sommarie delle conversazioni sono state scaricate");
+                    //qui tutte le informazioni sommarie sono state caricate. Li inserisco nell'array che userò ovunque (sfrutto ciclo for sotto)
+                    console.log(summaries[0].data());
+                    //Prelevo media utente
+                    const promisesMediaContatti = []; //qui inserisco tutte le promise 
+                    const chatsSummaryTmp = [];
+                    for(var i = 0; i < listOfConversations["conversations"].length; i++) {
+                        //sfrutto questo ciclo per salvarmi i sommari delle conversazioni
+                        let conversation = listOfConversations["conversations"][i];
+                        chatsSummaryTmp.push({key:i.toString(),chatId:conversation.chatId,  value: summaries[i].data(), contactName:conversation.contactName, contactUid:conversation.uid });
+                        //TODO-->NB: QUI BISOGNERA' SCEGLIERE UNA LOGICA PER CAPIRE QUALE LIVELLO DI VISIBILITà ADOTTARE, PER ADESSO METTO SEMPRE A 0
+                        const livelloDiVisibilità = "0";
+                        promisesMediaContatti.push(getMediaProfiloContatto(conversation.uid, livelloDiVisibilità));
+                    }
 
-                setChatsSummary(chatsSummaryTmp);
+                    setChatsSummary(chatsSummaryTmp);
 
-                //avvio promises
-                Promise.all(promisesMediaContatti)
-                    .then((mediaContattiResult)=>{
-                        console.log("Tutti i media dei contatti sono stati scaricati");
-                        const mediaContattiTmp = [];
-                        for(var i = 0; i < listOfConversations["conversations"].length; i++) {
-                            console.log("contatti "+mediaContattiResult[i].data());
-                            //sfrutto questo ciclo per salvarmi i sommari delle conversazioni
-                            mediaContattiTmp.push({key:i.toString(), value:mediaContattiResult[i].data()});
-                        }
-                        setMediaContatti(mediaContattiTmp);
-                        //indico termine del caricamente delle chat
-                        setIsChatLoading(false);
-                    }).catch((err)=>{
-                        console.log("Si è verificato un errore durrante il recupero dei media dei contatti: "+err);
-                    })
-            }).catch((err)=>{
-                console.log("Si è verificato un errore durante il recupero delle informazioni sommarie sulle conversazioni: "+err);
-            })
-        console.log(listOfConversations);
+                    //avvio promises
+                    Promise.all(promisesMediaContatti)
+                        .then((mediaContattiResult)=>{
+                            console.log("Tutti i media dei contatti sono stati scaricati");
+                            const mediaContattiTmp = [];
+                            for(var i = 0; i < listOfConversations["conversations"].length; i++) {
+                                console.log("contatti "+mediaContattiResult[i].data());
+                                //sfrutto questo ciclo per salvarmi i sommari delle conversazioni
+                                mediaContattiTmp.push({key:i.toString(), value:mediaContattiResult[i].data()});
+                            }
+                            setMediaContatti(mediaContattiTmp);
+                            //indico termine del caricamente delle chat
+                            setIsChatLoading(false);
+                        }).catch((err)=>{
+                            console.log("Si è verificato un errore durrante il recupero dei media dei contatti: "+err);
+                        })
+                }).catch((err)=>{
+                    console.log("Si è verificato un errore durante il recupero delle informazioni sommarie sulle conversazioni: "+err);
+                })
+
+                console.log(listOfConversations);
+        }else
+            setIsChatLoading(false);
         
 
     }

@@ -7,12 +7,12 @@ import { MosCeleste } from '../../../../resources/colors';
 
 import ProfileComponent from './component/profile.component';
 
-//TODO: TROVARE L'ERRRORE CHE BLOCCA L'APP (LA FREEZZA)
-export default function Profile({navigation}){
+
+export default function Profile({navigation, route}){
     
       return (
           <View style={styles.container} >
-                  <ProfileComponent navigation={navigation} />
+                  <ProfileComponent navigation={navigation} route={route}/>
           </View>
       )
 }

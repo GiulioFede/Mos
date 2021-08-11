@@ -146,13 +146,11 @@ export function _isProfiloCompletato(uid){
         Se sullo storage qualche immagine viene eliminata e qualcun'altra no non ci sono problemi.
         Se sullo storage alcune foto da eliminare mancano non ci sono problemi.
     */
-    export function _eliminaImmagineDiGalleria(url, nome){
+    export function _eliminaImmagineDiGalleria(nome){
         console.log("elimino immagine................................................................................:");
         var db = firebase.firestore();
         const idUser = firebase.auth().currentUser.uid;
-        console.log(nome);
-        console.log(url);
-        console.log(url.replace(nome,nome+"_25"));
+        
         //faccio un batch per eliminare tutti i riferimenti su firestore nei 4 documenti dei media
         var batch = db.batch();
             //elimino riferimento immagine originale
@@ -263,6 +261,37 @@ export function _isProfiloCompletato(uid){
         return db.collection("users").doc(idUser).update(doc);
     }
 
+    //NUOVA VERSIONE
+    export function _creaNuovoProfiloUtente(base64,
+                                            name,
+                                            date_of_birth,
+                                            biological_sex,
+                                            gender_identity,
+                                            gender_preference,
+                                            self_description,
+                                            hash,
+                                            lat,
+                                            lng){
+        try{
+            console.log("_creaNuovoProfiloUtente...");
+            var creaProfilo = firebase.functions().httpsCallable('createNewUserProfile');
+            return creaProfilo({
+                image: base64,
+                name: name,
+                date_of_birth: date_of_birth,
+                biological_sex: biological_sex,
+                gender_identity: gender_identity,
+                gender_preference: gender_preference,
+                self_description: self_description,
+                hash: hash,
+                lat: lat,
+                lng: lng
+            });
+        }catch(e){
+            throw e;
+        }
+    }
+
 
     //NUOVA VERSIONE (ok)
     //Caricare una nuova immagine di profilo (isForProfile=true) oppure di galleria (isForProfile=false)
@@ -285,14 +314,12 @@ export function _isProfiloCompletato(uid){
             Nel caso peggiore ci sono 4 immagini ridondanti.
         */
 
-        //se l'immagine da cambiare è quella del profilo
-        var nomeImmagineProfilo = "";
-        if(isForProfile==true){
-            if(nomeImmagine == "profileImage1") nomeImmagineProfilo="profileImage2";
-            else nomeImmagineProfilo = "profileImage1";
+        try{
+            console.log("carico nuova immagine "+nomeImmagine+" con isForProfile="+isForProfile);
+            return uploadNewUserImage({ isForProfile: isForProfile, imageName:nomeImmagine, image: base64, idUser: firebase.auth().currentUser.uid });
+        }catch(e){
+            throw e;
         }
-
-        return uploadNewUserImage({ isForProfile: isForProfile, imageName:nomeImmagineProfilo, image: base64, idUser: firebase.auth().currentUser.uid });
     }
 
     export function _scaricaUrlImmagine(nomeImmagine){
@@ -359,12 +386,37 @@ export function _isProfiloCompletato(uid){
         - profileImageUrl
         - gallery (array di url delle immagini di galleria dell'utente)
     */
-        export function _getMediaProfiloContatto(uid, visibility){
+        export async function _getMediaProfiloContatto(uid, visibility){
             console.log("ottengo media profilo utente con uid="+uid+" ................................................................................");
             var db = firebase.firestore();
     
             var mediaDocument = db.collection("users").doc(uid).collection("media").doc(visibility); 
             return mediaDocument.get();
+       }
+
+       export async function _getAllMediaOfCurrentUser(){
+            let uid = firebase.auth().currentUser.uid;
+            return Promise.all([_getMediaProfiloContatto(uid,"0"),
+                               _getMediaProfiloContatto(uid,"25"),
+                               _getMediaProfiloContatto(uid,"50"),
+                               _getMediaProfiloContatto(uid,"75"),
+                               _getMediaProfiloContatto(uid,"100")])
+                                    .then((ris)=>{
+                                        let media = new Object();
+                                        media["profileImageUrl"]={url_0: ris[0].data().profileImageUrl, url_25: ris[1].data().profileImageUrl, url_50: ris[2].data().profileImageUrl, url_75: ris[3].data().profileImageUrl, url_100: ris[4].data().profileImageUrl }
+                                        media["gallery"] = {};
+                                        for(key in ris[0].data().gallery){
+                                            console.log("chiave:"+key);
+                                            console.log("media attuali:");
+                                            console.log(media);
+                                            media["gallery"][key.toString()]= {url_0: ris[0].data().gallery[key], url_25: ris[1].data().gallery[key], url_50: ris[2].data().gallery[key], url_75: ris[3].data().gallery[key], url_100: ris[4].data().gallery[key] }
+                                        }
+
+                                        console.log("media fiinali:");
+                                        console.log(media);
+                                        return media;
+                                    })
+
        }
 
 

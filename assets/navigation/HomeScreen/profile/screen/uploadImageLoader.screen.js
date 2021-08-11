@@ -19,7 +19,7 @@ export default function UploadImageLoader({navigation,route}){
     console.log(route.params);
     
     //contesto autenticazione
-    var {caricaNuovaImmagine,setMessaggioAuth, informazioniProfiloUtente, setInformazioniProfiloUtente, eliminaImmagineDiProfilo} = useContext(AutenticazioneUtente);
+    var {caricaNuovaImmagine,setMessaggioAuth,getUtenteCorrente, informazioniProfiloUtente, setInformazioniProfiloUtente, eliminaImmagineDiProfilo} = useContext(AutenticazioneUtente);
 
 
     const [isLoading,setIsLoading]=useState(true);
@@ -32,47 +32,62 @@ export default function UploadImageLoader({navigation,route}){
         //carico nuova immagine passandogli la base 64 dell'immagine e indicando se si tratta di una immagine di profilo o meno
         //nel caso si tratta di immagine di profilo il nome dell'immagine del profilo che passo è utile dopo
         //prendo il nome dell'immagine di profilo attuale (estraendola dall'url)
-        const nomeImmagineProfiloAttuale = (informazioniProfiloUtente.urlProfileImage).includes("profileImage1") ? "profileImage1" : "profileImage2";
-        caricaNuovaImmagine(route.params.base64,route.params.isProfileImage, nomeImmagineProfiloAttuale) 
+        //let nomeNuovaImmagine = (informazioniProfiloUtente.urlProfileImage).includes("profileImage1") ? "profileImage2" : "profileImage1";
+        //se però non è di profilo allora le do come nome quello della data di oggi
+        //if(route.params.isProfileImage==false) nomeNuovaImmagine = new Date().toISOString().replace(/ /g,"").replace(/[.]/g,":");
+        caricaNuovaImmagine(route.params.base64,route.params.isProfileImage, route.params.nomeNuovaImmagine) 
           .then((result)=>{ 
             /*
               ritorna (dentro result.data):
-                - name: nome immagine...
-                - url: url download link...
+                name: fileName,
+                url_0: urls[0],
+                url_25: urls[1],
+                url_50: urls[2],
+                url_75: urls[3],
+                url_100: urls[4]
             */
             console.log("chiamata riuscita. Nuovo url generato:");
             console.log(result);
             if(route.params.isProfileImage==true){
               //aggiorno localmente l'immagine di profilo
-              informazioniProfiloUtente.urlProfileImage = route.params.uri;
               //elimino le vecchie copie
-              eliminaImmagineDiProfilo(nomeImmagineProfiloAttuale)
+              eliminaImmagineDiProfilo((route.params.nomeNuovaImmagine=="profileImage1"?"profileImage2":"profileImage1"))
                 .then((ris)=>{
                   console.log("tutte le vecchie versioni dell'immagine di profilo sono state eliminate");
                 }).catch((e)=>{
                   console.log("non è stato possibile eliminare tutte le vecchie versioni dell'immagine di profilo: "+e);
                 }).finally(()=>{
-                  //aggiorno localmente 
-                  var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
-                  setInformazioniProfiloUtente(nuoveInformazioniProfilo); 
-                  setMessaggioAuth("Immagine di profilo aggiornata.");
+                  //aggiorno localmente. Elimino localmente le vecchie foto memorizzate
+                  Promise.all([local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_0),
+                                       local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_25),
+                                       local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_50),
+                                       local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_75),
+                                       local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_100)]).finally(()=>{
+                    informazioniProfiloUtente.urlProfileImage = {url_0: result.data.url_0, url_25: result.data.url_25, url_50: result.data.url_50, url_75: result.data.url_75, url_100: result.data.url_100}; 
+                    var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
+                    setInformazioniProfiloUtente(nuoveInformazioniProfilo); 
+                    setMessaggioAuth("Immagine di profilo aggiornata.");
+                  })
                 })
               }else {
                 console.log("Nuova immagine di galleria aggiunta");
                //aggiorno localmente l'immagine di galleria
                 var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
                 console.log(nuoveInformazioniProfilo);
-                nuoveInformazioniProfilo.urlGalleryImages[result.data.name]=result.data.url;
+                //nuoveInformazioniProfilo.urlGalleryImages[result.data.name]=result.data.url;
+                nuoveInformazioniProfilo.urlGalleryImages[result.data.name]={url_0: result.data.url_0, url_25: result.data.url_25, url_50: result.data.url_50, url_75: result.data.url_75, url_100: result.data.url_100};
                 console.log(nuoveInformazioniProfilo);
                 setInformazioniProfiloUtente(nuoveInformazioniProfilo);
-                   
-               setMessaggioAuth("Immagine caricata con successo.");
-            }
+              }
+                navigation.navigate({name:"ProfileScreen",params: {uploadImageMex: "Immagine caricata con successo."}, merge: true});
+               //setMessaggioAuth("Immagine caricata con successo.");
+               //navigation.setParams({uploadImageMex: "Immagine caricata con successo."});
           }).catch((e)=>{
             console.log("errore: chiamata non riuscita");
             console.log(e);
-            setMessaggioAuth("Si è verificato un problema. Riprova più tardi.");
-          }).finally(() => navigation.navigate("ProfileScreen"));
+            //setMessaggioAuth("Si è verificato un problema. Riprova più tardi.");
+            navigation.navigate({name:"ProfileScreen",params: {uploadImageMex: "Caricamento immagine fallito."}, merge: true});
+          });//.finally(() => navigation.navigate("ProfileScreen"));
 
     }
 
