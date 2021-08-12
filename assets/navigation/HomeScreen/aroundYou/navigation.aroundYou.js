@@ -3,6 +3,7 @@ import {createStackNavigator, TransitionPresets} from "@react-navigation/stack";
 //1) IMPORTO i modelli di sezioni che voglio compaiano nella sezione “Chat”
 import { getFocusedRouteNameFromRoute } from "@react-navigation/core";
 import AroundYou from "./screen/aroundYou.screen";
+import AroundYouProfileDetails from "./screen/AroundYouProfileDetail.screen";
 
 const aroundYouStack = createStackNavigator();
 
@@ -32,6 +33,11 @@ const AroundYouNavigator = ({navigation,route}) => {
             <aroundYouStack.Screen
                 name="AroundYou"
                 component = {AroundYou}
+            />
+
+            <aroundYouStack.Screen
+                name="AroundYouProfileDetails"
+                component = {AroundYouProfileDetails}
             />
 
         </aroundYouStack.Navigator>

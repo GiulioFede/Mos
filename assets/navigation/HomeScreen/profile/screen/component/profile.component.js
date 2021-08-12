@@ -418,11 +418,11 @@ export default function ProfileComponent(props){
             <View style={{ flex: 1, justifyContent: 'flex-start', width:larghezzaDevice}}>
                     
                     {/* IMMAGINE PROFILO */}
-                    <View style={styles.contenitoreMediaProfilo}>
+                    <View style={styles.contenitoreMediaProfilo} >
                         {/* immagine */}
                         <View style={styles.contenitoreImmagineProfilo}>
                             <ActivityIndicator animating={urlProfileImage!="null"} size={fontSizeTitoloBarra} color={MosCeleste} style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center'}}/>
-                            {urlProfileImage!="null" && error==false && <Image source={{uri:urlProfileImage}} resizeMode="cover"  style={styles.immagineProfilo} />}
+                            {urlProfileImage!="null" && error==false && <Image source={{uri:urlProfileImage}} resizeMode="cover"  style={styles.immagineProfilo}/>}
                             {error==true && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
                             </View>
                         {/* pallino online */}
