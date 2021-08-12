@@ -8,6 +8,7 @@ import ChatNavigator from './chat/navigation.chat';
 import { AutenticazioneUtente } from '../../context/firebase/autenticazione';
 import { altezzaMenuNavigazione } from '../../context/variabili_globali/variabiliGlobali';
 import ProfileNavigator from './profile/navigation.profile';
+import AroundYouNavigator from './aroundYou/navigation.aroundYou';
 
 const Tab = createBottomTabNavigator();
 
@@ -23,7 +24,7 @@ function HomeScreen({navigation}){
 
                             if(route.name == 'Chat')
                                 return <Ionicons name="ios-chatbubble-outline" size={24} color={color} />
-                            else if(route.name == 'Around You'){
+                            else if(route.name == 'AroundYou'){
                                 return <Ionicons name="md-location-outline" size={24} color={color} />
                             }
                             else if(route.name == 'Profile'){
@@ -39,6 +40,7 @@ function HomeScreen({navigation}){
                         }}
                     >
                     <Tab.Screen name="Chat" component={ChatNavigator} />
+                    <Tab.Screen name="AroundYou" component={AroundYouNavigator} />
                     <Tab.Screen name="Profile" component={ProfileNavigator} />
                 </Tab.Navigator>
 

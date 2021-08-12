@@ -46,36 +46,33 @@ const dimensioneFotoGalleria = (larghezzaSchermo/2>altezzaSezioneGalleria) ? (al
   "self_description": "Uejsjsjsjs
 
 ",
-  "urlGalleryImages": Object {
-    "2021-08-10T07:42:23:333Z": Object {
-      "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z?alt=media&token=fcb7581b-0feb-4edb-bee4-1e6fbc91cf2f",
-      "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_100?alt=media&token=2cc1e97a-6747-4ee9-ab4d-225598950933",
-      "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_25?alt=media&token=acbedbc0-d8bf-4104-a63b-0281d6d7f525",
-      "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_50?alt=media&token=18e69acc-f5f8-4b1a-8e71-1212ecc6e3fa",
-      "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_75?alt=media&token=dd079c57-d70f-4dbc-86b9-8cf616e5c344",
+
+  "urlGalleryImages": Array [
+    Object {
+      "name": "0",
+      "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F0?alt=media&token=2d34475c-1f41-4e49-bbba-3159a5b487f7",
+      "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F0_100?alt=media&token=73c5d130-0ff9-4b98-851f-4b6beb256842",
+      "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F0_25?alt=media&token=4e35c4a0-bf98-4937-95b8-cf0b86cc37f1",
+      "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F0_50?alt=media&token=23f08d55-4ff1-45a7-b696-cfb5b2100094",
+      "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F0_75?alt=media&token=80a85840-bd69-46e6-a9e2-010022f88f85",
     },
-    "2021-08-10T07:46:34:436Z": Object {
-      "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A46%3A34%3A436Z?alt=media&token=282e57aa-c66c-49ab-93d9-a04700e74484",
-      "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A46%3A34%3A436Z_100?alt=media&token=3eb36e5e-07eb-4c78-bece-8fed9eeef9cb",
-      "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A46%3A34%3A436Z_25?alt=media&token=8aa22505-2c83-4945-9309-19e2de196678",
-      "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A46%3A34%3A436Z_50?alt=media&token=d928de3d-8ab5-4ad7-b240-ecd246eeec52",
-      "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A46%3A34%3A436Z_75?alt=media&token=17e78f0f-a25d-49c3-8dfb-985400ebe0e7",
+    Object {
+      "name": "1",
+      "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1?alt=media&token=648f8150-dd6f-457f-a9b2-0e5f96a41c7f",
+      "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=db6a1e5e-c81d-43c0-9085-ee4a36d7378d",
+      "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_25?alt=media&token=bc5b0ce0-790c-4c14-a7b3-ed95412763b7",
+      "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_50?alt=media&token=a5d0d9de-0718-43e0-8acd-16c1dc9c5caa",
+      "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_75?alt=media&token=568eea5d-671a-4481-9e78-b846d2e36d33",
     },
-    "2021-08-10T07:49:26:620Z": Object {
-      "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A49%3A26%3A620Z?alt=media&token=3219b7a1-91df-4d05-a8cb-e35d7397d601",
-      "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A49%3A26%3A620Z_100?alt=media&token=32f66c21-007c-45a9-a183-9321441291af",
-      "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A49%3A26%3A620Z_25?alt=media&token=ca87ed23-5f59-4fa0-bc5c-52ecd2143861",
-      "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A49%3A26%3A620Z_50?alt=media&token=7cf9205b-75a5-4b49-a9f4-9dac68706f90",
-      "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A49%3A26%3A620Z_75?alt=media&token=b742c8d6-dd31-458e-adb5-dd8814e8648d",
-    },
-    "2021-08-10T07:53:33:412Z": Object {
-      "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A53%3A33%3A412Z?alt=media&token=e55fb9a1-ab29-4a28-9a6f-1356270f6647",
-      "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A53%3A33%3A412Z_100?alt=media&token=93e32422-3202-4393-a3b6-1808e2ac7655",
-      "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A53%3A33%3A412Z_25?alt=media&token=4e2eea43-fa8c-4064-97bf-8689397960d0",
-      "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A53%3A33%3A412Z_50?alt=media&token=e9cfb3ea-4853-4e76-884b-6df6843c6363",
-      "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A53%3A33%3A412Z_75?alt=media&token=2e726f9a-4d52-4405-891c-17e91f6acba8",
-    },
-  },
+    Object {
+      "name": "2",
+      "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2?alt=media&token=702f10dc-fe13-4083-99b2-63e60c65d6ec",
+      "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=e71bacdd-76d2-48b7-9d92-d5818701f78a",
+      "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_25?alt=media&token=938c4d34-3586-4756-84aa-fa6b3863e4e1",
+      "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_50?alt=media&token=14bcae7c-0a70-4a59-aaa9-0da26de1b625",
+      "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_75?alt=media&token=c76939e7-63d3-4c24-9e8c-a4c64b90f81d",
+    }],
+
   "urlProfileImage": Object {
     "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2FprofileImage1?alt=media&token=791d7a41-048d-41a5-84c0-44d620cbd32b",
     "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2FprofileImage1_100?alt=media&token=3615a6f3-ff01-44c1-affe-778b47e6c3a4",
@@ -87,7 +84,6 @@ const dimensioneFotoGalleria = (larghezzaSchermo/2>altezzaSezioneGalleria) ? (al
 */
 
 export default function ProfileComponent(props){
-
     //DA ELIMINARE
     const [base64DaEliminare, setBase64DaEliminare] = useState("");
 
@@ -107,63 +103,45 @@ export default function ProfileComponent(props){
     const snackMessageRef = useRef();
 
 
-    //console.log("INFORMAZIONI PROFILO UTENTE__________________________________________");
-   // console.log(informazioniProfiloUtente);
+    console.log("INFORMAZIONI PROFILO UTENTE__________________________________________");
+    console.log(galleria);
     /*
         Esempio di struttura di galleria:
 
         Array [
             Object {
-                "key": 3,
-                "name": "2021-08-10T07:53:33:412Z",
-                "urls": Object {
-                    "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A53%3A33%3A412Z?alt=media&token=e55fb9a1-ab29-4a28-9a6f-1356270f6647",
-                    "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A53%3A33%3A412Z_100?alt=media&token=93e32422-3202-4393-a3b6-1808e2ac7655",
-                    "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A53%3A33%3A412Z_25?alt=media&token=4e2eea43-fa8c-4064-97bf-8689397960d0",
-                    "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A53%3A33%3A412Z_50?alt=media&token=e9cfb3ea-4853-4e76-884b-6df6843c6363",
-                    "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A53%3A33%3A412Z_75?alt=media&token=2e726f9a-4d52-4405-891c-17e91f6acba8",
-                },
+                "name": "3",
+                "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3?alt=media&token=b38a0cba-03d5-4275-af0f-86784806ca67",
+                "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4",
+                "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_25?alt=media&token=5fe1487b-83a8-4c14-baa3-51b10f5344a9",
+                "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_50?alt=media&token=817c7f8b-3805-46c5-a116-5435d3e78e0f",
+                "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_75?alt=media&token=c3fd1031-7c88-42a2-b1e6-1580837d6573",
             },
             Object {
-                "key": 2,
-                "name": "2021-08-10T07:49:26:620Z",
-                "urls": Object {
-                    "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A49%3A26%3A620Z?alt=media&token=3219b7a1-91df-4d05-a8cb-e35d7397d601",
-                    "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A49%3A26%3A620Z_100?alt=media&token=32f66c21-007c-45a9-a183-9321441291af",
-                    "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A49%3A26%3A620Z_25?alt=media&token=ca87ed23-5f59-4fa0-bc5c-52ecd2143861",
-                    "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A49%3A26%3A620Z_50?alt=media&token=7cf9205b-75a5-4b49-a9f4-9dac68706f90",
-                    "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A49%3A26%3A620Z_75?alt=media&token=b742c8d6-dd31-458e-adb5-dd8814e8648d",
-                },
+                "name": "2",
+                "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2?alt=media&token=e6242cb3-f76a-4392-96cc-b1f69a037ed1",
+                "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
+                "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_25?alt=media&token=9d9a53a0-f917-428f-878c-7c3412b51c9b",
+                "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_50?alt=media&token=b63bdf55-20b4-4370-adfa-b209d42d5c31",
+                "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_75?alt=media&token=ef60eca9-3f81-43db-b288-cc1b4caf6a41",
             },
             Object {
-                "key": 1,
-                "name": "2021-08-10T07:46:34:436Z",
-                "urls": Object {
-                    "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A46%3A34%3A436Z?alt=media&token=282e57aa-c66c-49ab-93d9-a04700e74484",
-                    "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A46%3A34%3A436Z_100?alt=media&token=3eb36e5e-07eb-4c78-bece-8fed9eeef9cb",
-                    "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A46%3A34%3A436Z_25?alt=media&token=8aa22505-2c83-4945-9309-19e2de196678",
-                    "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A46%3A34%3A436Z_50?alt=media&token=d928de3d-8ab5-4ad7-b240-ecd246eeec52",
-                    "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A46%3A34%3A436Z_75?alt=media&token=17e78f0f-a25d-49c3-8dfb-985400ebe0e7",
-                },
+                "name": "1",
+                "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1?alt=media&token=24a359e2-005e-4bd8-b684-21af442c0513",
+                "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
+                "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_25?alt=media&token=22c3bbce-51b2-4315-9094-7da6427bc393",
+                "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_50?alt=media&token=f774a4b8-6253-41f5-8087-c6389bd75f9f",
+                "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_75?alt=media&token=5b044416-2b3d-4296-897f-378875128be8",
             },
-            Object {
-                "key": 0,
-                "name": "2021-08-10T07:42:23:333Z",
-                "urls": Object {
-                    "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z?alt=media&token=fcb7581b-0feb-4edb-bee4-1e6fbc91cf2f",
-                    "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_100?alt=media&token=2cc1e97a-6747-4ee9-ab4d-225598950933",
-                    "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_25?alt=media&token=acbedbc0-d8bf-4104-a63b-0281d6d7f525",
-                    "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_50?alt=media&token=18e69acc-f5f8-4b1a-8e71-1212ecc6e3fa",
-                    "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_75?alt=media&token=dd079c57-d70f-4dbc-86b9-8cf616e5c344",
-                },
-            },
-        ]
+            ] 
 
     */
-
+        console.log("INFORMAZIONI PROFILO UTENTE::::::::::::::::::");
+        
     const inizializzaGalleria = () =>{
         console.log("reinizializzo galleria");
-        console.log(galleria);
+        //console.log(galleria);
+        /*
 //*        console.log(informazioniProfiloUtente.gallery);
         console.log(informazioniProfiloUtente.urlGalleryImages);
         var tmp = [];
@@ -173,10 +151,11 @@ export default function ProfileComponent(props){
                     tmp.push({key: i, name: key, urls: informazioniProfiloUtente.urlGalleryImages[key]});
                     i++;
             }
-        }       
+        } */  
+        var tmp = [...informazioniProfiloUtente.urlGalleryImages];   
         tmp.reverse();
         console.log("tmp reverse:");
-        console.log(tmp);
+        //console.log(tmp);
         setGalleria(tmp);
     }
 
@@ -264,10 +243,10 @@ export default function ProfileComponent(props){
     }
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-    //apri finestra per eliminare foto (gli passo la key (NB: non l'indice) della foto della galleria che potenzialmente vorrei eliminare)
-    function openDialog(key){
+    //apri finestra per eliminare foto (gli passo l'indice dell'array gallery dove si trova l'elemento da eliminare)
+    function openDialog(indexGallery){
         dialogEliminaImmagineDiGalleriaRef.current.open_dialog();
-        indiceFotoDaEliminare.current = key.toString();
+        indiceFotoDaEliminare.current = indexGallery;
     }
     //chiudo la finestra (resettando l'indice della foto da eliminare)  
     function closeDialog(){
@@ -276,9 +255,9 @@ export default function ProfileComponent(props){
     }
 
     //ELIMINA FOTO:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    //si basa sull'indice della foto che è stato settato quando abbiamo chiamato openDialog
+    //si basa sull'indiceFotoDaEliminare (ossia indice dell'array gallery) della foto che è stato settato quando abbiamo chiamato openDialog
     function eliminaImmagineDallaGalleria(){
-        console.log("nome da eliminare"+indiceFotoDaEliminare.current);
+        console.log("indice in galleria da eliminare"+indiceFotoDaEliminare.current);
         
         if(isLoading==false){
             try{
@@ -287,28 +266,31 @@ export default function ProfileComponent(props){
             //const url = galleria[index].url;
             //const nome = informazioniProfiloUtente.gallery[informazioniProfiloUtente.gallery.length-1-index];
             //const nome = getNomeImmagineDaUrl(url);
-            let nome = indiceFotoDaEliminare.current;
+            let nome = galleria[indiceFotoDaEliminare.current].name;
             //console.log("Nome immagine: "+nome);
+            const index = galleria.length -1 - indiceFotoDaEliminare.current;
             closeDialog();
-            
             //elimino
             eliminaImmagineDiGalleria(nome) //firebase elimina cercando il valore (ecco perchè diamo url)
                 .then(async(ris)=>{
                     setIsLoading(false);
                     console.log("Eliminazione remota completata "+ris);
                     //aggiorno informazioniProfiloUtente
-                    var infoUrlGalleryImages = JSON.parse(JSON.stringify(informazioniProfiloUtente.urlGalleryImages));
-                    Promise.all([local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[nome].url_0),
-                                       local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[nome].url_25),
-                                       local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[nome].url_50),
-                                       local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[nome].url_75),
-                                       local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[nome].url_100)]).finally(()=>{
+                    var infoUrlGalleryImages = [...informazioniProfiloUtente.urlGalleryImages];
+                    console.log("INFOURLGALLERYIMAGES ALL'INDICE "+index);
+                    console.log(infoUrlGalleryImages);
+                    console.log(infoUrlGalleryImages[index]);
+                    Promise.all([local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index]["url_0"]),
+                                       local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_25),
+                                       local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_50),
+                                       local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_75),
+                                       local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_100)]).finally(()=>{
                                                 //rimuovo elemento
-                                                delete infoUrlGalleryImages[nome];
+                                                delete infoUrlGalleryImages[index];
                                                 var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
                                                 nuoveInformazioniProfilo.urlGalleryImages = infoUrlGalleryImages;
                                                 setInformazioniProfiloUtente(nuoveInformazioniProfilo);
-
+                                                indiceFotoDaEliminare.current = -1;
                                                 //var tmp = [...galleria];
                                                 //tmp.splice(index,1);
                                                 //setGalleria(tmp);

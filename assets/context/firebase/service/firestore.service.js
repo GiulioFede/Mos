@@ -405,15 +405,23 @@ export function _isProfiloCompletato(uid){
                                         let media = new Object();
                                         media["profileImageUrl"]={url_0: ris[0].data().profileImageUrl, url_25: ris[1].data().profileImageUrl, url_50: ris[2].data().profileImageUrl, url_75: ris[3].data().profileImageUrl, url_100: ris[4].data().profileImageUrl }
                                         media["gallery"] = {};
+                                        let gallery = [];
                                         for(key in ris[0].data().gallery){
                                             console.log("chiave:"+key);
                                             console.log("media attuali:");
                                             console.log(media);
-                                            media["gallery"][key.toString()]= {url_0: ris[0].data().gallery[key], url_25: ris[1].data().gallery[key], url_50: ris[2].data().gallery[key], url_75: ris[3].data().gallery[key], url_100: ris[4].data().gallery[key] }
+                                            //media["gallery"][key]= {url_0: ris[0].data().gallery[key], url_25: ris[1].data().gallery[key], url_50: ris[2].data().gallery[key], url_75: ris[3].data().gallery[key], url_100: ris[4].data().gallery[key] }
+                                            gallery.push({name: key, url_0: ris[0].data().gallery[key], url_25: ris[1].data().gallery[key], url_50: ris[2].data().gallery[key], url_75: ris[3].data().gallery[key], url_100: ris[4].data().gallery[key] });
+                                        
                                         }
-
+                                        
+                                        /*let newMedia = new Object();
+                                        Object.keys(media["gallery"]).sort(function(a,b){if(a>b) return 0; else return 1}).reduce((prev,succ)=>{if(prev!=undefined) newMedia.push({[`${prev}`]: media["gallery"][prev]}); newMedia.push({[`${succ}`]: media["gallery"][succ]});})
+                                        
+                                        media["gallery"] = newMedia;*/
+                                        media["gallery"] = gallery;
                                         console.log("media fiinali:");
-                                        console.log(media);
+                                        console.log(media["gallery"]);
                                         return media;
                                     })
 

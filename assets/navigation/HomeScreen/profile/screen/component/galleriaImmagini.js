@@ -21,24 +21,21 @@ function GalleriaImmagini({galleria, openDialog, getUtenteCorrente, visibility})
     //console.log(galleria);
 
         //Questa funzione renderizza ogni singola immagine della flatlist (galleria)
-       function ImmagineGalleria({item}){
-          // console.log("renderizzo item di galleria");
+       function ImmagineGalleria({item, index}){
+            //console.log("renderizzo item di galleria:"+index);
             //console.log(item);
 
             /*
-                Esempio struttura di item galleria:
+                Esempio struttura di item galleria: NB: index (argomento sopra) è l'indice dell'array dentro cui si trova
 
                 Object {
-                    "key": 0,
-                    "name": "2021-08-10T07:42:23:333Z",
-                    "urls": Object {
-                        "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z?alt=media&token=fcb7581b-0feb-4edb-bee4-1e6fbc91cf2f",
-                        "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_100?alt=media&token=2cc1e97a-6747-4ee9-ab4d-225598950933",
-                        "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_25?alt=media&token=acbedbc0-d8bf-4104-a63b-0281d6d7f525",
-                        "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_50?alt=media&token=18e69acc-f5f8-4b1a-8e71-1212ecc6e3fa",
-                        "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2021-08-10T07%3A42%3A23%3A333Z_75?alt=media&token=dd079c57-d70f-4dbc-86b9-8cf616e5c344",
-                    },
-                    }
+                    "name": "0",
+                    "url_0": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F0?alt=media&token=2d34475c-1f41-4e49-bbba-3159a5b487f7",
+                    "url_100": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F0_100?alt=media&token=73c5d130-0ff9-4b98-851f-4b6beb256842",
+                    "url_25": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F0_25?alt=media&token=4e35c4a0-bf98-4937-95b8-cf0b86cc37f1",
+                    "url_50": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F0_50?alt=media&token=23f08d55-4ff1-45a7-b696-cfb5b2100094",
+                    "url_75": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F0_75?alt=media&token=80a85840-bd69-46e6-a9e2-010022f88f85",
+                },
 
             */
             
@@ -53,11 +50,11 @@ function GalleriaImmagini({galleria, openDialog, getUtenteCorrente, visibility})
 
                 const getLocalUri = async() =>{
                     let actual_remote_uri = "";
-                    if(visibility=="0") actual_remote_uri = item.urls.url_0;
-                    else if(visibility=="25") actual_remote_uri = item.urls.url_25;
-                    else if(visibility=="50") actual_remote_uri = item.urls.url_50;
-                    else if(visibility=="75") actual_remote_uri = item.urls.url_75;
-                    else if(visibility=="100") actual_remote_uri = item.urls.url_100;
+                    if(visibility=="0") actual_remote_uri = item.url_0;
+                    else if(visibility=="25") actual_remote_uri = item.url_25;
+                    else if(visibility=="50") actual_remote_uri = item.url_50;
+                    else if(visibility=="75") actual_remote_uri = item.url_75;
+                    else if(visibility=="100") actual_remote_uri = item.url_100;
 
                     try{
                         let local_uri = await local_storage.saveImageLocally(getUtenteCorrente(),actual_remote_uri);
@@ -87,7 +84,7 @@ function GalleriaImmagini({galleria, openDialog, getUtenteCorrente, visibility})
             return  (
                 <View style={styles.contenitoreFotoGalleria}>
                     {isImageLoaded && 
-                    <TouchableOpacity style={styles.bottoneEliminaFoto} onPress={()=>{openDialog(item.name)}}>
+                    <TouchableOpacity style={styles.bottoneEliminaFoto} onPress={()=>{openDialog(index)}}>
                         <Entypo name="cross" size={20} color={MosViola} />
                     </TouchableOpacity>
                     }
@@ -110,8 +107,8 @@ function GalleriaImmagini({galleria, openDialog, getUtenteCorrente, visibility})
             numColumns={3}
             ItemSeparatorComponent={()=><Divider/>}
             showsHorizontalScrollIndicator={false}
-            keyExtractor={item => item.key.toString()}
-            renderItem={({ item }) => <ImmagineGalleria item={item} visibility={visibility}/>}
+            keyExtractor={item => item.name.toString()}
+            renderItem={({ item, index }) => <ImmagineGalleria item={item} visibility={visibility} index={index}/>}
         />
         </View>
     )

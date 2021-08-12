@@ -31,7 +31,7 @@ const VisibilityFAB = (props) => {
                 onPress: () => props.setVisibility("100"),
               },
               {
-                icon: 'circle-slice-4',
+                icon: 'circle-slice-2',
                 label: '25% di visibilità',
                 color: props.visibility=="75"?MosViola:"grey",
                 onPress: () => props.setVisibility("75"),

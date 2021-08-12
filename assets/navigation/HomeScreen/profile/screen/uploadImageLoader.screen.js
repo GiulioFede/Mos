@@ -75,7 +75,7 @@ export default function UploadImageLoader({navigation,route}){
                 var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
                 console.log(nuoveInformazioniProfilo);
                 //nuoveInformazioniProfilo.urlGalleryImages[result.data.name]=result.data.url;
-                nuoveInformazioniProfilo.urlGalleryImages[result.data.name]={url_0: result.data.url_0, url_25: result.data.url_25, url_50: result.data.url_50, url_75: result.data.url_75, url_100: result.data.url_100};
+                nuoveInformazioniProfilo.urlGalleryImages.push({name: result.data.name, url_0: result.data.url_0, url_25: result.data.url_25, url_50: result.data.url_50, url_75: result.data.url_75, url_100: result.data.url_100});
                 console.log(nuoveInformazioniProfilo);
                 setInformazioniProfiloUtente(nuoveInformazioniProfilo);
               }
