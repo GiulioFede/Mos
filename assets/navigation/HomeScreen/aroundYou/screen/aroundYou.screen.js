@@ -7,9 +7,9 @@ import AroundYouComponent from '../component/aroundYou.component';
 export default function AroundYou({navigation, route}){
     
       return (
-          <View style={styles.container} >
+          //<View style={styles.container} >
                   <AroundYouComponent navigation={navigation} route={route}/>
-          </View>
+         // </View>
       )
 }
 

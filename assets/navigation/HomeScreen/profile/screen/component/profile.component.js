@@ -15,6 +15,7 @@ import InformazioniPersonali from '../../../../Informazioni Personali/informazio
 import VisibilityFAB from './visibilityFab';
 import DialogEliminaImmagineDiGalleria from './dialogEliminaImmagineDiGalleria';
 import SnackMessage from './snackMessage';
+import { LinearGradient } from "expo-linear-gradient";
 
 /*
     MISURE
@@ -414,9 +415,9 @@ export default function ProfileComponent(props){
                 <ActivityIndicator animating={isLoading} size={fontSizeTitoloBarra} color={MosCeleste} style={{position:"absolute", left:Dimensions.get("window").width*0.03}} />
             </View>
             <ScrollView horizontal={false}>
-                <ScrollView horizontal={false} horizontal={true} showsHorizontalScrollIndicator={false} style={{width:larghezzaDevice}}>
+
             <View style={{ flex: 1, justifyContent: 'flex-start', width:larghezzaDevice}}>
-                    
+                    <View style={{ paddingBottom:30}}>
                     {/* IMMAGINE PROFILO */}
                     <View style={styles.contenitoreMediaProfilo} >
                         {/* immagine */}
@@ -444,8 +445,13 @@ export default function ProfileComponent(props){
                     <View style ={styles.areaDescrizione}>
                         <Text style={styles.descrizioneTesto}>"Ciao mi chiamo Giulio e sono uno studente. Sono nato ad Alcamo ma studio a Pisa."</Text>
                     </View>
-                    <Divider />
-                    
+                    </View>
+                    <View style={{backgroundColor:"#fff"}}>
+                    <LinearGradient
+                        // Background Linear Gradient sopra chat
+                        colors={["rgb(219, 219, 219)",'transparent']}
+                        style={{width: larghezzaDevice,height: 50, position:"absolute"}}
+                        />
                 {/*SEZIONE DELLA GALLERIA */}  
                     <View style={styles.sezioneGalleria}>
 
@@ -454,8 +460,9 @@ export default function ProfileComponent(props){
                         <GalleriaImmagini galleria={galleria} openDialog={openDialog} getUtenteCorrente={getUtenteCorrente} visibility={visibility} />
 
                     </View>
+                    </View>
                 </View>
-                </ScrollView>
+
                 </ScrollView>
 
                 <View style={{width:larghezzaDevice, position:"absolute", height:"100%" }}>
@@ -483,12 +490,12 @@ export default function ProfileComponent(props){
 
 const styles = StyleSheet.create({
     container: {
-      backgroundColor:"#fff",
+      //backgroundColor:"#fff",
       height: Dimensions.get("window").height,
       flex:1
     },
     titolo:{
-        fontSize:fontSizeTitoloBarra,
+        fontSize:fontSizeTitoloBarra*0.8,
         position:"absolute",
         fontFamily: "Raleway_400Regular",
         color: "#52575D",
@@ -501,8 +508,8 @@ const styles = StyleSheet.create({
         height:altezzaBarraScreen,
         justifyContent:"center",
         paddingTop:24,
-        borderBottomColor:"#e6e6e6",
-        borderBottomWidth:0.7,
+        //borderBottomColor:"#e6e6e6",
+        //borderBottomWidth:0.7,
     },
     nome:{
         fontFamily: "Raleway_200ExtraLight",
@@ -604,8 +611,17 @@ const styles = StyleSheet.create({
         textAlignVertical:"center",
         flexDirection:"row"
     },
+    galleryTitle:{
+        fontSize:fontSizeTitoloBarra,
+        fontFamily: "Raleway_400Regular",
+        color: "#52575D",
+        left:20,
+        top:20
+
+    },
     sezioneGalleria: {
         width:larghezzaSchermo,
+        backgroundColor:"#fff"
         //height:altezzaSezioneGalleria,  //sezione galleria
         //justifyContent: 'center',
         //alignItems:"center"

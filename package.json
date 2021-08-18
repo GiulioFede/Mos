@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@expo-google-fonts/raleway": "^0.1.0",
+    "@gorhom/bottom-sheet": "^3.6.5",
     "@react-native-community/datetimepicker": "3.2.0",
     "@react-native-community/masked-view": "0.1.10",
     "@react-native-community/netinfo": "6.0.0",

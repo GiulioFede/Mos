@@ -9,6 +9,7 @@ import { DatePicker } from "./feature/date_picker";
 import * as Location from 'expo-location';
 import { AntDesign, MaterialIcons, Ionicons, Foundation,Fontisto, MaterialCommunityIcons,FontAwesome  } from '@expo/vector-icons';  
 import PhotoManager from "./photo";
+import { LocationAccuracy } from "expo-location";
 //installa expo install @react-native-community/datetimepicker
 
 export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizioneUtente,setSessoUtente,setIdentitaDiGenere, setPreferenzaSessoUtente,setDescrizioneUtente, setUriImmagine, creaProfilo, setError}){
@@ -53,7 +54,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                             }
                             var isAccepted= "none";                            
                             if(Platform.OS==="android")
-                                isAccepted = ris.android.scope;
+                                isAccepted = ris.android.accuracy;
                             else if(Platform.OS==="ios")
                                 isAccepted = ris.scope;
                             
@@ -64,15 +65,25 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                 return;
                             }else {
                                 //ha accettato
-                                Location.getCurrentPositionAsync()
+                                Location.getCurrentPositionAsync({accuracy:LocationAccuracy.Lowest})
                                     .then((pos)=>{
-                                        setIsLocationLoading(false);
+                                        
                                         //ottieni la posizione
                                         const user_position = [pos.coords.latitude,pos.coords.longitude];
                                         console.log(pos);
                                         console.log(user_position);
-                                        setPosizioneUtente(user_position);
-                                        setIsLocationSet(true);
+                                        //Location.reverseGeocodeAsync({latitude:pos.coords.latitude, longitude:pos.coords.longitude}, {useGoogleMaps:false})
+                                        //Location.reverseGeocodeAsync({latitude:39.501536,longitude:-104.723974}, {useGoogleMaps:false})
+                                           // .then((ris)=>{
+                                                //console.log("ADDRESS OBJECT USER");
+                                                //console.log(ris);
+                                                setIsLocationLoading(false);
+                                                setPosizioneUtente(user_position);
+                                                setIsLocationSet(true);
+                                            //}).catch((e)=>{
+                                              //  setIsLocationLoading(false);
+                                                //setError("Si è verificato un problema. Riprova a riottenere la posizione.")
+                                            //});
                                     }).catch((e)=>{
                                         setIsLocationLoading(false);
                                         setError("Si è verificato un errore. Riprovare più tardi.")
@@ -165,7 +176,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                     {/*PAGINA 1 --> NOME */}
                     {item.id=='1' &&
                         <TextInput
-                            style={[styles.sottoTesto,{backgroundColor:"white",color:MosCeleste,fontFamily:"Raleway_400Regular", width:width*0.7, margin:25, paddingVertical:3, borderRadius:height*0.03}]}
+                            style={[styles.sottoTesto,{backgroundColor:"white",color:MosCeleste,fontFamily:"Raleway_400Regular", width:width*0.3, margin:25, paddingVertical:3, borderRadius:height*0.03}]}
                             onChangeText={text => setNome(text.trim())}
                             onSubmitEditing={()=>setNomeUtente(nome)}
                             onBlur={()=> setNomeUtente(nome)} //focus perso

@@ -13,8 +13,8 @@ import PhoneAuthVerificationCodeScreen from "./assets/navigation/PhoneAuthScreen
 import {ColoreBarraDiStato, ColoreBarraDiStato as ColoreStatusBar} from "./assets/context/variabili_globali/variabiliGlobali";
 import SliderNuovoUtente from "./assets/navigation/SliderNuovoUtente/slider_nuovo_utente";
 
-
 const Stack = createStackNavigator();
+
 
 export default function Start(){
 

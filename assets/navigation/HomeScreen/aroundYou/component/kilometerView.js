@@ -42,14 +42,15 @@ const styles = StyleSheet.create({
        top: 40,
        left: 20,
        overflow: 'hidden',
-       height: KILOMETER_TEXT_HEIGHT
+       height: KILOMETER_TEXT_HEIGHT-8
     },
     kilometerText: {
         fontSize: KILOMETER_TEXT_HEIGHT,
         lineHeight: 40,
         textTransform: 'uppercase',
         letterSpacing: 2,
-        fontWeight: '800'  
+        fontWeight: '800',
+        backgroundColor:"white"
     },
     
   });

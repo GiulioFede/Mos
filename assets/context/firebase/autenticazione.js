@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi, _findNextTenClosestUsers} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -105,7 +105,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     getMediaProfiloContatto,
                     inviaNuovoMessaggio,
                     ottieniAscoltatoreNuoviMessaggi,
-                    getAllMediaOfCurrentUser
+                    getAllMediaOfCurrentUser,
+                    findNextTenClosestUsers
                 }}
                 >
                 {children}
@@ -387,4 +388,19 @@ export const AutenticazioneUtenteProvider = ({children}) => {
 
   function ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored){
       return _ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored);
+  }
+
+
+
+
+  /*
+            AROUND YOU
+  */
+
+  async function findNextTenClosestUsers(startAt, endAt){
+      try{
+        return _findNextTenClosestUsers(startAt,endAt);
+      }catch(e){
+          throw e;
+      }
   }

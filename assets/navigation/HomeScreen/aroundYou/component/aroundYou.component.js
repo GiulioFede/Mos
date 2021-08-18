@@ -1,192 +1,497 @@
-import React, {useState, useContext, useEffect, useRef} from 'react';
-import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions, Animated, FlatList} from 'react-native';
-import {MaterialIcons, Entypo} from "@expo/vector-icons";
+import React, {useState, useContext, useCallback, useEffect, useRef} from 'react';
+import {View, Text, StyleSheet, ScrollView, Image, Dimensions, Animated,  SafeAreaView, StatusBar, Platform} from 'react-native';
+import {Feather,Ionicons, Entypo} from "@expo/vector-icons";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button, Divider } from 'react-native-paper';
-import { altezzaBarraScreen, fontSizeTitoloBarra, larghezzaDevice } from '../../../../context/variabili_globali/variabiliGlobali';
-import { MosCeleste } from '../../../../resources/colors';
+import { altezzaBarraScreen, fontSizeTitoloBarra, iconSize, larghezzaDevice } from '../../../../context/variabili_globali/variabiliGlobali';
+import { MosCeleste, MosPurple, MosViola } from '../../../../resources/colors';
 import SnackMessage from '../../profile/screen/component/snackMessage';
 import PreviewProfile from './previewProfile';
-
+import { LinearGradient } from "expo-linear-gradient";
 import {geohashQueryBounds} from "geofire-common";
 import KilometerView from './kilometerView';
 import CircleBackground from './circleBackground';
+import { Directions, FlingGestureHandler, State, TouchableOpacity } from 'react-native-gesture-handler';
+import { FlatList } from 'react-native-gesture-handler';
+import BottomSheet, {BottomSheetScrollView} from '@gorhom/bottom-sheet'
+import BottomSheetUserDetails from './bottomSheetUserDetails';
+import LottieView from 'lottie-react-native';
+import DialogCreaNuovaConversazione from './dialogoCreaNuovaConversazione';
+import { AutenticazioneUtente } from '../../../../context/firebase/autenticazione';
+import Loading from './loading';
+import { computeDistance, getAgeFromDateString } from '../../../../context/utilities/functions.utilities';
+
+const {width, height} = Dimensions.get("window");
+const IMAGE_WIDTH = width*0.86;
+const IMAGE_HEIGHT = width*0.86*1.5;
+
+//mantiene della flatlist le informazioni sull'item attualmente mostrato
+var currentItemDisplayed = null;
+
+const info_profiles2 = [
+    {
+        id: "1",
+        key: "1",
+        name: "Marco",
+        self_description: "Sono uno studente di Palermo.",
+        date_of_birth: "Fri Mar 07 1975 09:08:10 GMT+0100 (CET)",
+        biological_sex: "maschio",
+        gender_identity: "demi boy",
+        gender_preference: "demi girl",
+        location: {
+            geohash: "sqc0p129br",
+            lat: 37.97,
+            lng: 12.96
+        },
+        current_occupation: "student",
+        hobbies_interests_and_passions: ["Ballare", "cantare", "pallavolo", "dipingere"],
+        profileImageUrl: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2FprofileImage2_50?alt=media&token=cf02f2a1-df3c-4fb3-aead-b3dd9e2a209f",
+        gallery: {
+            1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
+            2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
+            3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
+        }
+    },
+    {
+        id: "2",
+        key: "2",
+        name: "Lisa",
+        self_description: "Sono una studentessa di Palermo.",
+        date_of_birth: "Fri Mar 07 1983 09:08:10 GMT+0100 (CET)",
+        biological_sex: "femmina",
+        gender_identity: "demi girl",
+        gender_preference: "pangender",
+        location: {
+            geohash: "sqc0p129br",
+            lat: 38.97,
+            lng: 7.96
+        },
+        current_occupation: "student",
+        hobbies_interests_and_passions: ["Ballare", "cantare", "pallavolo", "dipingere"],
+        profileImageUrl: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F11_75?alt=media&token=1b443f70-2824-44f3-86f7-0970601c077d",
+        gallery: {
+            1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
+            2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
+            3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
+        }
+    },
+    {
+        id: "3",
+        key: "3",
+        name: "Giuseppe",
+        self_description: "Sono un barista",
+        date_of_birth: "Fri Mar 07 1975 09:08:10 GMT+0100 (CET)",
+        biological_sex: "maschio",
+        gender_identity: "demi boy",
+        gender_preference: "demi girl",
+        location: {
+            geohash: "sqc0p129br",
+            lat: 37.97,
+            lng: 12.96
+        },
+        current_occupation: "worker",
+        hobbies_interests_and_passions: ["Ballare", "cantare", "pallavolo", "dipingere"],
+        profileImageUrl: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F12_75?alt=media&token=e677c1a7-7be8-4e7d-a821-111923fe78a0",
+        gallery: {
+            1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
+            2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
+            3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
+        }
+    },
+    {
+        id: "4",
+        key: "4",
+        name: "Sonia",
+        self_description: "Sono una infermiera.",
+        date_of_birth: "Fri Mar 07 1975 09:08:10 GMT+0100 (CET)",
+        biological_sex: "femmina",
+        gender_identity: "femmina",
+        gender_preference: "maschio",
+        location: {
+            geohash: "sqc0p129br",
+            lat: 41.97,
+            lng: 21.96
+        },
+        current_occupation: "worker",
+        hobbies_interests_and_passions: ["Ballare", "cantare", "pallavolo", "dipingere"],
+        profileImageUrl: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F13_75?alt=media&token=67d0845b-bd33-41f3-806d-1e8777c74313",
+        gallery: {
+            1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
+            2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
+            3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
+        }
+    },
+]
+
+
+const VISIBLE_ITEMS = 4;
+
+let cityTmp,regionTmp,countryTmp;
+function getCityRegionCountryView(city, region, country){
+    //console.log(city+","+region+","+country);
+    cityTmp=null,regionTmp=null,countryTmp=null;
+    if(city!="null" && region!="null" && country!="null"){
+        cityTmp = city;
+        regionTmp = ","+region;
+        countryTmp = ","+country;
+    }
+    else if(city=="null" && region!="null" && country!="null"){
+        regionTmp = region;
+        countryTmp = ","+country;
+    }
+    else if(city=="null" && region=="null" && country!="null"){
+        countryTmp = country;
+    }
+    else if(city!="null" && region=="null" && country!="null"){
+        cityTmp = city;
+        countryTmp = ","+country;
+    }
+
+    return (
+        <View style={{marginBottom:10, paddingLeft:10, flexDirection:"row"}}>
+            {(cityTmp!=null || countryTmp!=null || regionTmp!=null) && <Entypo name="location-pin" size={IMAGE_HEIGHT*0.2/5} color="white" />}
+            {cityTmp!=null && <Text style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff"}}>{cityTmp}</Text>}
+            {regionTmp!=null && <Text style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff"}}>{regionTmp}</Text>}
+            {countryTmp!=null && <Text style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff"}}>{countryTmp}</Text>}
+        </View>
+    )
+}
 
 
 export default function AroundYouComponent(props){
 
     var {navigation, route} = props;
+    //contesto autenticazione
+    const {findNextTenClosestUsers, informazioniProfiloUtente} = useContext(AutenticazioneUtente);
     
-    const [isLoading, setIsLoading] = useState(true);
+    const [startingPointHeightBottomMenu, setstartingPointHeightBottomMenu] = useState(0);
 
     const snackMessageRef = useRef();
-    var {navigation, route} = props;
+    const bottomSheetUserDetailsRef = useRef();
+    const isSwipeAnimationFinished = useRef(false);
+    const dialogCreaNuovaConversazioneRef = useRef();
+    const [isLoading, setIsLoading] = useState(true);
+    
+
 
     //APRO MENU
     function apriUserSettings(){
         //navigation.openDrawer();
  
     }
-/*
+
+
+    //const scrollX = React.useRef(new Animated.Value(0)).current;
+
+    function apriChiudiBottomSheetMenu(item){
+        bottomSheetUserDetailsRef.current.setNewUserInformationDetails(item);
+        bottomSheetUserDetailsRef.current.expandOrClose();
+    }
+
+    function creaNuovaConversazione(){
+        console.log("creazione conversazione in corso...");
+    }
+    
+
+    const [activeIndex, setActiveIndex] = React.useState(0);
+    const animatedValue = React.useRef(new Animated.Value(0)).current;
+    const reactiveAnimated = React.useRef(new Animated.Value(0)).current;
+    const lottieAnimationRef = useRef();
+
+    React.useEffect(()=>{
+        Animated.timing(animatedValue, {
+            toValue: reactiveAnimated,
+            duration:300,
+            useNativeDriver: true
+        }).start();
+    },[])
+
+
+
+    const setActiveSlide = React.useCallback((newIndex) => {
+        setActiveIndex(newIndex);
+        reactiveAnimated.setValue(newIndex);
+    })
+
+
+    const bounds = useRef([]);
+    const lastDocumentDownloaded = useRef(null);
+    const current_bounds_index = useRef(0);
+    //conterrà gli utenti prelevati (dato alla flatlist)
+    const [info_profiles, setInfoProfiles] = useState([]);
+
     useEffect(()=>{
+        /*
+            Al caricamento della sezione trovo tutti i bounds centrati nella mia attuale
+            posizione. Per esempio potrei ottenere un array fatto di 4 elementi. Ciascun elemento
+            indicherà lo startAt e l'endAt su cui fare la query. Io utilizzerà anche un limit 10 
+            e salverò l'ultimo documento scaricato in lastDocumentDownloaded cosi che se l'utente
+            ne richiederà altri 10 userò come startAt ques'ultimo documento invece di ricominciare da
+            capo o peggio filtrare per documenti. Infatti startAt con un ulteriore condizione che mi salti
+            l'ultimo visionato farà comunque leggere i precedenti a firestore e me li metterà sul conto.
+            Quando la query ritorna zero come risultato allora passo al successivo elemento in bounds usando come
+            startAt ed endAt i nuovi e salvandomi in lastDocumentDownloaded l'ultimo nuovo. Si fa cosi fino a quando
+            tutti gli elementi di bounds sono stati utilizzati. */
+        
+        //posizione di partenza: la mia posizione    
+        const center = [37.9759552, 12.9645698];
+        //raggio in metri entro cui prelevare gli utenti vicini
+        const radiusInM = 2000*1000;
 
-        //DA ELIMINARE
-        // Find cities within 50km of London
-        const center = [51.5074, 0.1278];
-        const radiusInM = 50 * 1000;
+        console.log("neighbors");
+        //ottengo l'array bounds fatto di N elementi (startAt e endAt ogni elemento)
+        bounds.current = geohashQueryBounds(center, radiusInM);
+        current_bounds_index.current = 0;
+        lastDocumentDownloaded.current = null;
 
-        // Each item in 'bounds' represents a startAt/endAt pair. We have to issue
-        // a separate query for each pair. There can be up to 9 pairs of bounds
-        // depending on overlap, but in most cases there are 4.
-        console.log("NEIGHBORHOODS")
-        const bounds = geohashQueryBounds(center, radiusInM);
-        console.log(bounds);
-        const promises = [];
-        for (const b of bounds) {
-            console.log(b);
+        //trova successivi 10 elementi (all'inizio si parte dall'elemento zero di bounds)
+        //findNext10ClosestUsers();
 
-        }
-    },[])*/
+        //da eliminare (entrambi)
+        setIsLoading(false);
+        setInfoProfiles(info_profiles2);
+    },[]);
 
-    const scrollX = React.useRef(new Animated.Value(0)).current;
-
-    const info_profiles = [
-        {
-            id: "1",
-            name: "Marco",
-            self_description: "Sono uno studente di Palermo.",
-            date_of_birth: "Fri Mar 07 1975 09:08:10 GMT+0100 (CET)",
-            biologica_sex: "maschio",
-            gender_identity: "demi boy",
-            gender_preference: "demi girl",
-            location: {
-                geohash: "sqc0p129br",
-                lat: 37.97,
-                lng: 12.96
-            },
-            current_occupation: "student",
-            hobbies_interests_and_passions: "Ballare, cantare, pallavolo, dipingere",
-            profileImageUrl: "https://expertphotography.b-cdn.net/wp-content/uploads/2020/08/social-media-profile-photos-3.jpg",
-            gallery: {
-                1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
-                2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
-                3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
+    async function findNext10ClosestUsers(){
+            console.log("Cerco altri 10 utenti");
+            console.log(bounds.current.length+","+current_bounds_index.current);
+            setIsLoading(true);
+            /*
+                la funzione viene richiamata ricorsivamente, quindi se l'indice corrente dell'elemento di bounds da
+                esaminare è maggiore del suo massimo allora esco
+            */
+            if(current_bounds_index.current > bounds.current.length-1){
+                console.log("Non è possibile trovare nessun'altro");
+                setIsLoading(false);
+                return;
             }
-        },
-        {
-            id: "2",
-            name: "Lisa",
-            self_description: "Sono una studentessa di Palermo.",
-            date_of_birth: "Fri Mar 07 1983 09:08:10 GMT+0100 (CET)",
-            biologica_sex: "femmina",
-            gender_identity: "demi girl",
-            gender_preference: "pangender",
-            location: {
-                geohash: "sqc0p129br",
-                lat: 38.97,
-                lng: 7.96
-            },
-            current_occupation: "student",
-            hobbies_interests_and_passions: "Dipingere, calcio",
-            profileImageUrl: "https://d2qp0siotla746.cloudfront.net/img/use-cases/profile-picture/template_3.jpg",
-            gallery: {
-                1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
-                2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
-                3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
+            /*
+                Passo gli startAt e gli endAt dell'elemento corrente.
+                Se però lastDocumentDownloaded!= null allora passerò lui come startAt
+            */
+            try{
+                let startAt = (lastDocumentDownloaded.current==null) ? bounds.current[current_bounds_index.current][0] : lastDocumentDownloaded.current;
+                let endAt = bounds.current[current_bounds_index.current][1];
+
+                //ritorna in result[0] un array con i nuovi profili, mentre in result[1] l'ultimo documento
+                let result = await findNextTenClosestUsers(startAt, endAt);
+                let nearest_users = result[0];
+                
+                console.log("Utenti trovati?");
+                console.log(nearest_users);
+                /*
+                    se non è stato trovato nessuno, passo al successivo elemento dell'array automaticamente, ma
+                    resetto lastDocumentDownloaded
+                */
+                if(nearest_users.length == 0){
+                    console.log("nessuno");
+                    //resetto per ricominciare, ma passo avanti
+                    lastDocumentDownloaded.current = null;
+                    //se non sono già alla fine (ho visitato tutte le zone)
+                    current_bounds_index.current = current_bounds_index.current + 1;
+                    //richiamo ricorsivamente
+                    await findNext10ClosestUsers();
+                    //esco
+                    return;
+                }
+                //altrimenti, se è stato trovato qualcuno setto lastDocumentDownloaded come quello trovato in result
+                else {
+                    console.log("Si!");
+                    lastDocumentDownloaded.current = result[1];
+                }
+                /*
+                    Renderizzo. Siccome voglio almeno sempre 10 elementi, prima di eliminare totalmente i vecchi 10,
+                    mi chiedo quanti siano quelli nuovi. Se sono almeno 10, cancello i vecchi, altrimenti prendo dei
+                    vecchi quanto mi serve per arrivare a 10 con i nuovi.
+                */
+                console.log("renderizzo");
+                let tmp = null;
+                if(nearest_users.length==10)
+                    tmp = [...nearest_users];
+                else{
+                    //calcolo quanto manca ad arrivare a 10
+                    let offset = 10 - nearest_users.length;
+                    //se il vecchio ha elementi minori di offset allora lo metto tutto
+                    if(info_profiles.length<=offset)
+                        tmp = [...info_profiles,...nearest_users];
+                    //altrimenti prendo solo i suoi ultimi offset
+                    else
+                        tmp = [...info_profiles.slice(-offset),...nearest_users];
+                }
+                setInfoProfiles(tmp);
+                //console.log(nearest_users);
+            
+            }catch(e){
+                console.log(e);
             }
-        },
-        {
-            id: "3",
-            name: "Giuseppe",
-            self_description: "Sono un barista",
-            date_of_birth: "Fri Mar 07 1975 09:08:10 GMT+0100 (CET)",
-            biologica_sex: "maschio",
-            gender_identity: "demi boy",
-            gender_preference: "demi girl",
-            location: {
-                geohash: "sqc0p129br",
-                lat: 37.97,
-                lng: 12.96
-            },
-            current_occupation: "worker",
-            hobbies_interests_and_passions: "Ballare, cantare, pallavolo, dipingere",
-            profileImageUrl: "https://www.mensjournal.com/wp-content/uploads/mf/1280-selfie.jpg?quality=86&strip=all",
-            gallery: {
-                1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
-                2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
-                3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
-            }
-        },
-        {
-            id: "4",
-            name: "Sonia",
-            self_description: "Sono una infermiera.",
-            date_of_birth: "Fri Mar 07 1975 09:08:10 GMT+0100 (CET)",
-            biologica_sex: "femmina",
-            gender_identity: "femmina",
-            gender_preference: "maschio",
-            location: {
-                geohash: "sqc0p129br",
-                lat: 41.97,
-                lng: 21.96
-            },
-            current_occupation: "worker",
-            hobbies_interests_and_passions: "Leggere",
-            profileImageUrl: "https://souvlakimoo.gr/wp-content/uploads/2019/02/t2.jpg",
-            gallery: {
-                1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
-                2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
-                3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
-            }
-        },
-    ]
+
+        setIsLoading(false);
+        
+    }
+
+
+    function getDistance(lat, lng){
+
+        //ritorna distanza in kilometri
+        let distance = computeDistance(informazioniProfiloUtente.location.lat, 
+                                       informazioniProfiloUtente.location.lng,
+                                       lat,
+                                       lng);
+        return distance.toString()+"Km";
+    
+    }
+
+    //carico font
+    let [Raleway] = useFonts({Raleway_200ExtraLight});
+    let [Raleway2] = useFonts2({Raleway_400Regular});
+    if(!Raleway || !Raleway2)
+        return <View></View>
 
     return (
         <>
-            {/* BARRA SUPERIORE */}
-            <View style={styles.barraSuperiore}>
-                <Text style={styles.titolo}>Around You</Text>
-                <ActivityIndicator animating={!isLoading} size={fontSizeTitoloBarra} color={MosCeleste} style={{position:"absolute", left:Dimensions.get("window").width*0.03}} />
-            </View>
-
-            <View style={[styles.container,{flex:1}]}>
-
-            {/*CERCHIO IN BACKGROUND*/}
-            <CircleBackground scrollX={scrollX} info_profiles={info_profiles} />
-            {/* GALLERIA PROFILI */}
-            <Animated.FlatList
-                keyExtractor={(item) => item.id}
-                data = {info_profiles}
-                renderItem={({item,index}) => <PreviewProfile item = {item} index={index} scrollX = {scrollX} navigation={navigation} />}
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                horizontal
-                onScroll={Animated.event(
-                    [{ nativeEvent: {contentOffset: {x: scrollX}}}],
-                    {useNativeDriver: true}
-                )}
-                scrollEventThrottle={16}
-                />
-                <KilometerView scrollX = {scrollX} info_profiles = {info_profiles} />
-            </View>
+                    {/* BARRA SUPERIORE */}
+                    <View style={styles.barraSuperiore}>
+                <Text style={styles.titolo}>Attorno a te</Text>
                 
-            {/*MOSTRA L'ERRORE */}
-            <SnackMessage ref = {snackMessageRef} />
+            </View>
+        <FlingGestureHandler 
+        key="UP" 
+        direction={Directions.UP} 
+        onHandlerStateChange={async(ev) =>{
+            if(ev.nativeEvent.state === State.END){
+               // console.log("swipe alto:"+activeIndex);//sarà chiamato quando faccio swipe dal basso verso l'alto (incrementando ogni volta activeIndex)
+                //se arrivo alla fine ricarico con nuovi elementi
+                if(activeIndex === info_profiles.length -1){
+                    console.log("ricarico con nuovi elementi aggiuntivi");
+                    //se non sta già caricando...
+                    if(isLoading==false)
+                        await findNext10ClosestUsers();
+                    return;
+                }
+                setActiveSlide(activeIndex + 1);
+            }
+    }}>
+        <FlingGestureHandler
+            key="DOWN" 
+            direction={Directions.DOWN} 
+            onHandlerStateChange={ev =>{
+                if(ev.nativeEvent.state === State.END){
+                   //console.log("swipe basso:"+activeIndex);//sarà chiamato quando faccio swipe dall'alto verso il basso (decrementando ogni volta activeIndex)
+                    if(activeIndex === 0){
+                        return;
+                    }
+                    setActiveSlide(activeIndex - 1);
+                }
+            }}>
+                <FlatList 
+                    data = {info_profiles}
+                    keyExtractor = {(item) => item.key}
+                    scrollEnabled={false}
+                    onEndReached={()=>{console.log("carica nuovi elementi")}}
+                    contentContainerStyle = {{
+                        flex:1,
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                    CellRendererComponent={({index,item,children,style,...props})=>{
+                        
+                        const newStyle = [
+                            style,
+                            {
+                                elevation: info_profiles.length - index,
+                                zIndex: info_profiles.length - index,
+                                left: -IMAGE_WIDTH / 2,
+                                top: -IMAGE_HEIGHT / 2
+                            }
+                        ];
+                        return (
+                            
+                            <View index={index} {...props} style={newStyle}>
+                               {children}
+                            </View>
 
+                        )
+                    }}
+                    renderItem = {({item, index}) => {
+                        //console.log(index);
+                        const inputRange = [index -1, index, index +1]
+                        const translateY = animatedValue.interpolate({
+                            inputRange,
+                            outputRange: [15, 0, 15]
+                        });
+                        const opacity = animatedValue.interpolate({
+                            inputRange,
+                            outputRange: [-1 -1/VISIBLE_ITEMS, 1, 0]
+                            //outputRange: [-1, 1, 1]
+                        });
+                        const scale = animatedValue.interpolate({
+                            inputRange,
+                            outputRange: [0.92, 1, 1.2]
+                        });
+
+                        return (
+                            <>
+                            <Animated.View style={{position:'absolute',width:width, height:height, opacity, transform: [{translateY}, {scale} ] }}>
+                            <TouchableOpacity onPress={()=>{apriChiudiBottomSheetMenu(item)}}>
+                                    <Image source = {{ uri: item.profileImageUrl}} style={styles.image} />
+                                <LinearGradient
+                                    // Background Linear Gradient sopra chat
+                                    colors={['transparent',"black"]}
+                                    style={{position: 'absolute',bottom:0, width: IMAGE_WIDTH,height: IMAGE_HEIGHT*0.8, borderBottomLeftRadius: 16, borderBottomRightRadius:16}}
+                                    />
+                                <View style={{position:"absolute", alignItems:"flex-start", justifyContent:"flex-end", height:IMAGE_HEIGHT, bottom:10, overflow:"hidden", width:IMAGE_WIDTH*0.7}}>
+                                    <Text style={styles.name}>{item.name},{getAgeFromDateString(item.date_of_birth)}</Text>
+                                    {getCityRegionCountryView(item.location.city, item.location.region, item.location.country)}
+                                    <Text style={[styles.name,{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:MosCeleste}]}>{item.gender_identity}</Text>
+                                    <Text style={[styles.name,{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5}]}>{item.current_occupation}</Text>
+                                </View>
+                                <View style={{position: 'absolute', top:0, left:0, backgroundColor:"white",borderBottomRightRadius: 16, elevation:1 }}>
+                                    <Text style={{color:"black", fontSize:IMAGE_HEIGHT*0.2/4, padding:10, fontFamily: "Raleway_400Regular"}}>{getDistance(item.location.lat, item.location.lng)}</Text>
+                                </View>
+                                <View style={{position: 'absolute', top:0, left:IMAGE_WIDTH*0.9}}>
+                                    <Feather name="info" size={IMAGE_WIDTH*0.1} color="white" />
+                                </View>
+                                {index==0
+                            &&
+                            isSwipeAnimationFinished.current == false
+                            &&
+                            <Animated.View style={{position:'absolute', width:width, height:height, opacity, transform: [{translateY}, {scale} ] }}>
+                                <LottieView ref={animation => {lottieAnimationRef.current = animation}} autoPlay loop={false} onAnimationFinish={()=>{isSwipeAnimationFinished.current = true}} source={require('../../../../resources/lottie/swipe.json')} style={{width:IMAGE_WIDTH, height:IMAGE_HEIGHT}} />
+                            </Animated.View>
+                        }
+                            </TouchableOpacity>
+                        </Animated.View>
+                        <Animated.View style={{position:'absolute', width:width, height:height,  opacity, transform: [{translateY}, {scale} ] }}>
+                            <View style={{ backgroundColor:MosCeleste, top:IMAGE_HEIGHT*0.8, left:IMAGE_WIDTH*0.75, width:IMAGE_WIDTH*0.18, height:IMAGE_WIDTH*0.18, borderRadius:IMAGE_WIDTH*0.2/2, alignItems:"center", justifyContent:"center" }}>
+                                <TouchableOpacity onPress={()=>{dialogCreaNuovaConversazioneRef.current.open_dialog(item.name)}}>
+                                    <Ionicons name="ios-chatbubble-sharp" size={24} color="white" />
+                                </TouchableOpacity>
+                            </View>
+                        </Animated.View>
 
                         
-</>
+                        </>
+                        )
+
+                    }}
+                />
+        </FlingGestureHandler>
+    </FlingGestureHandler> 
+
+    <BottomSheetUserDetails ref={bottomSheetUserDetailsRef} IMAGE_HEIGHT={IMAGE_HEIGHT} />
+    <DialogCreaNuovaConversazione ref={dialogCreaNuovaConversazioneRef} creaNuovaConversazione = {creaNuovaConversazione} />
+    {isLoading==true && <View style={{position:"absolute", width:Dimensions.get("window").width, height:Dimensions.get("window").height, justifyContent:"center", alignItems:"center", flex:1, backgroundColor:"rgba(255,255,255,0.5)"}}>
+            <ActivityIndicator animating={isLoading} color={MosCeleste} />
+    </View>}
+    </> 
+            
     )
 }
 
 const styles = StyleSheet.create({
-    container: {
-      backgroundColor:"#fff",
-      flex:1
-    },
     titolo:{
-        fontSize:fontSizeTitoloBarra,
+        fontSize:fontSizeTitoloBarra*0.8,
         position:"absolute",
         fontFamily: "Raleway_400Regular",
         color: "#52575D",
@@ -199,8 +504,23 @@ const styles = StyleSheet.create({
         height:altezzaBarraScreen,
         justifyContent:"center",
         paddingTop:24,
-        borderBottomColor:"#e6e6e6",
-        borderBottomWidth:0.7,
+        backgroundColor:"#fff"
+        //borderBottomColor:"#e6e6e6",
+        //borderBottomWidth:0.7,
     },
+    image: {
+        width: IMAGE_WIDTH,
+        height: IMAGE_HEIGHT,
+        resizeMode: 'cover',
+        borderRadius: 16,
+    },
+    name : {
+        textTransform: 'capitalize',
+        fontFamily: "Raleway_400Regular",
+        color: '#fff',
+        fontSize: IMAGE_HEIGHT*0.2/3,
+        fontWeight: '900',
+        paddingLeft:10
+    }
     
   });

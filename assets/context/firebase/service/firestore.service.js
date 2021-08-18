@@ -629,3 +629,63 @@ export function _isProfiloCompletato(uid){
 
 
     
+    /*
+            AROUND YOU
+    */
+
+    export async function _findNextTenClosestUsers(startAt, endAt){
+
+        let db = firebase.firestore();
+
+        console.log("Cerco utenti con geohash compreso tra "+startAt +" e "+endAt);
+        try{
+        let nearest_users_snapshot = await db.collection('users')
+                .orderBy('location.geohash')
+                .startAfter(startAt)
+                .endAt(endAt)
+                .limit(10)
+                .get();
+
+        let new_info_profiles = [];
+        let docTmp = null;
+        let media = null;
+        var promises = [];
+        //trovati i 10 (massimo) utenti, per ciascuno scarico i media 100
+        nearest_users_snapshot.forEach(async(doc)=>{
+                    if(doc.exists){
+                        //scarico media
+                        //console.log("scarico media per documento "+doc.id+" ...");
+                        promises.push(_getMediaProfiloContatto(doc.id,"100"));
+                    }
+                })
+
+        let media_results = await Promise.all(promises);
+        let i =0;
+        let newlastDocumentDownloaded = null;
+        nearest_users_snapshot.forEach(async(doc)=>{
+            docTmp = null;
+            newlastDocumentDownloaded = doc;
+            if(doc.exists){
+                docTmp = doc.data();
+                //unisco id
+                docTmp.id = doc.id;
+                /*
+                    unisco key (sarà utile alla flat list come key extractor). Utilizzo un random number concatenato all'id
+                    cosi che se lo stesso elemento dovesse per sbaglio (cosa possibile con geohash) essere ricaricato due o 
+                    più volte, comunque avrebbe una key che è diversa solo per la fine.
+                */
+                docTmp.key = doc.id+(Math.floor(Math.random() * 1000)).toString();
+                //unisco media
+                docTmp.gallery = media_results[i].data().gallery;
+                docTmp.profileImageUrl = media_results[i].data().profileImageUrl;
+                i++;
+                new_info_profiles.push(docTmp);
+                //console.log(docTmp);
+            }
+        });
+            //ritorno i nuovi profili e l'ultimo documento di questi
+            return [new_info_profiles, newlastDocumentDownloaded];
+        }catch(e){
+            throw e;
+        }
+    }

@@ -103,8 +103,8 @@ function GalleriaImmagini({galleria, openDialog, getUtenteCorrente, visibility})
         <FlatList
             data={galleria}
             //contentContainerStyle={{alignItems:'center', justifyContent:"center"}}
-            //horizontal={false}
-            numColumns={3}
+            horizontal={true}
+            numColumns={1}
             ItemSeparatorComponent={()=><Divider/>}
             showsHorizontalScrollIndicator={false}
             keyExtractor={item => item.name.toString()}
@@ -112,6 +112,7 @@ function GalleriaImmagini({galleria, openDialog, getUtenteCorrente, visibility})
         />
         </View>
     )
+    
   }
 
   //questa funzione serve per dire quando renderizzare GalleriaImmagini
@@ -128,11 +129,11 @@ export default memo(GalleriaImmagini,compareFunction);
 const styles = StyleSheet.create({  
     immagineGalleria: {
         flex:1,
-        
     },
     contenitoreFotoGalleria: {
-        width:larghezzaDevice/3, 
-        height:larghezzaDevice/3,
+        width:larghezzaDevice, 
+        height:larghezzaDevice,
+        padding:2,
         borderColor:"white",
         borderWidth:1
         //overflow: "hidden",

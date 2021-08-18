@@ -3,7 +3,7 @@ import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions,A
 
 
 const {width, height} = Dimensions.get("window");
-const CIRCLE_SIZE = width*0.6;
+const CIRCLE_SIZE = width*0.25;
 //mostra il cerchio in background
 const CircleBackground = ({scrollX, info_profiles}) => {
 
@@ -21,17 +21,18 @@ const CircleBackground = ({scrollX, info_profiles}) => {
                         outputRange: [0,0.6,0]
                     })
                     return (
-                        <Animated.View 
-                            key={index} 
+                        <Animated.Image 
+                            key={index}
+                            blurRadius={100}
+                            source={{uri:info_profiles[index].profileImageUrl}}
                             style={[
                                 styles.circle,
                                 {
-                                    backgroundColor:"orange",
                                     transform: [{scale}],
                                     opacity
                                 }
                             ]}>
-                        </Animated.View>
+                        </Animated.Image>
                     )
                 })}
         </View>
