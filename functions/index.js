@@ -341,15 +341,21 @@ exports.createNewUserProfile = functions.https.onCall( async(data, context) =>{
                                                  .doc(folder);
                batch.set(documentoProfiloUtente,{
                            name: data.name,
-                           date_of_birth: data.date_of_birth,
+                           date_of_birth: new Date(data.date_of_birth),
+                           age: data.age,
                            biological_sex: data.biological_sex,
                            gender_identity: data.gender_identity,
                            gender_preference: data.gender_preference,
                            self_description: data.self_description,
+                           current_occupation: data.occupation,
+                           hobbies_interests_and_passions: data.keywords,
                            location: {
                               geohash: data.hash,
                               lat: data.lat,
-                              lng: data.lng
+                              lng: data.lng,
+                              city: data.city,
+                              region: data.region,
+                              country: data.country
                            }
                         });
                //1) documento originale

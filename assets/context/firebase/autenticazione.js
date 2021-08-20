@@ -22,7 +22,7 @@ export const AutenticazioneUtente = createContext(); //all'inizio è falso
 export const AutenticazioneUtenteProvider = ({children}) => {
     //se è true significa che siamo in fase di inizializzazione
     const [isInizializzazione, setIsInizializzazione] = useState(true);
-    //contiene le informazioni dell'utente
+    //contiene solo lo uid dell'utente
     const [user, setUser] = useState(null);
     //se true indica che ha completato gli step necessari a configurare il profilo
     const [isUserProfileCompleted, setIsUserProfileCompleted] = useState(null);
@@ -206,6 +206,22 @@ export const AutenticazioneUtenteProvider = ({children}) => {
         return _inviaEmailDiVerifica();
 
     }
+
+
+
+  /*
+            AROUND YOU
+  */
+
+        async function findNextTenClosestUsers(startAt, endAt, ageStart, ageEnd){
+            try{
+                return _findNextTenClosestUsers(startAt,endAt, informazioniProfiloUtente.gender_preference, ageStart, ageEnd);
+            }catch(e){
+                throw e;
+            }
+        }
+
+
   }
 
   //CONTROLLA CHE IL PROFILO E' STATO COMPLETATO
@@ -230,25 +246,37 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     function creaNuovoProfiloUtente(base64,
                                     name,
                                     date_of_birth,
+                                    age,
                                     biological_sex,
                                     gender_identity,
                                     gender_preference,
                                     self_description,
                                     hash,
                                     lat,
-                                    lng){
+                                    lng,
+                                    city,
+                                    region,
+                                    country,
+                                    occupazione,
+                                    keywords){
         try{
             console.log("creaNuovoProfiloUtente....");
             return _creaNuovoProfiloUtente( base64,
                                             name,
                                             date_of_birth,
+                                            age,
                                             biological_sex,
                                             gender_identity,
                                             gender_preference,
                                             self_description,
                                             hash,
                                             lat,
-                                            lng);
+                                            lng,
+                                            city,
+                                            region,
+                                            country,
+                                            occupazione,
+                                            keywords);
         }catch(e){
             throw e;
         }
@@ -392,15 +420,3 @@ export const AutenticazioneUtenteProvider = ({children}) => {
 
 
 
-
-  /*
-            AROUND YOU
-  */
-
-  async function findNextTenClosestUsers(startAt, endAt){
-      try{
-        return _findNextTenClosestUsers(startAt,endAt);
-      }catch(e){
-          throw e;
-      }
-  }

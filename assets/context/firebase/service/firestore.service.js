@@ -265,27 +265,39 @@ export function _isProfiloCompletato(uid){
     export function _creaNuovoProfiloUtente(base64,
                                             name,
                                             date_of_birth,
+                                            age,
                                             biological_sex,
                                             gender_identity,
                                             gender_preference,
                                             self_description,
                                             hash,
                                             lat,
-                                            lng){
+                                            lng,
+                                            city,
+                                            region,
+                                            country,
+                                            occupazione,
+                                            keywords){
         try{
             console.log("_creaNuovoProfiloUtente...");
             var creaProfilo = firebase.functions().httpsCallable('createNewUserProfile');
             return creaProfilo({
                 image: base64,
                 name: name,
-                date_of_birth: date_of_birth,
+                date_of_birth: date_of_birth.toString(),
+                age: age,
                 biological_sex: biological_sex,
                 gender_identity: gender_identity,
                 gender_preference: gender_preference,
                 self_description: self_description,
                 hash: hash,
                 lat: lat,
-                lng: lng
+                lng: lng,
+                city: city,
+                region: region,
+                country: country,
+                occupation: occupazione,
+                keywords: keywords
             });
         }catch(e){
             throw e;
@@ -387,11 +399,15 @@ export function _isProfiloCompletato(uid){
         - gallery (array di url delle immagini di galleria dell'utente)
     */
         export async function _getMediaProfiloContatto(uid, visibility){
-            console.log("ottengo media profilo utente con uid="+uid+" ................................................................................");
-            var db = firebase.firestore();
-    
-            var mediaDocument = db.collection("users").doc(uid).collection("media").doc(visibility); 
-            return mediaDocument.get();
+            try{
+                console.log("ottengo media profilo utente con uid="+uid+" ................................................................................");
+                var db = firebase.firestore();
+        
+                var mediaDocument = db.collection("users").doc(uid).collection("media").doc(visibility); 
+                return mediaDocument.get();
+            }catch(e){
+                throw e;
+            }
        }
 
        export async function _getAllMediaOfCurrentUser(){
@@ -633,59 +649,132 @@ export function _isProfiloCompletato(uid){
             AROUND YOU
     */
 
-    export async function _findNextTenClosestUsers(startAt, endAt){
+    const MAX_CARD_INTO_LIST = 4;
+    export async function _findNextTenClosestUsers(startAt, endAt, gender_preference, dateToStart, dateToEnd){
+        return new Promise(async(resolveMaster, rejectMaster)=>{
+            try{
+            let db = firebase.firestore();
 
-        let db = firebase.firestore();
+            let startDate = new Date(dateToStart);
+            let endDate = new Date(dateToEnd);
 
-        console.log("Cerco utenti con geohash compreso tra "+startAt +" e "+endAt);
-        try{
-        let nearest_users_snapshot = await db.collection('users')
-                .orderBy('location.geohash')
-                .startAfter(startAt)
-                .endAt(endAt)
-                .limit(10)
-                .get();
+            if(typeof(startAt)=="string")
+                console.log("Cerco utenti con geohash compreso tra "+startAt +" e "+endAt+" genere di identità "+gender_preference+" ed data compresa tra "+startDate.toString() +" e "+endDate.toString());
+            else
+                console.log("Cerco utenti con geohash compreso tra "+startAt.data().name +" e "+endAt+" genere di identità "+gender_preference+" ed data compresa tra "+startDate.toString() +" e "+endDate.toString());
 
-        let new_info_profiles = [];
-        let docTmp = null;
-        let media = null;
-        var promises = [];
-        //trovati i 10 (massimo) utenti, per ciascuno scarico i media 100
-        nearest_users_snapshot.forEach(async(doc)=>{
-                    if(doc.exists){
-                        //scarico media
-                        //console.log("scarico media per documento "+doc.id+" ...");
-                        promises.push(_getMediaProfiloContatto(doc.id,"100"));
-                    }
-                })
-
-        let media_results = await Promise.all(promises);
-        let i =0;
-        let newlastDocumentDownloaded = null;
-        nearest_users_snapshot.forEach(async(doc)=>{
-            docTmp = null;
-            newlastDocumentDownloaded = doc;
-            if(doc.exists){
-                docTmp = doc.data();
-                //unisco id
-                docTmp.id = doc.id;
-                /*
-                    unisco key (sarà utile alla flat list come key extractor). Utilizzo un random number concatenato all'id
-                    cosi che se lo stesso elemento dovesse per sbaglio (cosa possibile con geohash) essere ricaricato due o 
-                    più volte, comunque avrebbe una key che è diversa solo per la fine.
-                */
-                docTmp.key = doc.id+(Math.floor(Math.random() * 1000)).toString();
-                //unisco media
-                docTmp.gallery = media_results[i].data().gallery;
-                docTmp.profileImageUrl = media_results[i].data().profileImageUrl;
-                i++;
-                new_info_profiles.push(docTmp);
-                //console.log(docTmp);
+            try{
+            
+                let nearest_users_snapshot = null;
+            //se lo startAt non è un documento...
+            if(typeof(startAt)=="string"){
+            console.log("query tipo startAt");
+            nearest_users_snapshot = await db.collection('users') //questa query richiede un indice
+                    .where("gender_identity","==",gender_preference)
+                    .where("age","in",[20,21,22,23,24,25,26,27,28,29]) //in supporta al massimo 10 elementi nell'array
+                    .orderBy('location.geohash')
+                    .startAt(startAt)
+                    .endAt(endAt)
+                    .limit(MAX_CARD_INTO_LIST)
+                    .get();
+            }else {
+                console.log("query tipo startAfter");
+                nearest_users_snapshot = await db.collection('users') //questa query richiede un indice
+                    .where("gender_identity","==",gender_preference)
+                    .where("age","in",[20,21,22,23,24,25,26,27,28,29]) //in supporta al massimo 10 elementi nell'array
+                    .orderBy('location.geohash')
+                    .startAfter(startAt)
+                    .endAt(endAt)
+                    .limit(MAX_CARD_INTO_LIST)
+                    .get();
             }
-        });
-            //ritorno i nuovi profili e l'ultimo documento di questi
-            return [new_info_profiles, newlastDocumentDownloaded];
+
+            let new_info_profiles = [];
+            let docTmp = null;
+            let media = null;
+            var promises = [];
+            console.log("trovo gli utenti");
+            //trovati i 10 (massimo) utenti, per ciascuno scarico i media 100
+            await nearest_users_snapshot.docs.forEach(async(doc)=>{
+                try{
+                        console.log("trovo gli utenti 2");
+                        await new Promise((resolve,reject)=>{
+                            try{
+                            //se il documento esiste
+                            console.log("trovo gli utenti 3");
+                            if(doc.exists){
+                                console.log("Trovato: "+doc.data().location.geohash);
+                                //e se il suo id è diverso da quello dell'utente corrente
+                                if(doc.id != firebase.auth().currentUser.uid){
+                                    //scarico media
+                                    //console.log("scarico media per documento "+doc.id+" ...");
+                                    promises.push(_getMediaProfiloContatto(doc.id,"100"));
+                                    console.log("fine "+doc.data().location.geohash);
+                                }
+                            }
+                        }catch(e){
+                            console.log("trovo gli utenti 4");
+                            reject("fallito");
+                        }
+                        }).catch((e)=>{
+                            console.log("trovo gli utenti 5");
+                            console.log(e); rejectMaster(e); })
+                    }catch(e){
+                        console.log("trovo gli utenti 6");
+                        console.log("eccezione firestore:"+e);
+                    }
+            })
+
+            console.log("utenti trovati");
+
+            let media_results = await Promise.all(promises);
+            let i =0;
+            let newlastDocumentDownloaded = null;
+            console.log("gli associo immagini");
+            nearest_users_snapshot.docs.forEach(async(doc)=>{
+                return await new Promise((resolve, reject)=>{
+                    try {
+                        
+                docTmp = null;
+                //se il documento esiste
+                if(doc.exists){
+                    
+                    //se è diverso da quello dell'utente corrente
+                    if(doc.id != firebase.auth().currentUser.uid){
+                        console.log("Trovato: "+doc.data().name);
+                        newlastDocumentDownloaded = doc;
+                        docTmp = doc.data();
+                        //unisco id
+                        docTmp.id = doc.id;
+                        /*
+                            unisco key (sarà utile alla flat list come key extractor). Utilizzo un random number concatenato all'id
+                            cosi che se lo stesso elemento dovesse per sbaglio (cosa possibile con geohash) essere ricaricato due o 
+                            più volte, comunque avrebbe una key che è diversa solo per la fine.
+                        */
+                        docTmp.key = doc.id+(Math.floor(Math.random() * 1000)).toString();
+                        //unisco media
+                        docTmp.gallery = media_results[i].data().gallery;
+                        docTmp.profileImageUrl = media_results[i].data().profileImageUrl;
+                        i++;
+                        new_info_profiles.push(docTmp);
+                        //console.log(docTmp);
+                    }
+                }
+            }catch(e){
+                reject(e);
+            }
+            }).catch((e)=>{console.log("errore firestore durante l'associamento delle immagini ai profili:"+e); rejectMaster(e);})
+            });
+                console.log("ritorno utenti trovati.");
+                //ritorno i nuovi profili e l'ultimo documento di questi
+                resolveMaster([new_info_profiles, newlastDocumentDownloaded]);
+            }catch(e){
+                console.log("firestore solleva errore.");
+                throw e;
+            }
         }catch(e){
+            console.log("promise solleva errore:"+e);
             throw e;
         }
+    })
     }

@@ -1,7 +1,6 @@
 import React, {useState, useContext, useEffect, useRef} from 'react';
 import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions,Animated, Platform, FlatList} from 'react-native';
 import {Divider} from 'react-native-paper'
-import { nodeFromRef, SharedElement } from 'react-native-shared-element';
 import { fontSizeSottoTitolo } from '../../../../context/variabili_globali/variabiliGlobali';
 import { MosViola } from '../../../../resources/colors';
 
@@ -31,15 +30,10 @@ export default function PreviewProfile(props){
                             inputRange,
                             outputRange: [0.92, 1, 1.2]
                         });
-
-                        let startAncestor;
-                        let startNode;
-                        let endAncestor;
-                        let endNode;
    
    return (
 <>
-<Animated.View style={{position:'absolute',width:width, height:height, opacity, transform: [{translateY}, {scale} ] }} ref={ref => startAncestor = nodeFromRef(ref)}>
+<Animated.View style={{position:'absolute',width:width, height:height, opacity, transform: [{translateY}, {scale} ] }}>
         <TouchableOpacity onPress={()=>{}}>
 
                                         <Image source = {{ uri: item.profileImageUrl}} style={styles.image} />

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 import * as SQLite from 'expo-sqlite'
 
@@ -704,6 +705,28 @@ const updateMessageState = async(nomeTabella,row, new_state) => {
     })
 }
 
+const savePreference = async(currentUser, preferenceName, value) => {
+    return new Promise(async(resolve, reject) => {
+        try{
+
+            await AsyncStorage.setItem(currentUser+"_"+preferenceName, value.toString());
+            resolve(true);
+        }catch(e){
+            throw e;
+        }
+    });
+}
+
+const readPreference = async (currentUser, preferenceName) => {
+    try {
+        const value = await AsyncStorage.getItem(currentUser+"_"+preferenceName);
+        return value;
+    } catch(e) {
+      throw e;
+    }
+  }
+
+
 export default local_storage = {
     checkIfTableExists,
     removeTableForConversation,
@@ -720,5 +743,7 @@ export default local_storage = {
     deleteMediaTable,
     deleteMediaFolder,
     saveImageLocally,
-    removeImageLocally
+    removeImageLocally,
+    savePreference,
+    readPreference
 }

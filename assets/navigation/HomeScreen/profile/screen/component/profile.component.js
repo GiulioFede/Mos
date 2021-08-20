@@ -160,9 +160,9 @@ export default function ProfileComponent(props){
         setGalleria(tmp);
     }
 
-    function getAge(dateString) {
+    function getAge(timestamp) {
         var today = new Date();
-        var birthDate = new Date(dateString);
+        var birthDate = new Date(timestamp.seconds*1000);
         var age = today.getFullYear() - birthDate.getFullYear();
         var m = today.getMonth() - birthDate.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
@@ -438,12 +438,12 @@ export default function ProfileComponent(props){
                     <View style = {styles.areaDettagliUtente}>
                         <Text style={styles.nome}>{informazioniProfiloUtente.name.charAt(0).toUpperCase()+informazioniProfiloUtente.name.slice(1)}</Text>
                         <Entypo name="dot-single" size={24} color="#52575D" />
-                        <Text style={styles.age}>{getAge(informazioniProfiloUtente.date_of_birth)}</Text>
+                        <Text style={styles.age}>{informazioniProfiloUtente.age}</Text>
                     </View>
 
                     {/* DESCRIZIONE */}
                     <View style ={styles.areaDescrizione}>
-                        <Text style={styles.descrizioneTesto}>"Ciao mi chiamo Giulio e sono uno studente. Sono nato ad Alcamo ma studio a Pisa."</Text>
+                        <Text style={styles.descrizioneTesto}>{informazioniProfiloUtente.self_description}</Text>
                     </View>
                     </View>
                     <View style={{backgroundColor:"#fff"}}>

@@ -1,18 +1,24 @@
-import React, {useState, useContext} from "react"
-import {View, Text, StyleSheet, useWindowDimensions, Image, TextInput,TouchableOpacity, Platform, ScrollView} from "react-native";
+import React, {useState, useRef} from "react"
+import {View, Text, StyleSheet, useWindowDimensions, Image, TextInput,TouchableOpacity, Platform, ScrollView, Dimensions} from "react-native";
 import { altezzaSchermoInterno, fontSizeCampi, fontSizeSottoTitolo, fontSizeTitolo, fontSizeTitoloPiccolo, larghezzaDevice } from "../../../context/variabili_globali/variabiliGlobali";
-import {RadioButton, ActivityIndicator, Dialog, Portal} from "react-native-paper";
+import {RadioButton, ActivityIndicator, Dialog, Portal, Divider} from "react-native-paper";
 import { MosCeleste, MosPurple, MosViola } from "../../../resources/colors";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { DatePicker } from "./feature/date_picker";
 import * as Location from 'expo-location';
-import { AntDesign, MaterialIcons, Ionicons, Foundation,Fontisto, MaterialCommunityIcons,FontAwesome  } from '@expo/vector-icons';  
+import { AntDesign, Entypo  } from '@expo/vector-icons';  
 import PhotoManager from "./photo";
 import { LocationAccuracy } from "expo-location";
+import { FlatList } from "react-native-gesture-handler";
 //installa expo install @react-native-community/datetimepicker
 
-export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizioneUtente,setSessoUtente,setIdentitaDiGenere, setPreferenzaSessoUtente,setDescrizioneUtente, setUriImmagine, creaProfilo, setError}){
+
+//variabili di appoggio (li metto qua cosi da evitare di ricrearle ad ogni render)
+let tmpKeywordArray = null;
+let check = false;
+
+export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizioneUtente,setSessoUtente,setIdentitaDiGenere, setPreferenzaSessoUtente,setDescrizioneUtente, setOccupazioneUtente,setKeywordUtente, setUriImmagine, creaProfilo, setError}){
 
 
     const {width, height} = useWindowDimensions();
@@ -23,6 +29,13 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
     const [nome, setNome] = useState('');
     //descrizione
     const [descrizione, setDescrizione] = useState('');
+    //occupazione
+    const [occupazione, setOccupazione] = useState('');
+    //keyword hobby,interessi e passioni
+    const [keyword, setUltimaKeyword] = useState('');
+
+    //riferimento flatlist keyword
+    const flatListKeywordRef = useRef();
 
     //posizione
     const [isLocationSet, setIsLocationSet] = useState(null);
@@ -72,18 +85,21 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         const user_position = [pos.coords.latitude,pos.coords.longitude];
                                         console.log(pos);
                                         console.log(user_position);
-                                        //Location.reverseGeocodeAsync({latitude:pos.coords.latitude, longitude:pos.coords.longitude}, {useGoogleMaps:false})
-                                        //Location.reverseGeocodeAsync({latitude:39.501536,longitude:-104.723974}, {useGoogleMaps:false})
-                                           // .then((ris)=>{
+                                        //ottengo la città, la regione e lo stato
+                                        Location.reverseGeocodeAsync({latitude:pos.coords.latitude, longitude:pos.coords.longitude}, {useGoogleMaps:false})
+                                           .then((ris)=>{
                                                 //console.log("ADDRESS OBJECT USER");
-                                                //console.log(ris);
-                                                setIsLocationLoading(false);
+                                                console.log(ris);
+                                                user_position.push(ris[0].city==null?"null":(ris[0].city) );
+                                                user_position.push(ris[0].region==null?"null":(ris[0].region));
+                                                user_position.push(ris[0].country==null?"null":(ris[0].country));
                                                 setPosizioneUtente(user_position);
                                                 setIsLocationSet(true);
-                                            //}).catch((e)=>{
-                                              //  setIsLocationLoading(false);
-                                                //setError("Si è verificato un problema. Riprova a riottenere la posizione.")
-                                            //});
+                                            }).catch((e)=>{
+                                                setError("Si è verificato un problema. Riprova a riottenere la posizione.")
+                                            }).finally(()=>{
+                                                setIsLocationLoading(false);
+                                            })
                                     }).catch((e)=>{
                                         setIsLocationLoading(false);
                                         setError("Si è verificato un errore. Riprovare più tardi.")
@@ -134,8 +150,48 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
         setUriImmagine(path);
     }
 
+    //array utilizzato dalla flatlist keyword
+    const [keywordArray, setKeywordArray] = useState([]);
+    //keyword hobby
+    function inserisciKeyword(){
+        //controllo che l'attuale keyword non sia vuota
+        if(keyword.length>0){
+            //controllo che l'attuale keyword non sia già presente
+            check = false;
+            for(let i=0; i<keywordArray.length;i++){
+                if(keywordArray[i].keyword.toUpperCase()===keyword.toUpperCase()){
+                    check = true;
+                    break;
+                }
+            }
+            //se è stato trovato un doppione esco e avviso
+            if(check==true){
+                setError("La keyword "+keyword.toUpperCase()+" esiste già.");
+                return;
+            }
+            //inserisco nella flatlist
+            //se la flatlist è vuota...
+            if(keywordArray.length==0)
+                tmpKeywordArray = [{id:0, keyword:keyword.toUpperCase()}]
+            else
+                tmpKeywordArray = [...keywordArray,{id:((keywordArray[keywordArray.length-1].id)+1), keyword:keyword.toUpperCase()}];
+            setKeywordArray(tmpKeywordArray);
+            setKeywordUtente(tmpKeywordArray);
+            setUltimaKeyword("");
+        }
+    }
+
+    function eliminaKeyword(index){
+        tmpKeywordArray = [...keywordArray];
+        tmpKeywordArray.splice(index,1);
+        setKeywordArray(tmpKeywordArray);
+        setKeywordUtente(tmpKeywordArray);
+    }
+
+    console.log(keywordArray);
     
     function creaNuovoUser(){
+        console.log("crea profilo..");
         creaProfilo();
     }
 
@@ -158,7 +214,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
             {/*item.id=='3' && <Ionicons name="ios-location-sharp" size={altezzaSchermoInterno*0.3} color="white" /> */}
             {/*item.id=='4' && <Fontisto name="intersex" size={altezzaSchermoInterno*0.3} color="white" /> */}
             {/*item.id=='5' && <MaterialCommunityIcons name="heart-multiple" size={altezzaSchermoInterno*0.3} color="white" /> */}
-            {item.id=='8' && 
+            {item.id=='10' && 
                 <View> 
                     {/*altrimenti imposta l'immagine dell'utente */}
                     {uri &&  <View style={styles.contenitoreImgProfilo}><Image source={{ uri: uri }} style={[styles.image, {alignSelf:"center",width:altezzaSchermoInterno*0.3, height:altezzaSchermoInterno*0.3, resizeMode:"cover"}]} /></View> }
@@ -167,23 +223,26 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
             {/*item.id=='9' && <Ionicons name="person-add" size={altezzaSchermoInterno*0.3} color="white" /> */}
 
             <View style={{flex:1, padding:10}}>
-                <View style={{flex:0.5, width:"100%", justifyContent:"center"}} >
+                <View style={{flex:0.5, width:"100%",alignItems:"center", justifyContent:"center", alignSelf:"center"}} >
                     <Text style={styles.titolo}>{item.title}</Text>
-                    <Text style={styles.sottoTesto}>{item.subTitle}</Text>
+                    <Text style={[styles.sottoTesto,{textAlign:"center"}]}>{item.subTitle}</Text>
                 </View>
                 <View style={{flex:0.5,width:"100%", justifyContent:"center", alignItems:"center"}}>
 
                     {/*PAGINA 1 --> NOME */}
                     {item.id=='1' &&
+                        <View>
                         <TextInput
-                            style={[styles.sottoTesto,{backgroundColor:"white",color:MosCeleste,fontFamily:"Raleway_400Regular", width:width*0.3, margin:25, paddingVertical:3, borderRadius:height*0.03}]}
+                            style={[styles.sottoTesto,{color:MosCeleste,fontFamily:"Raleway_400Regular",borderBottomColor:MosCeleste, borderBottomWidth:1, textAlign:"center", width:width*0.3, margin:25, paddingVertical:3}]}
                             onChangeText={text => setNome(text.trim())}
                             onSubmitEditing={()=>setNomeUtente(nome)}
                             onBlur={()=> setNomeUtente(nome)} //focus perso
                             value={nome}
+                            autoCapitalize="words"
                             placeholder="Nome"
                             keyboardType="name-phone-pad"
                       />
+                      </View>
                          }
 
                         {/*PAGINA 2 --> DATA DI NASCITA */}
@@ -221,16 +280,16 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         uncheckedColor={MosCeleste}
                                         value="maschio"
                                         style={{width:200, height:200}}
-                                        status={ isSexChecked === 'maschio' ? 'checked' : 'unchecked' }
-                                        onPress={() => setSesso('maschio')}
+                                        status={ isSexChecked === 'male' ? 'checked' : 'unchecked' }
+                                        onPress={() => setSesso('male')}
                                     />
                                     <Text style={[styles.campiDaCompilare,{paddingLeft:larghezzaDevice*0.1}]}>FEMMINA</Text>
                                     <RadioButton
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
                                         value="femmina"
-                                        status={ isSexChecked === 'femmina' ? 'checked' : 'unchecked' }
-                                        onPress={() => setSesso('femmina')}
+                                        status={ isSexChecked === 'female' ? 'checked' : 'unchecked' }
+                                        onPress={() => setSesso('female')}
                                     />
                                 </View>
                                 <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
@@ -258,8 +317,8 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         uncheckedColor={MosCeleste}
                                         value="maschio"
                                         style={{width:200, height:200}}
-                                        status={ isGenereChecked === 'maschio' ? 'checked' : 'unchecked' }
-                                        onPress={() => setGenere('maschio')}
+                                        status={ isGenereChecked === 'male' ? 'checked' : 'unchecked' }
+                                        onPress={() => setGenere('male')}
                                     />
                                      <Text style={styles.campiDaCompilare}>MASCHIO</Text>
                                 </View>
@@ -268,8 +327,8 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
                                         value="femmina"
-                                        status={ isGenereChecked === 'femmina' ? 'checked' : 'unchecked' }
-                                        onPress={() => setGenere('femmina')}
+                                        status={ isGenereChecked === 'female' ? 'checked' : 'unchecked' }
+                                        onPress={() => setGenere('female')}
                                     />
                                      <Text style={styles.campiDaCompilare}>FEMMINA</Text>
                                 </View>
@@ -288,8 +347,8 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="androgino"
-                                            status={ isGenereChecked === 'androgino' ? 'checked' : 'unchecked' }
-                                            onPress={() => setGenere('androgino')}
+                                            status={ isGenereChecked === 'androgynous' ? 'checked' : 'unchecked' }
+                                            onPress={() => setGenere('androgynous')}
                                         />
                                         <Text style={styles.campiDaCompilare}>ANDROGINO</Text>
                                     </View>
@@ -298,8 +357,8 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="terzo genere"
-                                            status={ isGenereChecked === 'terzo genere' ? 'checked' : 'unchecked' }
-                                            onPress={() => setGenere('terzo genere')}
+                                            status={ isGenereChecked === 'third gender' ? 'checked' : 'unchecked' }
+                                            onPress={() => setGenere('third gender')}
                                         />
                                         <Text style={styles.campiDaCompilare}>TERZO GENERE</Text>
                                     </View>
@@ -368,8 +427,8 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="transessuale"
-                                            status={ isGenereChecked === 'transessuale' ? 'checked' : 'unchecked' }
-                                            onPress={() => setGenere('transessuale')}
+                                            status={ isGenereChecked === 'transexual' ? 'checked' : 'unchecked' }
+                                            onPress={() => setGenere('transexual')}
                                         />
                                         <Text style={styles.campiDaCompilare}>TRANSESSUALE</Text>
                                     </View>
@@ -398,8 +457,8 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi androgino"
-                                            status={ isGenereChecked === 'demi androgino' ? 'checked' : 'unchecked' }
-                                            onPress={() => setGenere('demi androgino')}
+                                            status={ isGenereChecked === 'demi androgynous' ? 'checked' : 'unchecked' }
+                                            onPress={() => setGenere('demi androgynous')}
                                         />
                                         <Text style={styles.campiDaCompilare}>DEMI-ANDROGINO</Text>
                                     </View>
@@ -615,24 +674,78 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     value={descrizione}
                                     keyboardType="name-phone-pad"
                                     multiline={true}
-                                    placeholder='Parlaci di te, della tua sessualità in breve...'
+                                    placeholder='Parlaci di te...'
                                     underlineColorAndroid='transparent'
                                     maxLength={150}
                                 />
                             </View>
                             }
 
-                        {/*PAGINA 6 --> FOTO */}
-                        {item.id=='8' && <PhotoManager setErrore={displayError} setUriUtente={setUriImg}/>}
+                        {/*PAGINA 8 --> OCCUPAZIONE */}
+                        {item.id=='8' &&
+                            <View>
+                            <TextInput
+                                style={[styles.sottoTesto,{color:MosCeleste,fontFamily:"Raleway_400Regular",borderBottomColor:MosCeleste, borderBottomWidth:1, textAlign:"center", width:width*0.7, margin:25, paddingVertical:3}]}
+                                onChangeText={text => setOccupazione(text)}
+                                onSubmitEditing={()=>setOccupazioneUtente(occupazione)}
+                                onBlur={()=> setOccupazioneUtente(occupazione)} //focus perso
+                                value={occupazione}
+                                maxLength={50}
+                                placeholder="es. studente, barista,..."
+                                keyboardType="name-phone-pad"
+                        />
+                        </View> }
+ 
+                        {/*PAGINA 9 --> HOBBY, INTERESSI E PASSIONI */}
+                        {item.id=='9' 
+                            &&
+                            <View style={{flex:1}} >
+                                <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
+                                    <Text style={{color:MosPurple,fontFamily:"Raleway_400Regular",fontSize:fontSizeSottoTitolo*0.7,opacity:(keywordArray.length<10?1:0.3) }}>Inserisci parola chiave:</Text>
+                                    <TextInput
+                                        style={[styles.sottoTesto,{color:MosCeleste,opacity:(keywordArray.length<10?1:0.3), fontFamily:"Raleway_400Regular",fontSize:fontSizeSottoTitolo*0.7,borderBottomColor:MosCeleste, borderBottomWidth:1, textAlign:"center", width:width*0.3, margin:25, paddingVertical:3}]}
+                                        onChangeText={key => setUltimaKeyword(key.trim())}
+                                        onSubmitEditing={()=>{inserisciKeyword()}}
+                                        value={keyword}
+                                        editable = {keywordArray.length<10}
+                                        maxLength={15}
+                                        placeholder="es. dipingere"
+                                        keyboardType="name-phone-pad"
+                                />
+                                </View>
+                                <Divider />
+                                <View >
+                                <FlatList
+                                    ref = {flatListKeywordRef}
+                                    onContentSizeChange={()=> flatListKeywordRef.current.scrollToEnd()} 
+                                    horizontal={true}
+                                    data={keywordArray}
+                                    showsHorizontalScrollIndicator={true}
+                                    keyExtractor={item => item.id.toString()}
+                                    renderItem={({ item, index }) =>
+                                        <View style={{marginTop:10}}>
+                                            <Text style={{color:"white",backgroundColor:MosPurple, borderRadius:10, margin:10, height:50, textAlign:"center", textAlignVertical:"center", padding:10}}>{item.keyword}</Text>
+                                            <TouchableOpacity style={{position:"absolute"}} onPress={()=>{eliminaKeyword(index)}}>
+                                                <Entypo name="cross" size={20} color="white" style={{backgroundColor:"red", borderRadius:5}} /> 
+                                            </TouchableOpacity>
+                                        </View>
+                                    }
+                                />
+                                </View>
+                            </View>
+                        }     
 
-                        {/*PAGINA 7 --> CREAZIONE PROFILO */}
-                        {item.id=='9' && 
-                                    <TouchableOpacity onPress={creaNuovoUser}>
+                        {/*PAGINA 10 --> FOTO */}
+                        {item.id=='10' && <PhotoManager setErrore={displayError} setUriUtente={setUriImg}/>}
+
+                        {/*PAGINA 11 --> CREAZIONE PROFILO */}
+                        {item.id=='11' && 
+                                    <TouchableOpacity onPress={()=>{creaNuovoUser()}}>
                                         <Text style={[styles.campiDaCompilare,{color:"white", backgroundColor:MosCeleste,fontFamily:"Raleway_400Regular", padding:10, marginTop:20, borderRadius:20}]}> CREA PROFILO</Text>
                                     </TouchableOpacity> 
                         }
 
-                     {/*<Text style={[styles.info,{paddingTop:20, textAlign:"center"}]}>{item.info}</Text>*/}
+                     {<Text style={[styles.info,{paddingTop:20, textAlign:"center"}]}>{item.info}</Text>}
                 </View>
                
 
@@ -675,8 +788,7 @@ const styles = StyleSheet.create({
         fontSize:fontSizeSottoTitolo*0.8,
         fontFamily: "Raleway_200ExtraLight",
         color: MosCeleste,
-        alignSelf:"center",
-        textAlign:"center",
+        alignSelf:"center"
     },
     campiDaCompilare: {
         fontSize:fontSizeCampi,
@@ -686,7 +798,7 @@ const styles = StyleSheet.create({
     info: {
         fontSize:fontSizeCampi,
         fontFamily: "Raleway_200ExtraLight",
-        color: "white"
+        color: "#444"
     },
     errore:{
         fontSize:fontSizeCampi,

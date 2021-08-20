@@ -3,7 +3,7 @@ import React,{ useImperativeHandle, forwardRef, useState, useRef} from "react";
 import { Text, View,StyleSheet, Dimensions, Image } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
 import { Divider } from "react-native-paper";
-import { getAgeFromDateString } from "../../../../context/utilities/functions.utilities";
+import { getAgeFromDate } from "../../../../context/utilities/functions.utilities";
 import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaSchermoInterno, fontSizeSottoTitolo, fontSizeTitolo } from "../../../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste, MosPurple, MosViola } from "../../../../resources/colors";
 import {Entypo} from "@expo/vector-icons";
@@ -153,7 +153,7 @@ function getCityRegionCountryView(city, region, country){
              <>
                 <View style={{flexDirection:"row", paddingBottom:5}}>
                     <Text style={styles.name}>{currentUserDisplayed.current.name}</Text>
-                    <Text style={styles.age}>{getAgeFromDateString(currentUserDisplayed.current.date_of_birth)}</Text>
+                    <Text style={styles.age}>{currentUserDisplayed.age}</Text>
                 </View>
 
                 {getCityRegionCountryView(currentUserDisplayed.current.location.city,currentUserDisplayed.current.location.region,currentUserDisplayed.current.location.country)}

@@ -1,9 +1,9 @@
 import React, {useState, useRef, useContext, useEffect} from "react";
-import {View, Text,Dimensions,StyleSheet, TouchableOpacity, TextInput, ScrollView,KeyboardAvoidingView, Button, Platform,BackHandler} from "react-native"
+import {View, Text,Dimensions,StyleSheet, TouchableOpacity, TextInput, ScrollView,KeyboardAvoidingView, Button, Platform,BackHandler, FlatList} from "react-native"
 import { FAB, Snackbar, ActivityIndicator, Divider, Checkbox } from 'react-native-paper';
 import { altezzaDevice, fontSizeCampi, fontSizeSottoTitolo, fontSizeTitoloBarra, fontSizeTitoloCampo, iconSize, larghezzaDevice } from "../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste, MosPurple, MosViola } from "../../resources/colors";
-import {Ionicons} from "@expo/vector-icons";
+import {Ionicons, AntDesign, Entypo} from "@expo/vector-icons";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { DatePicker } from "./components/datePicker";
@@ -11,10 +11,16 @@ import * as Location from 'expo-location';
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 import { geohashForLocation } from "geofire-common";
 import AreaSceltaGenere from "./components/areaSceltaGenere";
+import SliderKMPreference from "./components/sliderKmPreference";
+import localStorage from "../../context/local_storage/localStorage";
+
+
+let tmpKeywordArray = [];
+let check = false;
 
 export default function InformazioniPersonali({ navigation }) {
 
-    var {user,informazioniProfiloUtente, informazioniAutenticazioneUtente, aggiornaEmail, inviaEmailDiVerifica,messaggioAuth, setMessaggioAuth,aggiornaDettagliProfiloUtente,logOut} = useContext(AutenticazioneUtente);
+    var {user,informazioniProfiloUtente,setInformazioniProfiloUtente, informazioniAutenticazioneUtente, aggiornaEmail, inviaEmailDiVerifica,messaggioAuth, setMessaggioAuth,aggiornaDettagliProfiloUtente,logOut} = useContext(AutenticazioneUtente);
 
     const [isLoading, setIsLoading] = useState(false);
     //indica se ci è stato un errore globale 
@@ -22,18 +28,26 @@ export default function InformazioniPersonali({ navigation }) {
 
     const scrollView = useRef();
 
-    //indica dove è stata fatta la modifica (dataDiNascita, descrizione, posizione, identità di genere)
-    var indiciModifiche = useRef([false,false,false,false,false]);
+    //indica dove è stata fatta la modifica (dataDiNascita, descrizione, posizione, identità di genere, occupazione, keywords, slider km, range età) NB: gli ultimi due vengono trattati diversamente dagli altri dato che vengono salvati in locale
+    var indiciModifiche = useRef([false,false,false,false,false, false, false, false, false]);
 
-    const [auth, setAuth] = useState((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]);
+    const [auth, setAuth] = useState(informazioniAutenticazioneUtente!=null?((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]):null);
     const [erroreAuth, setErroreAuth] = useState(null);
 
     const [nome, setNome] = useState("");
 
     const [descrizione, setDescrizione] = useState(informazioniProfiloUtente.self_description);
+    
+    const [occupazione, setOccupazione] = useState(informazioniProfiloUtente.current_occupation);
 
     const [dataDiNascita, setDataDiNascita] = useState(informazioniProfiloUtente.date_of_birth);
     const [erroreData, setErroreData] = useState(null);
+
+    const [keywordArray, setKeywordArray] = useState(Object.keys(informazioniProfiloUtente.hobbies_interests_and_passions).map(function(key,index){
+            return {id: index, keyword: informazioniProfiloUtente.hobbies_interests_and_passions[index]}
+    }))
+
+    const sliderKMRef = useRef();
 
     const [isLocationLoading, setIsLocationLoading] = useState("");
 
@@ -43,7 +57,8 @@ export default function InformazioniPersonali({ navigation }) {
 
     //messaggio snack
     const [snackMessage, setSnackMessage] = useState(null);
-
+    //reference flat list keywords
+    const flatListKeywordRef = useRef();
 
 
     function controllaEmail(){
@@ -118,7 +133,7 @@ function aggiornaPhoneNumber(){
 }
 
     function notificaModifiche(){
-        for(var i=0; i<5; i++){
+        for(var i=0; i<9; i++){
             if(indiciModifiche.current[i]==true){
                 console.log("modifica "+i);
                 scrollView.current.scrollToEnd({animated: true});
@@ -137,9 +152,9 @@ function aggiornaPhoneNumber(){
         }
         else {
             setErroreData(null);
-            let data_str = data+"";//.getDate()+"/"+(data.getMonth()+1)+"/"+data.getFullYear();
-            console.log("setto data di nascita in modificaDataDiNascita uguale a "+data_str);
-            setDataDiNascita(data_str);
+            let data_str = data;//.getDate()+"/"+(data.getMonth()+1)+"/"+data.getFullYear();
+            console.log("setto data di nascita in modificaDataDiNascita uguale a "+data_str.toString());
+            setDataDiNascita({nanoseconds:0, seconds:data_str.getTime()/1000});
             //console.log(informazioniProfiloUtente.date_of_birth+","+data_str);
             //avverto che è avvenuta una modifica se questa è diversa dalla precedente
             if(informazioniProfiloUtente.date_of_birth!=data_str){
@@ -206,10 +221,23 @@ function aggiornaPhoneNumber(){
                                         const user_position = [pos.coords.latitude,pos.coords.longitude];
                                         console.log(pos);
                                         console.log(user_position);
-                                        posizioneUtente.current=user_position;
-                                        //avverto che è avvenuta una modifica
-                                        indiciModifiche.current[2]=true;
-                                        notificaModifiche();
+                                        Location.reverseGeocodeAsync({latitude:pos.coords.latitude, longitude:pos.coords.longitude}, {useGoogleMaps:false})
+                                           .then((ris)=>{
+                                                //console.log("ADDRESS OBJECT USER");
+                                                console.log(ris);
+                                                user_position.push(ris[0].city==null?"null":(ris[0].city) );
+                                                user_position.push(ris[0].region==null?"null":(ris[0].region));
+                                                user_position.push(ris[0].country==null?"null":(ris[0].country));
+                                                posizioneUtente.current=user_position;
+                                                //avverto che è avvenuta una modifica
+                                                indiciModifiche.current[2]=true;
+                                                notificaModifiche();
+                                                console.log("nuove modifiche alla posizione:");
+                                                console.log(posizioneUtente.current);
+                                            }).catch((e)=>{
+                                                console.log("errore aggiornamento posizione:"+e);
+                                                setSnackMessage("Si è verificato un problema. Riprova a riottenere la posizione.")
+                                            });
                                     }).catch((e)=>{
                                         setIsLocationLoading("");
                                         setSnackMessage("Si è verificato un errore. Riprovare più tardi.")
@@ -243,12 +271,60 @@ function aggiornaPhoneNumber(){
     }
 
     function modificaDescrizione(){
+        setDescrizione(descrizione.replace(/\s*$/,""));
         //se era diversa da prima
         if(descrizione != informazioniProfiloUtente.self_description)
             indiciModifiche.current[1]=true;
         else
             indiciModifiche.current[1]=false;
         notificaModifiche();
+    }
+
+    function modificaOccupazione(){
+        setOccupazione(occupazione.replace(/\s*$/,""));
+        //se era diversa da prima
+        if(occupazione != informazioniProfiloUtente.current_occupation)
+            indiciModifiche.current[5] = true;
+        else
+            indiciModifiche.current[5] = false;
+        notificaModifiche();
+    }
+
+    //keyword
+    //keyword hobby,interessi e passioni
+    const [keyword, setUltimaKeyword] = useState('');
+
+    function inserisciKeyword(){
+        //controllo che l'attuale keyword non sia vuota
+        if(keyword.length>0){
+            //controllo che l'attuale keyword non sia già presente
+            check = false;
+            for(let i=0; i<keywordArray.length;i++){
+                if(keywordArray[i].keyword.toUpperCase()===keyword.toUpperCase()){
+                    check = true;
+                    break;
+                }
+            }
+            //se è stato trovato un doppione esco e avviso
+            if(check==true){
+                setSnackMessage("La keyword "+keyword.toUpperCase()+" esiste già.");
+                return;
+            }
+            //inserisco nella flatlist
+            //se la flatlist è vuota...
+            if(keywordArray.length==0)
+                tmpKeywordArray = [{id:0, keyword:keyword.toUpperCase()}]
+            else
+                tmpKeywordArray = [...keywordArray,{id:((keywordArray[keywordArray.length-1].id)+1), keyword:keyword.toUpperCase()}];
+            setKeywordArray(tmpKeywordArray);
+            setUltimaKeyword("");
+        }
+    }
+
+    function eliminaKeyword(index){
+        tmpKeywordArray = [...keywordArray];
+        tmpKeywordArray.splice(index,1);
+        setKeywordArray(tmpKeywordArray);
     }
 
     const [identitaDiGenere, setIdentitaDiGenere] = useState(informazioniProfiloUtente.gender_identity);
@@ -277,13 +353,53 @@ function aggiornaPhoneNumber(){
         notificaModifiche();
     }
 
-    console.log("data di birh:"+dataDiNascita);
-    function salvaDettagliUtente(){
+    const raggioDiAzione = useRef();
+    function modificaPreferenzaRaggioDiAzione(vecchio, nuovo){
+        console.log("modifica preferenza raggio di azione..");
+        raggioDiAzione.current = nuovo;
+        if(vecchio==nuovo)
+            indiciModifiche.current[7] = false;
+        else
+            indiciModifiche.current[7] = true;
+        
+        notificaModifiche();
+    }
+
+
+    async function salvaDettagliUtente(){
+
+        console.log("vecchie keyword:");
+        console.log(informazioniProfiloUtente.hobbies_interests_and_passions);
+        console.log("nuove keyword:");
+        console.log(keywordArray);
+        //controllo che le keyword siano diverse dall'ultima volta
+        //1) se la dimensione dell'array è diversa allora sicuramente sono cambiate
+        if(informazioniProfiloUtente.hobbies_interests_and_passions.length!=keywordArray.length){
+            indiciModifiche.current[6] = true;
+        }
+        //2) altrimenti se è ancora uguale può comunque essere che una parola vecchia è stata eliminata e una nuova inserita
+        else {
+            for(let i=0; i<informazioniProfiloUtente.hobbies_interests_and_passions.length; i++){
+                check = false;
+                for(let j=0; j<keywordArray.length; j++){
+                    //controllo che la i-esima keyword vecchia ci sia nell'array nuovo
+                    if(informazioniProfiloUtente.hobbies_interests_and_passions[i]==keywordArray[j].keyword){
+                        check = true; //è ancora presente
+                        break;
+                    }
+                }
+                //se non è presente allora l'array è cambiato, bisogna salvarlo
+                if(check==false) {
+                    indiciModifiche.current[6] = true;
+                    break;
+                }
+            }
+        }
 
         var doc = {};
-        for(var i=0; i<5; i++){
+        for(var i=0; i<9; i++){
             if(indiciModifiche.current[i]==true){
-                if(i==0) doc["date_of_birth"]=dataDiNascita+"";
+                if(i==0) doc["date_of_birth"] = new Date(dataDiNascita.seconds*1000);
                 else if(i==1) doc["self_description"] = descrizione;
                 else if(i==2) {
                     doc["location.lat"]=posizioneUtente.current[0];
@@ -291,8 +407,13 @@ function aggiornaPhoneNumber(){
                     let hash = geohashForLocation([posizioneUtente.current[0], posizioneUtente.current[1]]);
                     doc["location.geohash"] = hash;
                 }
-                else if(i==3) doc["gender_identity"]= identitaDiGenere;
-                else if(i==4) doc["gender_preference"]=orientamentoSessuale;
+                else if(i==3) doc["gender_identity"] = identitaDiGenere;
+                else if(i==4) doc["gender_preference"] = orientamentoSessuale;
+                else if(i==5) doc["current_occupation"] = occupazione;
+                else if(i==6) doc["hobbies_interests_and_passions"] = Object.keys(keywordArray).map(function(k,i){
+                                                                            return keywordArray[i].keyword;
+                                                                        })
+                
             }
         }
 
@@ -302,21 +423,35 @@ function aggiornaPhoneNumber(){
             setIsLoading(true);
             try{
                 aggiornaDettagliProfiloUtente(user,doc)
-                    .then((ris)=>{
-                        setIsLoading(false);
+                    .then(async(ris)=>{
                         //aggiorno autenticazione
-                        for(var i=0; i<5; i++){
+                        for(var i=0; i<7; i++){
                             if(indiciModifiche.current[i]==true){
-                                if(i==0) informazioniProfiloUtente.date_of_birth=dataDiNascita+"";
+                                if(i==0) informazioniProfiloUtente.date_of_birth = {nanoseconds: 0, seconds: dataDiNascita.seconds};
                                 else if(i==1) informazioniProfiloUtente.self_description = descrizione;
-                                else if(i==2) informazioniProfiloUtente.position=posizioneUtente.current;
-                                else if(i==3) informazioniProfiloUtente.gender_identity=identitaDiGenere;
-                                else if(i==4) informazioniProfiloUtente.gender_preference=orientamentoSessuale;
+                                else if(i==2) informazioniProfiloUtente.position = posizioneUtente.current;
+                                else if(i==3) informazioniProfiloUtente.gender_identity = identitaDiGenere;
+                                else if(i==4) informazioniProfiloUtente.gender_preference = orientamentoSessuale;
+                                else if(i==5) informazioniProfiloUtente.current_occupation = occupazione;
+                                else if(i==6) informazioniProfiloUtente.hobbies_interests_and_passions = Object.keys(keywordArray).map(function(k,i){
+                                                                                                            return keywordArray[i].keyword;
+                                                                                                        })
                             }
                         }
+
+                        //controllo se ci sono preferenze locali da aggiornare
+                        if(indiciModifiche.current[7]==true){
+                            console.log("operazione di modifica preferenza raggio di azione in corso...");
+                            await localStorage.savePreference(user,"action_range",raggioDiAzione.current);
+                        }
+
+                        let informazioniProfiloUtenteTMP = JSON.parse(JSON.stringify(informazioniProfiloUtente));
+                        setInformazioniProfiloUtente(informazioniProfiloUtenteTMP);
+
                         //resetto
                         resetta();
                         setSnackMessage("Profilo aggiornato con successo.");
+                        setIsLoading(false);
                     }).catch((e)=>{
                         console.log("errore:"+e.code+","+e);
                         setIsLoading(false);
@@ -328,10 +463,27 @@ function aggiornaPhoneNumber(){
                 setSnackMessage("Si è verificato un problema. Riprova più tardi.");
             }
         }
+        //altrimenti se nessuna modifica riguarda il remoto ma solo il locale
+        //controllo se ci sono preferenze locali da aggiornare
+        else if(indiciModifiche.current[7]==true){
+            try{
+                setIsLoading(true);
+                console.log("operazione di modifica preferenza raggio di azione in corso...");
+                await localStorage.savePreference(user,"action_range",raggioDiAzione.current);
+                let informazioniProfiloUtenteTMP = JSON.parse(JSON.stringify(informazioniProfiloUtente));
+                informazioniProfiloUtenteTMP.action_range_preference = raggioDiAzione.current;
+                setInformazioniProfiloUtente(informazioniProfiloUtenteTMP);
+                await resetta();
+                setSnackMessage("Profilo aggiornato con successo.");
+                setIsLoading(false);
+            }catch(e){
+                setSnackMessage("Non è stato possibile salvare la preferenza sul raggio di azione. Riprovare.");
+            }
+        }
 
     }
 
-    function resetta(){
+    async function resetta(){
         //prima resetto tutti i campi con l'ultima modifica salvata
         setAuth((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]);
         //setDataDiNascita(informazioniProfiloUtente.dateOfBirth);
@@ -339,18 +491,25 @@ function aggiornaPhoneNumber(){
         setDataDiNascita(informazioniProfiloUtente.date_of_birth);
         setIdentitaDiGenere(informazioniProfiloUtente.gender_identity);
         setOrientamentoSessuale(informazioniProfiloUtente.gender_preference);
+        setDescrizione(informazioniProfiloUtente.self_description);
+        setOccupazione(informazioniProfiloUtente.current_occupation);
+        setKeywordArray(Object.keys(informazioniProfiloUtente.hobbies_interests_and_passions).map(function(key,index){
+            return {id: index, keyword: informazioniProfiloUtente.hobbies_interests_and_passions[index]}
+        }))
+
+        await sliderKMRef.current.resetta();
 
         //resetto tutti gli errori
         scrollView.current.scrollTo({y: 0});
-        indiciModifiche.current = [false,false,false,false,false];
+        indiciModifiche.current = [false,false,false,false,false, false, false];
         setErroreAuth(null);
         setErroreData(null);
         setIsDatePickerOpened(false);
         setSnackMessage(null);
     }
 
-    function tornaIndietro(){
-        resetta();
+    async function tornaIndietro(){
+        await resetta();
         navigation.goBack();
     }
 
@@ -383,7 +542,7 @@ function aggiornaPhoneNumber(){
 
 
     function getFormattedData(){
-        let dataDiNascitaTMP = new Date(dataDiNascita);
+        let dataDiNascitaTMP = new Date(dataDiNascita.seconds*1000);
         console.log("ritorno di "+dataDiNascita+" il valore: "+dataDiNascitaTMP.getDate()+"/"+(dataDiNascitaTMP.getMonth()+1)+"/"+dataDiNascitaTMP.getFullYear());
         return dataDiNascitaTMP.getDate()+"/"+(dataDiNascitaTMP.getMonth()+1)+"/"+dataDiNascitaTMP.getFullYear()
     }
@@ -484,7 +643,6 @@ function aggiornaPhoneNumber(){
                                         style={styles.campo}
                                         autoCapitalize="none"
                                         onChangeText={text => setDescrizione(text)}
-                                        onSubmitEditing={()=>modificaDescrizione()}
                                         onBlur={()=> modificaDescrizione()} //focus perso
                                         value={descrizione}
                                         keyboardType="name-phone-pad"
@@ -494,6 +652,64 @@ function aggiornaPhoneNumber(){
                                         maxLength={150}
                                     />
                                 </View>
+                            </View>
+                            <Divider />
+                        
+                        {/*OCCUPAZIONE*/}
+                        <View style={{ flex:0.8, width:"100%",marginBottom:10}}>
+                                <Text style={[styles.titoloCampo,{marginTop:20}]}>Occupazione</Text>
+                                <View style={{paddingLeft:Dimensions.get("window").width*0.03}}>
+                                    <TextInput
+                                        style={styles.campo}
+                                        autoCapitalize="none"
+                                        onChangeText={text => setOccupazione(text)}
+                                        onBlur={()=> modificaOccupazione()} //focus perso
+                                        value={occupazione}
+                                        keyboardType="name-phone-pad"
+                                        multiline={true}
+                                        placeholder='...'
+                                        underlineColorAndroid='transparent'
+                                        maxLength={50}
+                                    />
+                                </View>
+                            </View>
+                            <Divider />
+                        
+                        {/*KEYWORDS*/}
+                        <View style={{ flex:0.8, width:"100%",marginBottom:10}}>
+                                <Text style={[styles.titoloCampo,{marginTop:20}]}>Hobby, interessi e passioni</Text>
+                                <View style={{paddingLeft:Dimensions.get("window").width*0.03, flexDirection:"row",alignItems:"center"}}>
+                                    <TextInput
+                                        style={[styles.campo,{width:Dimensions.get("window").width*0.4,margin:10, padding:10, borderBottomColor:MosViola,borderBottomWidth:1, color:MosCeleste,opacity:(keywordArray.length<10?1:0.3)}]}
+                                        onChangeText={key => setUltimaKeyword(key.trim())}
+                                        value={keyword}
+                                        editable = {keywordArray.length<10}
+                                        maxLength={15}
+                                        placeholder="es. dipingere"
+                                        keyboardType="name-phone-pad"
+                                    />
+                                    <TouchableOpacity onPress={()=>{inserisciKeyword()}}>
+                                        <AntDesign name="plus" size={fontSizeCampi*1.5} color={MosViola} style={{opacity:(keywordArray.length<10?1:0.3)}} />
+                                    </TouchableOpacity>
+                                </View>
+                                    <View style={{height:100,paddingLeft:Dimensions.get("window").width*0.03}}>
+                                        <FlatList
+                                            ref = {flatListKeywordRef}
+                                            onContentSizeChange={()=> flatListKeywordRef.current.scrollToEnd()} 
+                                            horizontal={true}
+                                            data={keywordArray}
+                                            showsHorizontalScrollIndicator={true}
+                                            keyExtractor={item => item.id.toString()}
+                                            renderItem={({ item, index }) =>
+                                                <View style={{marginTop:10}}>
+                                                    <Text style={{color:"white",backgroundColor:MosViola, borderRadius:10, margin:10, height:50, textAlign:"center", textAlignVertical:"center", padding:10}}>{item.keyword}</Text>
+                                                    <TouchableOpacity style={{position:"absolute"}} onPress={()=>{eliminaKeyword(index)}}>
+                                                        <Entypo name="cross" size={20} color="white" style={{backgroundColor:"red", borderRadius:5}} /> 
+                                                    </TouchableOpacity>
+                                                </View>
+                                                }
+                                        />
+                                    </View>
                             </View>
                             <Divider />
 
@@ -546,12 +762,20 @@ function aggiornaPhoneNumber(){
                             <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
                                 <Text
                                         style={[styles.campo,{color:MosViola}]}
-                                        defaultValue={"..."}> {orientamentoSessuale} </Text>
+                                        defaultValue={"..."}> {orientamentoSessuale} 
+                                </Text>
+                                <Text style={[styles.sottoCampo,{marginTop:5}]}>Nella sezione "Attorno a te" ti mostreremo il genere che qui hai scelto come quello da cui maggiormente sei attratto.</Text>
                             </View>
                         </TouchableOpacity>
                         <AreaSceltaGenere apriArea={apriArea2} setApriArea={setApriArea2} setIdentitaDiGenere={modificaOrientamentoSessuale} />
 
                         <Divider/>
+
+                        {/* SLIDER KM PREFERENCE */}
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Raggio di azione</Text>
+                        <View style={{ alignSelf:"center"}}>
+                            <SliderKMPreference ref={sliderKMRef} currentUser = {user} modificaPreferenzaRaggioDiAzione = {modificaPreferenzaRaggioDiAzione} />
+                        </View>
 
                     {/*BOTTONE PER SALVARE*/}
                     <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10, textAlign:"center"}]} onPress={salvaDettagliUtente}><Text style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>SALVA DETTAGLI</Text></TouchableOpacity>

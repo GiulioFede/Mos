@@ -21,9 +21,20 @@ export function computeDistance(lat1, lon1, lat2, lon2) {
     }
 
 
-export function getAgeFromDateString(dateString) {
+export function getAgeFromTimestamp(timestamp) {
   var today = new Date();
-  var birthDate = new Date(dateString);
+  var birthDate = new Date(timestamp.seconds*1000);
+  var age = today.getFullYear() - birthDate.getFullYear();
+  var m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+  }
+  return age;
+}
+
+export function getAgeFromDate(date) {
+  var today = new Date();
+  var birthDate = new Date(date);
   var age = today.getFullYear() - birthDate.getFullYear();
   var m = today.getMonth() - birthDate.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {

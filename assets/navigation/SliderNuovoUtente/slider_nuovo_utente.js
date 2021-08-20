@@ -11,6 +11,7 @@ import slider_data from './resources/slider_data';
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 import { Ionicons } from '@expo/vector-icons';
 import { geohashForLocation } from "geofire-common";
+import { getAgeFromDate } from "../../context/utilities/functions.utilities";
 
 export default function SliderNuovoUtente({route, navigation}){ //NB: route.params.uid contiene l'uid col quale salvare l'utente (e' uguale all'uid di autenticazione)
 
@@ -38,6 +39,8 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
     let identitaDiGenere = useRef("");
     let preferenzaSesso = useRef("");
     let descrizione = useRef("");
+    let occupazione = useRef("");
+    let keyword = useRef([]); //array di keyword
     let uriImmagineProfilo = useRef("");
 
     //funzioni per modificare i dati sopra
@@ -67,13 +70,15 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
             setSnackError("Devi avere almeno 14 anni per usare Mosaic.");
         }
         else {
-            dataDiNascita.current=data.toString();//getDate()+"/"+(data.getMonth()+1)+"/"+data.getFullYear();
+            dataDiNascita.current=data;//getDate()+"/"+(data.getMonth()+1)+"/"+data.getFullYear();
             setShowForwardArrow(true);
         }
     }
 
     function setPosizione(position){
+        //position conterrà un array di questo genere --> [lat, long, città, regione, stato]
         posizione.current = position;
+        console.log(position);
         setShowForwardArrow(true);
     }
 
@@ -100,6 +105,22 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
             setShowForwardArrow(false);
     }
 
+    function setOccupazioneUtente(occ){
+        occupazione.current = occ;
+        if(occupazione.current != "")
+            setShowForwardArrow(true);
+        else
+            setShowForwardArrow(false);
+    }
+
+    function setKeywordUtente(keywordArray){
+        keyword.current = keywordArray;
+        if(keyword.current.length>=5)
+            setShowForwardArrow(true);
+        else
+            setShowForwardArrow(false);
+    }
+
     function setUriImmagineProfilo(uri){
         uriImmagineProfilo.current = uri;
         setShowForwardArrow(true);
@@ -109,14 +130,13 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
     const [isCreazioneUtenteLoading, setIsCreazioneUtenteIsLoading] = useState(false);
   
     function creaNuovoProfilo(){
-        console.log("creazione profilo:"+name.current+","+dataDiNascita.current+","+posizione.current+","+sesso.current+","+identitaDiGenere.current+","+preferenzaSesso.current+","+uriImmagineProfilo.current);
+        console.log("creazione profilo:"+name.current+","+dataDiNascita.current+","+posizione.current+","+sesso.current+","+identitaDiGenere.current+","+preferenzaSesso.current+","+descrizione.current+","+occupazione.current+","+keyword.current+","+uriImmagineProfilo.current);
         //ultimo check di sicurezza
-        if(!uid || uid.length==0 || name.current.length==0 || dataDiNascita.current.length==0 || posizione.current.length == 0 || sesso.current.length==0 || identitaDiGenere.current=="" || preferenzaSesso.current.length==0 || descrizione.current.length==0 || uriImmagineProfilo.current.length==0){
+        if(!uid || uid.length==0 || name.current.length==0 || dataDiNascita.current.toString().length==0 || posizione.current.length == 0 || sesso.current.length==0 || identitaDiGenere.current=="" || preferenzaSesso.current.length==0 || descrizione.current.length==0 || occupazione.current.length==0 || uriImmagineProfilo.current.length==0){
             console.log("Errore generico:"+e);
             setSnackError("Si è verificato un problema. Riprova più tardi.");
             return;
         }
-
         setIsCreazioneUtenteIsLoading(true);
         try{
             console.log("genero hash:");
@@ -132,16 +152,26 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                             .then(async(immagineManipolata)=>{
                                 try{
                                     console.log("immagine manipolata. Creo profilo...");
+                                    //estraggo solo le keyword (perchè per la flat list sono nel formato id:...keyword:...)
+                                    let keywordCleaned = [];
+                                    for(let i=0; i<keyword.current.length; i++)
+                                        keywordCleaned.push(keyword.current[i].keyword);
                                     await creaNuovoProfiloUtente(immagineManipolata.base64,
                                                                  name.current,  
                                                                  dataDiNascita.current,
+                                                                 getAgeFromDate(dataDiNascita.current),
                                                                  sesso.current,
                                                                  identitaDiGenere.current,
                                                                  preferenzaSesso.current,
                                                                  descrizione.current,
-                                                                 hash, 
-                                                                 posizione.current[0],
-                                                                 posizione.current[1]
+                                                                 hash.substring(0,6), //per privacy prendo una regione fatta da solo 6 lettere di geohash (es. sqc0p1 )
+                                                                 Number.parseFloat(posizione.current[0]).toPrecision(5), //per privacy prendo solo le prime 3 cifre dopo il punto
+                                                                 Number.parseFloat(posizione.current[1]).toPrecision(5),
+                                                                 posizione.current[2], //città
+                                                                 posizione.current[3], //regione
+                                                                 posizione.current[4], //stato
+                                                                 occupazione.current,
+                                                                 keywordCleaned
                                     );
                                     console.log("CREAZIONE PROFILO RIUSCITA!!!");
                                     setIsCreazioneUtenteIsLoading(false);
@@ -241,7 +271,7 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
         console.log("Nuovo inserimento");
         console.log("indice corrente:"+currentIndex);
         console.log("valore:"+descrizione.current);
-        if(currentIndex==0 && dataDiNascita.current=="") //se sono in data ed è vuota non permettere di andare avanti
+        if(currentIndex==0 && dataDiNascita.current.toString()=="") //se sono in data ed è vuota non permettere di andare avanti
             setShowForwardArrow(false);
         if(currentIndex==1 && posizione.current=="")
             setShowForwardArrow(false);
@@ -253,7 +283,11 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
             setShowForwardArrow(false);
         if(currentIndex==5 && descrizione.current=="")
             setShowForwardArrow(false);
-        if(currentIndex==6 && uriImmagineProfilo.current=="")
+        if(currentIndex==6 && occupazione.current=="")
+            setShowForwardArrow(false);
+        if(currentIndex==7 && keyword.current.length<5)
+            setShowForwardArrow(false);
+        if(currentIndex==8 && uriImmagineProfilo.current=="")
             setShowForwardArrow(false);
 
         //se l'indice corrente è diverso da 1 mostro la freccia indietro
@@ -333,6 +367,8 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                                                     setIdentitaDiGenere = {setIdentitaDiGenere}
                                                     setPreferenzaSessoUtente = {setPreferenzaSesso}
                                                     setDescrizioneUtente = {setDescrizioneUtente}
+                                                    setOccupazioneUtente = {setOccupazioneUtente}
+                                                    setKeywordUtente = {setKeywordUtente}
                                                     setUriImmagine = {setUriImmagineProfilo}
                                                     creaProfilo = {creaNuovoProfilo}
                                                     setError = {setSnackError}

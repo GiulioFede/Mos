@@ -15,7 +15,7 @@ export const DatePicker = ({setData, isVisible, setIsVisible}) => {
   useEffect(()=>{
 
     console.log("Data di nascita:"+informazioniProfiloUtente.date_of_birth);
-    setDataPickerDate(new Date(informazioniProfiloUtente.date_of_birth));
+    setDataPickerDate(new Date(informazioniProfiloUtente.date_of_birth.seconds*1000));
 
   },[informazioniProfiloUtente.date_of_birth])
 
