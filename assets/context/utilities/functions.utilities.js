@@ -42,3 +42,14 @@ export function getAgeFromDate(date) {
   }
   return age;
 }
+
+
+//dato un min e max ritorna un array composto da [min, min+1, min+2,..., max-1, max]
+export function range(min, max) { 
+  var len = max - min + 1;
+  var arr = new Array(len);
+  for (var i=0; i<len; i++) {
+    arr[i] = min + i;
+  }
+  return arr;
+}

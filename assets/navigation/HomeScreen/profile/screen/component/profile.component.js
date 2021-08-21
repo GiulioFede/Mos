@@ -216,7 +216,7 @@ export default function ProfileComponent(props){
         inizializzaGalleria();
 
         return () => isMounted.current = false;
-    },[informazioniProfiloUtente, visibility])
+    },[informazioniProfiloUtente.age, informazioniProfiloUtente.self_description, user, visibility])
 
     //viene usato da uploadImageLoaderScreen per lasciare un messaggio a questo attuale schermo su come è andato l'upload
     useEffect(()=>{

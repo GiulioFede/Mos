@@ -105,4 +105,4 @@ const styles = StyleSheet.create({
         color: "#52575D",
         fontSize:Dimensions.get("window").width*0.8*0.03
     }
-})
+});

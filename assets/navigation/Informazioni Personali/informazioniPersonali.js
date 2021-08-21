@@ -13,6 +13,8 @@ import { geohashForLocation } from "geofire-common";
 import AreaSceltaGenere from "./components/areaSceltaGenere";
 import SliderKMPreference from "./components/sliderKmPreference";
 import localStorage from "../../context/local_storage/localStorage";
+import AgeRange from "./components/ageRange";
+import { getAgeFromTimestamp } from "../../context/utilities/functions.utilities";
 
 
 let tmpKeywordArray = [];
@@ -48,6 +50,8 @@ export default function InformazioniPersonali({ navigation }) {
     }))
 
     const sliderKMRef = useRef();
+
+    const rangeEtaRef = useRef();
 
     const [isLocationLoading, setIsLocationLoading] = useState("");
 
@@ -365,6 +369,15 @@ function aggiornaPhoneNumber(){
         notificaModifiche();
     }
 
+    const rangeEta = useRef();
+    function modificaPreferenzaRangeDiEta(min, max){
+        console.log("nuovo range di età:"+min+","+max);
+        rangeEta.current=[min,max];
+        indiciModifiche.current[8] = true;
+        notificaModifiche();
+
+    }
+
 
     async function salvaDettagliUtente(){
 
@@ -400,6 +413,7 @@ function aggiornaPhoneNumber(){
         for(var i=0; i<9; i++){
             if(indiciModifiche.current[i]==true){
                 if(i==0) doc["date_of_birth"] = new Date(dataDiNascita.seconds*1000);
+                if(i==0) doc["age"] = getAgeFromTimestamp(dataDiNascita);
                 else if(i==1) doc["self_description"] = descrizione;
                 else if(i==2) {
                     doc["location.lat"]=posizioneUtente.current[0];
@@ -428,6 +442,7 @@ function aggiornaPhoneNumber(){
                         for(var i=0; i<7; i++){
                             if(indiciModifiche.current[i]==true){
                                 if(i==0) informazioniProfiloUtente.date_of_birth = {nanoseconds: 0, seconds: dataDiNascita.seconds};
+                                if(i==0) informazioniProfiloUtente.age = getAgeFromTimestamp(dataDiNascita);
                                 else if(i==1) informazioniProfiloUtente.self_description = descrizione;
                                 else if(i==2) informazioniProfiloUtente.position = posizioneUtente.current;
                                 else if(i==3) informazioniProfiloUtente.gender_identity = identitaDiGenere;
@@ -439,13 +454,22 @@ function aggiornaPhoneNumber(){
                             }
                         }
 
+                        let informazioniProfiloUtenteTMP = JSON.parse(JSON.stringify(informazioniProfiloUtente));
+
                         //controllo se ci sono preferenze locali da aggiornare
                         if(indiciModifiche.current[7]==true){
                             console.log("operazione di modifica preferenza raggio di azione in corso...");
                             await localStorage.savePreference(user,"action_range",raggioDiAzione.current);
+                            informazioniProfiloUtenteTMP.action_range_preference = raggioDiAzione.current;
                         }
 
-                        let informazioniProfiloUtenteTMP = JSON.parse(JSON.stringify(informazioniProfiloUtente));
+                        //controllo se ci sono preferenze locali da aggiornare
+                        if(indiciModifiche.current[8]==true){
+                            console.log("operazione di modifica preferenza età in corso...");
+                            await localStorage.savePreference(user,"age_range",rangeEta.current[0]+","+rangeEta.current[1]);
+                            informazioniProfiloUtenteTMP.action_range_preference = rangeEta.current;
+                        }
+
                         setInformazioniProfiloUtente(informazioniProfiloUtenteTMP);
 
                         //resetto
@@ -465,13 +489,21 @@ function aggiornaPhoneNumber(){
         }
         //altrimenti se nessuna modifica riguarda il remoto ma solo il locale
         //controllo se ci sono preferenze locali da aggiornare
-        else if(indiciModifiche.current[7]==true){
+        else if(indiciModifiche.current[7]==true || indiciModifiche.current[8]==true){
             try{
                 setIsLoading(true);
-                console.log("operazione di modifica preferenza raggio di azione in corso...");
-                await localStorage.savePreference(user,"action_range",raggioDiAzione.current);
                 let informazioniProfiloUtenteTMP = JSON.parse(JSON.stringify(informazioniProfiloUtente));
-                informazioniProfiloUtenteTMP.action_range_preference = raggioDiAzione.current;
+                if(indiciModifiche.current[7]==true){
+                    console.log("operazione di modifica preferenza raggio di azione in corso...");
+                    await localStorage.savePreference(user,"action_range",raggioDiAzione.current);
+                    informazioniProfiloUtenteTMP.action_range_preference = raggioDiAzione.current;
+                }
+                else {
+                    console.log("operazione di modifica preferenza età in corso...");
+                    await localStorage.savePreference(user,"age_range",rangeEta.current[0]+","+rangeEta.current[1]);
+                    informazioniProfiloUtenteTMP.action_range_preference = rangeEta.current;
+                }
+
                 setInformazioniProfiloUtente(informazioniProfiloUtenteTMP);
                 await resetta();
                 setSnackMessage("Profilo aggiornato con successo.");
@@ -498,6 +530,7 @@ function aggiornaPhoneNumber(){
         }))
 
         await sliderKMRef.current.resetta();
+        await rangeEtaRef.current.resetta();
 
         //resetto tutti gli errori
         scrollView.current.scrollTo({y: 0});
@@ -739,8 +772,8 @@ function aggiornaPhoneNumber(){
                                     editable={false}
                                     style={styles.campo}
                                     defaultValue={informazioniProfiloUtente.biological_sex} />
-                            <Text style={styles.sottoCampo}>(non modificabile)</Text>
                         </View>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>(Non modificabile)</Text>
                         <Divider />
                         
                         {/* IDENTITA' DI GENERE */}
@@ -764,9 +797,9 @@ function aggiornaPhoneNumber(){
                                         style={[styles.campo,{color:MosViola}]}
                                         defaultValue={"..."}> {orientamentoSessuale} 
                                 </Text>
-                                <Text style={[styles.sottoCampo,{marginTop:5}]}>Nella sezione "Attorno a te" ti mostreremo il genere che qui hai scelto come quello da cui maggiormente sei attratto.</Text>
                             </View>
                         </TouchableOpacity>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Nella sezione "Attorno a te" ti mostreremo il genere che qui hai scelto come quello da cui maggiormente sei attratto.</Text>
                         <AreaSceltaGenere apriArea={apriArea2} setApriArea={setApriArea2} setIdentitaDiGenere={modificaOrientamentoSessuale} />
 
                         <Divider/>
@@ -776,6 +809,15 @@ function aggiornaPhoneNumber(){
                         <View style={{ alignSelf:"center"}}>
                             <SliderKMPreference ref={sliderKMRef} currentUser = {user} modificaPreferenzaRaggioDiAzione = {modificaPreferenzaRaggioDiAzione} />
                         </View>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Nella sezione "Attorno a te" ti mostreremo gli utenti entro il raggio di azione che qui hai scelto.</Text>
+                        <Divider />
+
+                        {/* RANGE ETA' */}
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Fasce d'età</Text>
+                        <View style={{ alignSelf:"center"}}>
+                            <AgeRange ref={rangeEtaRef} uid={user} dateOfBirth={informazioniProfiloUtente.date_of_birth} modificaPreferenzaRangeDiEta={modificaPreferenzaRangeDiEta} />
+                        </View>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Nella sezione "Attorno a te" ti mostreremo il genere che qui hai scelto come quello da cui maggiormente sei attratto.</Text>
 
                     {/*BOTTONE PER SALVARE*/}
                     <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10, textAlign:"center"}]} onPress={salvaDettagliUtente}><Text style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>SALVA DETTAGLI</Text></TouchableOpacity>

@@ -20,7 +20,7 @@ import LottieView from 'lottie-react-native';
 import DialogCreaNuovaConversazione from './dialogoCreaNuovaConversazione';
 import { AutenticazioneUtente } from '../../../../context/firebase/autenticazione';
 import Loading from './loading';
-import { computeDistance, getAgeFromTimestamp } from '../../../../context/utilities/functions.utilities';
+import { computeDistance, getAgeFromTimestamp, range } from '../../../../context/utilities/functions.utilities';
 import localStorage from '../../../../context/local_storage/localStorage';
 
 const {width, height} = Dimensions.get("window");
@@ -198,6 +198,7 @@ const MAX_CARD_INTO_LIST = 4;
 
 //variabili di appoggio
 var radius = 25;
+var rangeEta = [];
 const emptyArray = [{key:"empty"}];
 
 export default function AroundYouComponent(props){
@@ -301,7 +302,7 @@ export default function AroundYouComponent(props){
             setInfoProfiles([]);
         }
 
-    },[refresh,informazioniProfiloUtente.action_range_preference, informazioniProfiloUtente.gender_preference]);
+    },[refresh,informazioniProfiloUtente.action_range_preference, informazioniProfiloUtente.gender_preference,informazioniProfiloUtente.age_range]);
 
 
     useEffect(()=>{
@@ -331,11 +332,11 @@ export default function AroundYouComponent(props){
             const center = [parseFloat(informazioniProfiloUtente.location.lat), parseFloat(informazioniProfiloUtente.location.lng)];
             //raggio in metri entro cui prelevare gli utenti vicini
             //lo prelevo dalle preferenze
-            let val = await localStorage.readPreference(user,"action_range");
-            if(val!=null){
-                if(val<=0.25) radius = 25;
-                else if (val<=0.50) radius = 250;
-                else if (val<=0.75) radius = 2500;
+            let action_range = await localStorage.readPreference(user,"action_range");
+            if(action_range!=null){
+                if(action_range<=0.25) radius = 25;
+                else if (action_range<=0.50) radius = 250;
+                else if (action_range<=0.75) radius = 2500;
                 else radius = 40000;
             }
             const radiusInM = radius*1000;
@@ -348,8 +349,20 @@ export default function AroundYouComponent(props){
 
             //setto range di età sulla quale effettuare la ricerca: voglio età comprese tra [20,30] anni
             //data di inizio: oggi - X anni
-            startDateToSearch = new Date(new Date().getFullYear()-30, 0, 1); //primo gennaio di quell'anno
-            endDateToSearch = new Date(new Date().getFullYear()-20, 11, 31);
+            //leggo range di età di preferenza
+            let age_range = await localStorage.readPreference(user,"age_range");//ritorna "x,y"
+            if(age_range==null){
+                let user_age = getAgeFromTimestamp(informazioniProfiloUtente.date_of_birth);
+                if(user_age<=94)
+                    rangeEta = range(user_age,user_age+5);
+                else
+                    rangeEta = [user_age];
+            }else {
+                age_range = age_range.split(","); //["x","y"]
+                rangeEta = range(parseInt(age_range[0]),parseInt(age_range[1])); //creo range [x,x+1,...,y-1,y]
+            }
+            //startDateToSearch = new Date(new Date().getFullYear()-30, 0, 1); //primo gennaio di quell'anno
+            //endDateToSearch = new Date(new Date().getFullYear()-20, 11, 31);
 
         // setActiveIndex(0);
         // animatedValue.current = new Animated.Value(0);
@@ -399,7 +412,7 @@ export default function AroundYouComponent(props){
                 let endAt = bounds.current[current_bounds_index.current][1];
 
                 //ritorna in result[0] un array con i nuovi profili, mentre in result[1] l'ultimo documento
-                let result = await findNextTenClosestUsers(startAt, endAt, startDateToSearch.toString(), endDateToSearch.toString());
+                let result = await findNextTenClosestUsers(startAt, endAt, rangeEta);
 
                 let nearest_users = result[0];
                 

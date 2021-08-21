@@ -261,6 +261,17 @@ export function _isProfiloCompletato(uid){
         return db.collection("users").doc(idUser).update(doc);
     }
 
+    export function _updateAge(age){
+        try{
+            var db = firebase.firestore();
+            console.log("aggiorno età utente a "+age);
+    
+            return db.collection("users").doc(firebase.auth().currentUser.uid).update({age:age});
+        }catch(e){
+            throw e;
+        }
+    }
+
     //NUOVA VERSIONE
     export function _creaNuovoProfiloUtente(base64,
                                             name,
@@ -650,18 +661,16 @@ export function _isProfiloCompletato(uid){
     */
 
     const MAX_CARD_INTO_LIST = 4;
-    export async function _findNextTenClosestUsers(startAt, endAt, gender_preference, dateToStart, dateToEnd){
+    export async function _findNextTenClosestUsers(startAt, endAt, gender_preference, ageRange){
         return new Promise(async(resolveMaster, rejectMaster)=>{
             try{
             let db = firebase.firestore();
 
-            let startDate = new Date(dateToStart);
-            let endDate = new Date(dateToEnd);
-
-            if(typeof(startAt)=="string")
-                console.log("Cerco utenti con geohash compreso tra "+startAt +" e "+endAt+" genere di identità "+gender_preference+" ed data compresa tra "+startDate.toString() +" e "+endDate.toString());
-            else
-                console.log("Cerco utenti con geohash compreso tra "+startAt.data().name +" e "+endAt+" genere di identità "+gender_preference+" ed data compresa tra "+startDate.toString() +" e "+endDate.toString());
+            if(typeof(startAt)=="string"){
+                console.log("Cerco utenti con geohash compreso tra "+startAt +" e "+endAt+" genere di identità "+gender_preference+" ed data compresa tra "); console.log(ageRange);
+            }else{
+                console.log("Cerco utenti con geohash compreso tra "+startAt.data().name +" e "+endAt+" genere di identità "+gender_preference+" ed data compresa tra "); console.log(ageRange);
+            }
 
             try{
             
@@ -671,7 +680,7 @@ export function _isProfiloCompletato(uid){
             console.log("query tipo startAt");
             nearest_users_snapshot = await db.collection('users') //questa query richiede un indice
                     .where("gender_identity","==",gender_preference)
-                    .where("age","in",[20,21,22,23,24,25,26,27,28,29]) //in supporta al massimo 10 elementi nell'array
+                    .where("age","in",ageRange) //in supporta al massimo 10 elementi nell'array
                     .orderBy('location.geohash')
                     .startAt(startAt)
                     .endAt(endAt)
@@ -681,7 +690,7 @@ export function _isProfiloCompletato(uid){
                 console.log("query tipo startAfter");
                 nearest_users_snapshot = await db.collection('users') //questa query richiede un indice
                     .where("gender_identity","==",gender_preference)
-                    .where("age","in",[20,21,22,23,24,25,26,27,28,29]) //in supporta al massimo 10 elementi nell'array
+                    .where("age","in",ageRange) //in supporta al massimo 10 elementi nell'array
                     .orderBy('location.geohash')
                     .startAfter(startAt)
                     .endAt(endAt)
@@ -691,7 +700,6 @@ export function _isProfiloCompletato(uid){
 
             let new_info_profiles = [];
             let docTmp = null;
-            let media = null;
             var promises = [];
             console.log("trovo gli utenti");
             //trovati i 10 (massimo) utenti, per ciascuno scarico i media 100

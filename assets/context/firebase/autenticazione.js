@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi, _findNextTenClosestUsers} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi, _findNextTenClosestUsers, _updateAge} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -93,6 +93,7 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     caricaNuovaImmagineDiGalleria,
                     eliminaImmagineDiGalleria,
                     cambiaImmagineDiProfilo,
+                    updateAge,
                     aggiornaEmail,
                     aggiornaDettagliProfiloUtente,
                     caricaNuovaImmagine,
@@ -213,9 +214,9 @@ export const AutenticazioneUtenteProvider = ({children}) => {
             AROUND YOU
   */
 
-        async function findNextTenClosestUsers(startAt, endAt, ageStart, ageEnd){
+        async function findNextTenClosestUsers(startAt, endAt, ageRange){
             try{
-                return _findNextTenClosestUsers(startAt,endAt, informazioniProfiloUtente.gender_preference, ageStart, ageEnd);
+                return _findNextTenClosestUsers(startAt,endAt, informazioniProfiloUtente.gender_preference, ageRange);
             }catch(e){
                 throw e;
             }
@@ -317,6 +318,15 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     function aggiornaDettagliProfiloUtente(idUser,doc){
         console.log("aggiorno dettaglid del profilo utente_");
         return _aggiornaDettagliProfiloUtente(idUser,doc);
+    }
+
+    //l'età (age) può essere inconsistente con quella di date_of_birth
+    function updateAge(age){
+        try{
+            return _updateAge(age);
+        }catch(e){
+            throw e;
+        }
     }
 
     //NEW:Caricare una nuova immagine di profilo (isForProfile=true e in tal caso nomeImmagine ha senso) oppure di galleria (isForProfile=false)

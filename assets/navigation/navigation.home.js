@@ -15,6 +15,7 @@ import { altezzaDevice, larghezzaDevice } from '../context/variabili_globali/var
 import { MosCeleste } from '../resources/colors';
 import local_storage from '../context/local_storage/localStorage';
 import * as FileSystem from 'expo-file-system';
+import { getAgeFromTimestamp } from '../context/utilities/functions.utilities';
 
 
 const Drawer = createDrawerNavigator();
@@ -30,7 +31,7 @@ const Drawer = createDrawerNavigator();
 export default function HomeNavigator({navigation}) {
 
     //contesto
-    const {getUserInformation, getUtenteCorrente,user, logOut,scaricaUrlImmagine, setInformazioniProfiloUtente, getMediaProfiloUtente, getListOfConversations, setListOfConversations, getAllMediaOfCurrentUser} = useContext(AutenticazioneUtente);
+    const {getUserInformation, getUtenteCorrente,user, logOut,scaricaUrlImmagine, setInformazioniProfiloUtente, updateAge, getListOfConversations, setListOfConversations, getAllMediaOfCurrentUser} = useContext(AutenticazioneUtente);
 
     //se true indica che il profilo non è stato ancora caricato
     const [isProfileLoading, setIsProfileLoading] = useState(true);
@@ -98,8 +99,6 @@ export default function HomeNavigator({navigation}) {
                   info_utente.urlProfileImage = media.profileImageUrl;
                   console.log("info complete utente:");
                   console.log(info_utente);
-                  //info contiene le info dell'utente
-                  setInformazioniProfiloUtente(info_utente);
 
                                       /*
                 ottengo il documento delle informazioni sulle conversazioni nel formato:
@@ -118,15 +117,40 @@ export default function HomeNavigator({navigation}) {
                */
                   getListOfConversations()
                   .then((chats)=>{
-                    console.log("Prelevo informazioni chat utente:");
-                    if(chats.exists)
-                      setListOfConversations(chats.data())
-                    console.log(chats.data())
-                  }).catch((err)=>{
-                    console.log("Errorre durante il recupero delle informazioni sulla chat dell'utente:"+err);
-                  }).finally(()=>{
+                    try{
+                      console.log("Prelevo informazioni chat utente:");
+                      if(chats.exists)
+                        setListOfConversations(chats.data())
+                      console.log(chats.data())
+
+                      //controllo che l'età attuale sia uguale a quella memorizzata. Se diversa la aggiorno e se 
+                      //dovessi fallire carico comunque il profilo. E' una inconsistenza comunque non grave
+                      if(getAgeFromTimestamp(info_utente.date_of_birth) == info_utente.age){
+                        console.log("età consistente");
+                        //info contiene le info dell'utente
+                        setInformazioniProfiloUtente(info_utente);
+                        setIsProfileLoading(false);
+                      }
+                      else {
+                        console.log("età inconsistente. Necessita di aggiornamento");
+                        updateAge(getAgeFromTimestamp(info_utente.date_of_birth)).
+                          then((ris)=>{
+                            console.log("età aggiornata con successo.");
+                            info_utente.age = getAgeFromTimestamp(info_utente.date_of_birth);
+                          }).finally((f)=>{
+                            //info contiene le info dell'utente
+                            setInformazioniProfiloUtente(info_utente);
+                            setIsProfileLoading(false);
+                          })
+                      }
+                  }catch(e){
+                    console.log("E' avvenuto un errore. Carico comunque il profilo:"+e);
                     setIsProfileLoading(false);
-                  });
+                  }
+
+                  }).catch((err)=>{
+                    console.log("Errore durante il recupero delle informazioni sulla chat dell'utente:"+err);
+                  })
                 }).catch((err)=>{
                   console.log("Navigation.home.js: Si è verificato un problema durante il download dei media dell'utente:"+err)
                 }) 
