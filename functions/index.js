@@ -373,6 +373,10 @@ exports.createNewUserProfile = functions.https.onCall( async(data, context) =>{
                //1) documento 100% 
                var updateImmagineProfilo100 = admin.firestore().collection("users").doc(folder).collection("media").doc("100");
                batch.set(updateImmagineProfilo100, {profileImageUrl: urls[4], gallery: new Object()});
+
+               //creo documento conversazioni vuoto
+               var createEmptyConversation = admin.firestore().collection("users").doc(folder).collection("chats").doc("Conversations");
+               batch.set(createEmptyConversation, {conversations: []}); 
       
             //commit del batch
                return batch.commit().then((result)=>{

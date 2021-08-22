@@ -12,15 +12,17 @@ const DialogCreaNuovaConversazione = forwardRef((props, ref) => {
      //estraggo argomenti
      const {creaNuovaConversazione} = props;
      const nameOfCard = useRef("");
+     const uidOfCard = useRef("");
 
      useImperativeHandle(ref, () => ({
         close_dialog(){
             closeDialog();
         },
 
-        open_dialog(name){
+        open_dialog(name, uid){
             nameOfCard.current = name;
-            openDialog(name);
+            uidOfCard.current = uid;
+            openDialog(name, uid);
         }
         
      }));
@@ -45,7 +47,7 @@ const DialogCreaNuovaConversazione = forwardRef((props, ref) => {
                 </Dialog.Content>
                 <Dialog.Actions>
                     <Button onPress={closeDialog} color={MosCeleste} ><Text>Annulla</Text></Button>
-                    <Button onPress={creaNuovaConversazione} color={MosViola} ><Text>Crea</Text></Button>
+                    <Button onPress={()=>{creaNuovaConversazione(uidOfCard.current, nameOfCard.current)}} color={MosViola} ><Text>Crea</Text></Button>
                 </Dialog.Actions>
             </Dialog>
         </Portal>

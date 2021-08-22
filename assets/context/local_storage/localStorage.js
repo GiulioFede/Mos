@@ -191,10 +191,10 @@ export class LocalStorage {
 
 const db = SQLite.openDatabase("MosaicLocalDB.db");
 
-const removeTableForConversation = async (nomeTabella) => {
+const removeTable = async (nomeTabella) => {
     return new Promise((resolve, reject) =>{
         try{
-            
+                
             let update = "DROP TABLE IF EXISTS "+nomeTabella;
             db.transaction(
                 (tx)=>{
@@ -390,8 +390,8 @@ function stringToHash(string) {
       
     if (string.length == 0) return hash;
       
-    for (i = 0; i < string.length; i++) {
-        char = string.charCodeAt(i);
+    for (let i = 0; i < string.length; i++) {
+        let char = string.charCodeAt(i);
         hash = ((hash << 5) - hash) + char;
         hash = hash & hash;
     }
@@ -726,10 +726,156 @@ const readPreference = async (currentUser, preferenceName) => {
     }
   }
 
+  /*
+        NOTIFICHE
+  */
+
+    const createNewTableForNotifications = async(nomeUtente) => {
+            return new Promise((resolve, reject)=>{
+                try{
+                    //creo tabella se non esiste
+                    console.log("creo tabella se non esiste");
+                    /*
+                        La tabella notifiche presenta i seguenti campi:
+                            - type: il tipo può essere dei seguenti standard:
+                                        - JOIN: significa che qualcuno si è unito a te, ossia ha creato lui stesso una conversazione con te
+                                        - BLOCKED: significa che qualcuno ti ha bloccato
+                            - author: l'autore del type di notifica
+                            - timestamp: timestamp di ricezione, ma nota bene che viene espresso in seconds cosi da poter ordinare le notifiche
+                            - state: può assumere solo due stati:
+                                        - seen: vista, non bisogna incrementare il campanello
+                                        - unseen: non visto, ossia se lo si incontra bisogna incrementare di 1 il numero delle notifiche nel campanello
+                    */
+                    let query1 = 'CREATE TABLE IF NOT EXISTS '+ nomeUtente +'_notifications(timestamp INTEGER, type TEXT, author TEXT, state TEXT);';             
+                    db.transaction(
+                            (tx)=>{
+                                tx.executeSql(
+                                    query1,
+                                    [],
+                                    (_,result)=>{ resolve("tabella creata")},
+                                    (_,error) => { console.log("tabella non creata")}
+                                )
+                            },
+                            (error) => { console.log("tabella non creata")},
+                            ()=>{ console.log("trasazione eseguita con successo:");}
+                        )
+    
+                }catch(e){
+                    throw e;
+                }
+            })
+        }
+
+        const createNewIndexForTableForNotifications = async(nomeUtente) => {
+            return new Promise((resolve, reject)=>{
+                try{
+                    //creo tabella se non esiste
+                    let query1 = 'CREATE UNIQUE INDEX IF NOT EXISTS indexOf'+nomeUtente+'_notifications_index ON '+ nomeUtente +'_notifications(timestamp)';
+                    db.transaction(
+                        (tx)=>{
+                            tx.executeSql(
+                                query1,
+                                [],
+                                (_,result)=>{ resolve("indice creato")},
+                                (_,error) => { reject("indice non creato")}
+                            )
+                        },
+                        (error) => { reject(error)},
+                        ()=>{ console.log("trasazione eseguita con successo:");}
+                    )
+        
+                }catch(e){
+                    throw e;
+                }
+        
+            })
+        }
+
+        const getListOfNotifications = async (user, offset) => {
+            return new Promise((resolve, reject) => {
+                try{
+        
+                    console.log("Avvio query...");
+                    let query = "SELECT * FROM "+user+"_notifications ORDER BY timestamp DESC LIMIT 2 OFFSET "+offset;
+                    db.transaction(
+                        (tx)=>{
+                            tx.executeSql(
+                                query,
+                                [],
+                                //in caso di successo
+                                (_,{ rows: { _array } }) => { console.log("ritorno lista dallo storage");
+                                                              console.log(_array); 
+                                                              resolve(JSON.stringify(_array))},
+                                //in caso di errore
+                                (_, error) => { reject("notifiche non prelevate")}
+                            )
+                        },
+                        (error) =>{reject("notifiche non prelevate")},
+                        ()=>{ console.log("transazione eseguita con successo:");}
+                    )
+            
+                }catch(e){
+                    throw e;
+                }
+        
+            }) 
+        }
+
+        const storeNewNotification = async(user,timestamp, type, author, state) => {
+            return new Promise((resolve, reject) => {
+                try{
+                    //const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente+".db");
+                    console.log("Memorizzo nuovo messaggio");
+                    let update = "INSERT INTO "+user+"_notifications(timestamp, type, author, state) VALUES(?,?,?,?)";
+                        db.transaction(
+                            (tx)=>{
+                                tx.executeSql(
+                                    update,
+                                    [timestamp, type, author, state],
+                                    //in caso di successo
+                                    (_, result) => {resolve(result)},
+                                    //in caso di errore
+                                    (_, error) => {reject(error)}
+                                )
+                            },
+                            (error) => {reject(error)},
+                            (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
+                        )
+                }catch(e){
+                    throw e;
+                }
+            })
+        }
+
+        const updateNotificationState = async(user,timestamp) => {
+            return new Promise((resolve, reject) => {
+                try{
+                    console.log("Aggiorno stato notifica a 'seen'");
+                    let update = "UPDATE "+user+"_notifications SET state='seen' WHERE timestamp="+timestamp;
+                        db.transaction(
+                            (tx)=>{
+                                tx.executeSql(
+                                    update,
+                                    [],
+                                    //in caso di successo
+                                    (_, result) => {resolve(result)},
+                                    //in caso di errore
+                                    (_, error) => {reject(error)}
+                                )
+                            },
+                            (error) => {reject(error)},
+                            (arg)=>{ console.log("transazione eseguita con successo:"+arg);}
+                        )
+                }catch(e){
+                    throw e;
+                }
+            })
+        }
+
 
 export default local_storage = {
     checkIfTableExists,
-    removeTableForConversation,
+    removeTable,
     createNewTableForConversation,
     createNewIndexForTableForConversation,
     getListOfChatMessages,
@@ -745,5 +891,10 @@ export default local_storage = {
     saveImageLocally,
     removeImageLocally,
     savePreference,
-    readPreference
+    readPreference,
+    createNewTableForNotifications,
+    createNewIndexForTableForNotifications,
+    getListOfNotifications,
+    storeNewNotification,
+    updateNotificationState
 }

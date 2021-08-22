@@ -53,3 +53,12 @@ export function range(min, max) {
   }
   return arr;
 }
+
+export function fromDateToGGMMYYYYHHMM(seconds){
+
+  const date = new Date(seconds*1000);
+    
+  return ( date.getFullYear().toString() + "/"+pad2(date.getMonth() + 1) +"/"+ pad2( date.getDate()) +"  "+ pad2( date.getHours() ) +":"+ pad2( date.getMinutes() ) );
+}
+
+function pad2(n) { return n < 10 ? '0' + n : n }

@@ -100,16 +100,18 @@ function GalleriaImmagini({galleria, openDialog, getUtenteCorrente, visibility})
 
     return (
         <View>
+            <ScrollView horizontal>
         <FlatList
             data={galleria}
             //contentContainerStyle={{alignItems:'center', justifyContent:"center"}}
-            horizontal={true}
-            numColumns={1}
+            //horizontal={true}
+            numColumns={2}
             ItemSeparatorComponent={()=><Divider/>}
             showsHorizontalScrollIndicator={false}
             keyExtractor={item => item.name.toString()}
             renderItem={({ item, index }) => <ImmagineGalleria item={item} visibility={visibility} index={index}/>}
         />
+        </ScrollView>
         </View>
     )
     
@@ -131,9 +133,9 @@ const styles = StyleSheet.create({
         flex:1,
     },
     contenitoreFotoGalleria: {
-        width:larghezzaDevice, 
-        height:larghezzaDevice,
-        padding:2,
+        width:larghezzaDevice*0.5, 
+        height:larghezzaDevice*0.5,
+        padding:1,
         borderColor:"white",
         borderWidth:1
         //overflow: "hidden",

@@ -7,11 +7,8 @@ import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button, Divider } fro
 import { altezzaBarraScreen, fontSizeCampi, fontSizeTitoloBarra, iconSize, larghezzaDevice } from '../../../../context/variabili_globali/variabiliGlobali';
 import { MosCeleste, MosPurple, MosViola } from '../../../../resources/colors';
 import SnackMessage from '../../profile/screen/component/snackMessage';
-import PreviewProfile from './previewProfile';
 import { LinearGradient } from "expo-linear-gradient";
 import {geohashQueryBounds} from "geofire-common";
-import KilometerView from './kilometerView';
-import CircleBackground from './circleBackground';
 import { Directions, FlingGestureHandler, State, TouchableOpacity} from 'react-native-gesture-handler';
 //import { FlatList } from 'react-native-gesture-handler';
 import BottomSheet, {BottomSheetScrollView} from '@gorhom/bottom-sheet'
@@ -19,7 +16,6 @@ import BottomSheetUserDetails from './bottomSheetUserDetails';
 import LottieView from 'lottie-react-native';
 import DialogCreaNuovaConversazione from './dialogoCreaNuovaConversazione';
 import { AutenticazioneUtente } from '../../../../context/firebase/autenticazione';
-import Loading from './loading';
 import { computeDistance, getAgeFromTimestamp, range } from '../../../../context/utilities/functions.utilities';
 import localStorage from '../../../../context/local_storage/localStorage';
 
@@ -205,7 +201,7 @@ export default function AroundYouComponent(props){
 
     var {navigation, route} = props;
     //contesto autenticazione
-    const {findNextTenClosestUsers, informazioniProfiloUtente, user} = useContext(AutenticazioneUtente);
+    const {findNextTenClosestUsers, listOfConversations, setListOfConversations, informazioniProfiloUtente, user, createNewConversation} = useContext(AutenticazioneUtente);
     
     const [startingPointHeightBottomMenu, setstartingPointHeightBottomMenu] = useState(0);
 
@@ -214,6 +210,7 @@ export default function AroundYouComponent(props){
     const isSwipeAnimationFinished = useRef(false);
     const dialogCreaNuovaConversazioneRef = useRef();
     const [isLoading, setIsLoading] = useState(true);
+    const [isChatCreating, setIsChatCreating] = useState(false);
     const refFlatList = useRef();
     const startFrom = useRef(0);
 
@@ -237,8 +234,39 @@ export default function AroundYouComponent(props){
         bottomSheetUserDetailsRef.current.expandOrClose();
     }
 
-    function creaNuovaConversazione(){
-        console.log("creazione conversazione in corso...");
+    function creaNuovaConversazione(uidOfCard, nameOfCard){
+        console.log("creazione conversazione in corso con "+uidOfCard);
+        setIsLoading(true);
+        setIsChatCreating(true);
+        dialogCreaNuovaConversazioneRef.current.close_dialog();
+        createNewConversation(uidOfCard, nameOfCard, informazioniProfiloUtente.name)
+            .then((newChatId)=>{
+                console.log("chat creata");
+                //aggiungo la coppia {chatId: newChatId, uid: uidOfCard} alle mie informazioni personali cosi da aggiornare lo screen chat
+                let listOfConversationsTMP = {conversations: []};
+                if(listOfConversations==null){
+                    listOfConversationsTMP["conversations"]=[{chatId: newChatId, uid: uidOfCard, contactName: nameOfCard}];
+                } 
+                else {
+                    listOfConversationsTMP = JSON.parse(JSON.stringify(listOfConversations));
+                    listOfConversationsTMP["conversations"].push({chatId: newChatId, uid: uidOfCard, contactName: nameOfCard});
+                }
+                setListOfConversations(listOfConversationsTMP);
+                //mandalo in chat
+                navigation.navigate("Chat");
+            }).catch((err)=>{
+                console.log("errore durante creazione chat:"+err);
+                if(err=="A conversation already exists")
+                    snackMessageRef.current.setta_messaggio_da_mostrare("Sembra che stai già avendo una conversazione con "+nameOfCard);
+                else
+                    snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un errore durante la creazione della chat. Riprova più tardi.");
+                
+
+            }).finally(()=>{
+                setIsLoading(false);
+                setIsChatCreating(false);
+            })
+
     }
     
 
@@ -591,7 +619,7 @@ export default function AroundYouComponent(props){
                         )
                     }}
                     renderItem = {({item, index}) => {
-                        //console.log(index);
+                        //console.log(item);
                         const inputRange = [index -1, index, index +1]
                         const translateY = animatedValue.interpolate({
                             inputRange,
@@ -643,7 +671,7 @@ export default function AroundYouComponent(props){
                         <Animated.View style={{position:'absolute', width:width, height:height,  opacity, transform: [{translateY}, {scale} ] }}>
                         {item.key!="empty" &&
                             <View style={{ backgroundColor:MosCeleste, top:IMAGE_HEIGHT*0.8, left:IMAGE_WIDTH*0.75, width:IMAGE_WIDTH*0.18, height:IMAGE_WIDTH*0.18, borderRadius:IMAGE_WIDTH*0.2/2, alignItems:"center", justifyContent:"center" }}>
-                                <TouchableOpacity onPress={()=>{dialogCreaNuovaConversazioneRef.current.open_dialog(item.name)}}>
+                                <TouchableOpacity onPress={()=>{dialogCreaNuovaConversazioneRef.current.open_dialog(item.name, item.id)}}>
                                     <Ionicons name="ios-chatbubble-sharp" size={24} color="white" />
                                 </TouchableOpacity>
                             </View>
@@ -679,8 +707,9 @@ export default function AroundYouComponent(props){
 
     <BottomSheetUserDetails ref={bottomSheetUserDetailsRef} IMAGE_HEIGHT={IMAGE_HEIGHT} />
     <DialogCreaNuovaConversazione ref={dialogCreaNuovaConversazioneRef} creaNuovaConversazione = {creaNuovaConversazione} />
-    {isLoading==true && <View style={{position:"absolute", width:Dimensions.get("window").width, height:Dimensions.get("window").height, justifyContent:"center", alignItems:"center", flex:1, backgroundColor:"rgba(255,255,255,0.5)"}}>
+    {isLoading==true && <View style={{position:"absolute", width:Dimensions.get("window").width, height:Dimensions.get("window").height, justifyContent:"center", alignItems:"center", flex:1, backgroundColor:"rgba(255,255,255,0.85)"}}>
             <ActivityIndicator animating={isLoading} color={MosCeleste} />
+            {isChatCreating==true && <Text style={styles.messaggioCreazioneChat}>Creazione chat in corso...</Text>}
     </View>}
     <SnackMessage ref={snackMessageRef}/>
     </> 
@@ -720,6 +749,12 @@ const styles = StyleSheet.create({
         fontSize: IMAGE_HEIGHT*0.2/3,
         fontWeight: '900',
         paddingLeft:10
+    },
+    messaggioCreazioneChat: {
+        marginTop:10,
+        fontFamily: "Raleway_400Regular",
+        color: 'black',
+        fontSize: fontSizeCampi,
     }
     
   });

@@ -58,7 +58,7 @@ const AreaSceltaGenere = (props) => {
           <TouchableOpacity color={MosPurple} onPress={()=>{setGender("genderflux")}}>
               <Text style={[styles.sottoCampo,{textAlign:"center", justifyContent:"center", color:MosPurple}]}>Genderflux</Text>
           </TouchableOpacity>
-          <TouchableOpacity color={MosPurple} onPress={()=>{setGender("transessuale")}}>
+          <TouchableOpacity color={MosPurple} onPress={()=>{setGender("transexual")}}>
               <Text style={[styles.sottoCampo,{textAlign:"center", justifyContent:"center", color:MosPurple}]}>Transessuale</Text>
           </TouchableOpacity>
           <TouchableOpacity color={MosPurple} onPress={()=>{setGender("demi boy")}}>

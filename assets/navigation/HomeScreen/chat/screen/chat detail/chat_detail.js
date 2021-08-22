@@ -152,7 +152,7 @@ export default function ChatDetail({ navigation,route}){
             //se la promise interna ha un errore lo catturo
             try{
                 //da eliminare (la prima solo)
-                //await local_storage.removeTableForConversation(getUtenteCorrente()+contactUid+"");
+                //await local_storage.removeTable(getUtenteCorrente()+contactUid+"");
                 await local_storage.createNewTableForConversation(getUtenteCorrente()+contactUid+"");
                 await local_storage.createNewIndexForTableForConversation(getUtenteCorrente()+contactUid+"");
                 

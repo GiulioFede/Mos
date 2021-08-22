@@ -459,6 +459,74 @@ export function _isProfiloCompletato(uid){
     /*
             METODI PER LA MESSAGISTICA
     */
+
+    //creazione nuova conversazione
+    export async function _createNewConversation(uidNewContact, nameNewContact, myName){
+        try{
+
+            var db = firebase.firestore();
+
+            //riferimento utente con cui voglio conversare
+            var contactDoc = db.collection("users").doc(uidNewContact);
+            //riferimento nuova conversazione
+            var nuovaConversazionePath = db.collection("chats").doc(); //random id
+            //riferimento mio documento users/me/Conversations/conversations
+            var myConversations = db.collection("users").doc(firebase.auth().currentUser.uid).collection("chats").doc("Conversations");
+            //riferimento documento contatto users/me/Conversations/conversations
+            var contactConversations = db.collection("users").doc(uidNewContact).collection("chats").doc("Conversations");
+
+            return db.runTransaction(async (transaction) =>{
+                /*
+                    non controllo se il documento chats/Conversations esiste già in quanto lo creo (anche vuoto)
+                    in fase di creazione del profilo. In questo modo l'utente X che vuole parlare con Y avrà come
+                    autorizzazione solo la possibilità di incrementare l'array conversation col suo id
+                */
+
+                /*
+                    controllo che l'utente con cui voglio conversare esista ancora. Infatti è possibile vedere in "Around You"
+                    una vista non aggiornata.
+                */
+               let contactInfo = await transaction.get(contactDoc);
+               if(!contactInfo.exists){
+                   throw "User not exists";
+               }
+
+               //scarico conversazioni contatto
+               let contact_conversations_info = await transaction.get(contactConversations);
+               //se il contatto possiede già una conversazione in cui come uid possiede noi allora fermo tutto
+               if(!contact_conversations_info.exists){
+                   throw "General error";
+               }
+               else {
+                   //return contact_conversations_info.data();
+                   for(let i=0; i<contact_conversations_info.data().conversations.length; i++){
+                       //se esistiamo già mando errore
+                       if(contact_conversations_info.data().conversations[i].uid==firebase.auth().currentUser.uid)
+                            throw "A conversation already exists";
+                   }
+               }
+
+               //se tutto va bene allora creo conversazione
+               //creo nuova chat nella collezione chats
+               await transaction.set(nuovaConversazionePath, {lastMessage:
+                                                            {author:null,
+                                                            timestamp:null,
+                                                            type:null,
+                                                            value:null},
+                                                        numberOfMessages:0});
+                
+                //creo nel mio profilo la coppia {chatId: nuovoId, uid: contatto}
+                transaction.update(myConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:uidNewContact, contactName: nameNewContact})});
+                //creo nel profilo del contatto la coppia {chatId: nuovoId, uid: mioUid}
+                transaction.update(contactConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:firebase.auth().currentUser.uid,contactName: myName})});
+                
+                return nuovaConversazionePath.id;
+            });
+
+        }catch(e){
+            throw e;
+        }
+    }
 /*
     //invia un messaggio
     export async function _inviaNuovoMessaggio(chatId, contactUid, type, value){
@@ -654,6 +722,39 @@ export function _isProfiloCompletato(uid){
                     .orderBy("timestamp");
     }
 
+    export function _ottieniAscoltatoreNuoveNotifiche(ultimoTimestamp){ //NB: ultimoTimestamp deve essere un numero (i secondi)
+        try{
+        //ascolto documenti in una raccolta
+            let db = firebase.firestore();
+            //se non esiste alcun timestamp (ossia non esiste neppure una notifica memorizzata in locale)
+            if(ultimoTimestamp==-1)
+                return db.collection("users")
+                         .doc(firebase.auth().currentUser.uid)
+                         .collection("notifications")
+                         .where("timestamp",">", new Date()); //perchè? Ogni volta che scarico una notifica la salvo in locale e la elimino in remoto. 
+                                                              //Se quest'ultima operazione dovesse fallire allora potrei avere su un device diverso
+                                                              //il download della stessa notifica anche se sono passati molti giorni. Ho bisogno quindi
+                                                              //di un punto di inizio fermo.
+            else {
+                return db.collection("users")
+                         .doc(firebase.auth().currentUser.uid)
+                         .collection("notifications")
+                         .where("timestamp",'>',new Date(ultimoTimestamp*1000));
+            }
+        }catch(e){
+            throw e;
+        }
+        
+    }
+
+    export async function _removeNotification(id){
+        try {
+            let db = firebase.firestore();
+            return db.collection("users").doc(firebase.auth().currentUser.uid).collection("notifications").doc(id).delete();
+        }catch(e){
+            throw e;
+        }
+    }
 
     
     /*

@@ -16,7 +16,7 @@ import Svg, { Path } from 'react-native-svg'
 // Import react-native-size-matters
 // from 'https://github.com/nirsky/react-native-size-matters'
 import { moderateScale } from 'react-native-size-matters' //installa con: yarn add react-native-size-matters
-import { MosCeleste } from '../../../../../../resources/colors'
+import { MosCeleste, MosPurple, MosViola } from '../../../../../../resources/colors'
 import { fontSizeCampi } from '../../../../../../context/variabili_globali/variabiliGlobali'
 
 // Props info list
@@ -29,9 +29,10 @@ function MessageBubble({messaggio}) {
     return (
         <View>
         <View style={[styles.item, styles.itemIn]}>
-        <View style={[styles.balloon, {backgroundColor: MosCeleste}]}>
+        <View style={[styles.balloon, {backgroundColor: messaggio==null?MosViola:MosCeleste,  }]}>
         {/* non preoccuparti per la lunghezza dato che verranno consentiti al massimo solo brevi messaggi*/}
-          <Text style={{paddingTop: 5, color: 'white', fontSize:fontSizeCampi}}>{messaggio}</Text> 
+          {messaggio!=null && <Text style={{paddingTop: 5, color: 'white', fontSize:fontSizeCampi}}>{messaggio}</Text>} 
+          {messaggio==null && <Text style={{paddingTop: 5, color: "white", fontSize:fontSizeCampi, fontStyle:"italic"}}>fai il primo passo!</Text>} 
           <View
           style={[
             styles.arrowContainer,
@@ -42,7 +43,7 @@ function MessageBubble({messaggio}) {
            <Svg style={styles.arrowLeft} width={moderateScale(15.5, 0.6)} height={moderateScale(17.5, 0.6)} viewBox="32.484 17.5 15.515 17.5"  enable-background="new 32.485 17.5 15.515 17.5">
                 <Path
                     d="M38.484,17.5c0,8.75,1,13.5-6,17.5C51.484,35,52.484,17.5,38.484,17.5z"
-                    fill={MosCeleste}
+                    fill={messaggio==null?MosViola:MosCeleste}
                     x="0"
                     y="0"
                 />

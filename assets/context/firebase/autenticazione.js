@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi, _findNextTenClosestUsers, _updateAge} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -106,8 +106,11 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     getMediaProfiloContatto,
                     inviaNuovoMessaggio,
                     ottieniAscoltatoreNuoviMessaggi,
+                    ottieniAscoltatoreNuoveNotifiche,
+                    removeNotification,
                     getAllMediaOfCurrentUser,
-                    findNextTenClosestUsers
+                    findNextTenClosestUsers,
+                    createNewConversation
                 }}
                 >
                 {children}
@@ -414,6 +417,15 @@ export const AutenticazioneUtenteProvider = ({children}) => {
             METODI PER LA MESSAGGISTICA
   */
 
+  //crea nuova conversazione
+  async function createNewConversation(uidNewContact, nameNewContact, myName){
+      try{
+          return await _createNewConversation(uidNewContact, nameNewContact, myName);
+      }catch(e){
+          throw e;
+      }
+  }
+
   //invia un messaggio a un contactUid
   function inviaNuovoMessaggio(chatId, contactUid, type, value, callbackSuccess, callbackFailure){
       try{
@@ -427,6 +439,22 @@ export const AutenticazioneUtenteProvider = ({children}) => {
   function ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored){
       return _ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored);
   }
+
+  function ottieniAscoltatoreNuoveNotifiche(ultimoTimestamp){//NB: ultimoTimestamp deve essere un numero (i secondi)
+      try{
+        return _ottieniAscoltatoreNuoveNotifiche(ultimoTimestamp);
+      }catch(e){
+            throw e;
+      }
+    }
+
+    async function removeNotification(documentID){
+        try{
+            return await _removeNotification(documentID);
+        }catch(e){
+            throw e;
+        }
+    }
 
 
 
