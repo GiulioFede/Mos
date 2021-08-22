@@ -11,18 +11,18 @@ const DialogCreaNuovaConversazione = forwardRef((props, ref) => {
      const [isDialogVisible, setIsDialogVisible] = useState(false);
      //estraggo argomenti
      const {creaNuovaConversazione} = props;
-     const nameOfCard = useRef("");
-     const uidOfCard = useRef("");
+     const currentUserBasicInfo = useRef([]); //contiene [nome, uid, token push notification] del contatto sui cui si è aperto il dialogo
 
      useImperativeHandle(ref, () => ({
         close_dialog(){
             closeDialog();
         },
 
-        open_dialog(name, uid){
-            nameOfCard.current = name;
-            uidOfCard.current = uid;
-            openDialog(name, uid);
+        open_dialog(name, uid, token){
+            currentUserBasicInfo.current[0] = name;
+            currentUserBasicInfo.current[1] = uid;
+            currentUserBasicInfo.current[2] = token;
+            openDialog();
         }
         
      }));
@@ -43,11 +43,11 @@ const DialogCreaNuovaConversazione = forwardRef((props, ref) => {
             <Dialog visible={isDialogVisible} onDismiss={closeDialog}>
                 <Dialog.Title>Nuova conversazione</Dialog.Title>
                 <Dialog.Content>
-                    <Text>Vuoi davvero iniziare una nuova conversazione con {nameOfCard.current}?</Text>
+                    <Text>Vuoi davvero iniziare una nuova conversazione con {currentUserBasicInfo.current[0]}?</Text>
                 </Dialog.Content>
                 <Dialog.Actions>
                     <Button onPress={closeDialog} color={MosCeleste} ><Text>Annulla</Text></Button>
-                    <Button onPress={()=>{creaNuovaConversazione(uidOfCard.current, nameOfCard.current)}} color={MosViola} ><Text>Crea</Text></Button>
+                    <Button onPress={()=>{creaNuovaConversazione(currentUserBasicInfo.current[1], currentUserBasicInfo.current[0], currentUserBasicInfo.current[2])}} color={MosViola} ><Text>Crea</Text></Button>
                 </Dialog.Actions>
             </Dialog>
         </Portal>

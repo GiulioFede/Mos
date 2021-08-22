@@ -18,6 +18,7 @@ import DialogCreaNuovaConversazione from './dialogoCreaNuovaConversazione';
 import { AutenticazioneUtente } from '../../../../context/firebase/autenticazione';
 import { computeDistance, getAgeFromTimestamp, range } from '../../../../context/utilities/functions.utilities';
 import localStorage from '../../../../context/local_storage/localStorage';
+import { sendPushNotification } from '../../../../context/push_notifications/functions';
 
 const {width, height} = Dimensions.get("window");
 const IMAGE_WIDTH = width*0.86;
@@ -234,13 +235,13 @@ export default function AroundYouComponent(props){
         bottomSheetUserDetailsRef.current.expandOrClose();
     }
 
-    function creaNuovaConversazione(uidOfCard, nameOfCard){
+    function creaNuovaConversazione(uidOfCard, nameOfCard, token){
         console.log("creazione conversazione in corso con "+uidOfCard);
         setIsLoading(true);
         setIsChatCreating(true);
         dialogCreaNuovaConversazioneRef.current.close_dialog();
         createNewConversation(uidOfCard, nameOfCard, informazioniProfiloUtente.name)
-            .then((newChatId)=>{
+            .then(async(newChatId)=>{
                 console.log("chat creata");
                 //aggiungo la coppia {chatId: newChatId, uid: uidOfCard} alle mie informazioni personali cosi da aggiornare lo screen chat
                 let listOfConversationsTMP = {conversations: []};
@@ -252,6 +253,8 @@ export default function AroundYouComponent(props){
                     listOfConversationsTMP["conversations"].push({chatId: newChatId, uid: uidOfCard, contactName: nameOfCard});
                 }
                 setListOfConversations(listOfConversationsTMP);
+                //manda una push notification al contatto per avvertirlo che hai creato una conversazione
+                await sendPushNotification(token,"Qualcuno ti trova interessante!", (informazioniProfiloUtente.name+" vorrebbe parlare con te."));
                 //mandalo in chat
                 navigation.navigate("Chat");
             }).catch((err)=>{
@@ -671,7 +674,7 @@ export default function AroundYouComponent(props){
                         <Animated.View style={{position:'absolute', width:width, height:height,  opacity, transform: [{translateY}, {scale} ] }}>
                         {item.key!="empty" &&
                             <View style={{ backgroundColor:MosCeleste, top:IMAGE_HEIGHT*0.8, left:IMAGE_WIDTH*0.75, width:IMAGE_WIDTH*0.18, height:IMAGE_WIDTH*0.18, borderRadius:IMAGE_WIDTH*0.2/2, alignItems:"center", justifyContent:"center" }}>
-                                <TouchableOpacity onPress={()=>{dialogCreaNuovaConversazioneRef.current.open_dialog(item.name, item.id)}}>
+                                <TouchableOpacity onPress={()=>{dialogCreaNuovaConversazioneRef.current.open_dialog(item.name, item.id, item.push_notification_token)}}>
                                     <Ionicons name="ios-chatbubble-sharp" size={24} color="white" />
                                 </TouchableOpacity>
                             </View>

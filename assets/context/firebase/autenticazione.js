@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -77,6 +77,7 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     setListOfConversations,
                     getUtenteCorrente,
                     logOut,
+                    saveNewPushNotificationToken,
                     accediConEmailPassword,
                     inviaEmailRecuperoPassword,
                     inviaCodiceDiVerifica,
@@ -209,6 +210,14 @@ export const AutenticazioneUtenteProvider = ({children}) => {
         console.log("invia email di verifica");
         return _inviaEmailDiVerifica();
 
+    }
+
+    async function saveNewPushNotificationToken(token){
+        try{
+            return await _saveNewPushNotificationToken(token);
+        }catch(e){
+            throw e;
+        }
     }
 
 

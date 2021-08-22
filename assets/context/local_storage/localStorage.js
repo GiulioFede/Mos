@@ -796,7 +796,7 @@ const readPreference = async (currentUser, preferenceName) => {
                 try{
         
                     console.log("Avvio query...");
-                    let query = "SELECT * FROM "+user+"_notifications ORDER BY timestamp DESC LIMIT 2 OFFSET "+offset;
+                    let query = "SELECT * FROM "+user+"_notifications ORDER BY timestamp DESC LIMIT 5 OFFSET "+offset;
                     db.transaction(
                         (tx)=>{
                             tx.executeSql(

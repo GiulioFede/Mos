@@ -474,6 +474,8 @@ export function _isProfiloCompletato(uid){
             var myConversations = db.collection("users").doc(firebase.auth().currentUser.uid).collection("chats").doc("Conversations");
             //riferimento documento contatto users/me/Conversations/conversations
             var contactConversations = db.collection("users").doc(uidNewContact).collection("chats").doc("Conversations");
+            //avviso (oltre che con la push notifications che verrà fatta dal chiamante della funzione) l'utente con una notifica
+            var contactNotificationChannel = db.collection("users").doc(uidNewContact).collection("notifications").doc();
 
             return db.runTransaction(async (transaction) =>{
                 /*
@@ -518,8 +520,10 @@ export function _isProfiloCompletato(uid){
                 //creo nel mio profilo la coppia {chatId: nuovoId, uid: contatto}
                 transaction.update(myConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:uidNewContact, contactName: nameNewContact})});
                 //creo nel profilo del contatto la coppia {chatId: nuovoId, uid: mioUid}
-                transaction.update(contactConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:firebase.auth().currentUser.uid,contactName: myName})});
-                
+                transaction.update(contactConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:firebase.auth().currentUser.uid,contactName: myName})});   
+                //creo nel profilo del contatto una notifica
+                transaction.set(contactNotificationChannel,{author: firebase.auth().currentUser.uid, type: "JOIN", timestamp: new Date()}); 
+
                 return nuovaConversazionePath.id;
             });
 
@@ -886,4 +890,23 @@ export function _isProfiloCompletato(uid){
             throw e;
         }
     })
+    }
+
+
+    /*
+        PUSH NOTIFICATIONS
+    */
+
+    export async function _saveNewPushNotificationToken(token){
+        try{
+            let db = firebase.firestore();
+            return db.collection("users")
+                     .doc(firebase.auth().currentUser.uid)
+                     .set({
+                         push_notification_token: token
+                     }, {merge: true});
+
+        }catch(e){
+            throw e;
+        }
     }

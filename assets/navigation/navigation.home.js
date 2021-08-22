@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import {Text, View, StyleSheet } from 'react-native';
 import {DrawerActions, NavigationContainer} from '@react-navigation/native';
 import {ActivityIndicator} from 'react-native-paper';
@@ -16,7 +16,23 @@ import { MosCeleste } from '../resources/colors';
 import local_storage from '../context/local_storage/localStorage';
 import * as FileSystem from 'expo-file-system';
 import { getAgeFromTimestamp } from '../context/utilities/functions.utilities';
+import * as Notifications from 'expo-notifications'
+import registerForPushNotificationsAsync from '../context/push_notifications/registerForPushNotifications';
 
+/*
+  NB: Questa funzione decide solo come comportarsi quando si riceve una notifica MA l'app è in FOREGROUND.
+      Infatti io NON voglio che parta alcun suono (immagina di chattare, stai rregistrando e ti arriva una
+      notifica con suono, brutta cosa ;)). Voglio comunque che la notifica mi spunti sopra. Per questo motivo
+      setterò shouldShowAlert=true (voglio che mi spunti) ma shouldPlaySound=false (non voglio alcun suono).
+
+*/
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false
+  })
+});
 
 const Drawer = createDrawerNavigator();
 
@@ -31,10 +47,17 @@ const Drawer = createDrawerNavigator();
 export default function HomeNavigator({navigation}) {
 
     //contesto
-    const {getUserInformation, getUtenteCorrente,user, logOut,scaricaUrlImmagine, setInformazioniProfiloUtente, updateAge, getListOfConversations, setListOfConversations, getAllMediaOfCurrentUser} = useContext(AutenticazioneUtente);
+    const {getUserInformation, getUtenteCorrente,user, logOut,scaricaUrlImmagine, setInformazioniProfiloUtente, updateAge, getListOfConversations, setListOfConversations, getAllMediaOfCurrentUser, saveNewPushNotificationToken} = useContext(AutenticazioneUtente);
 
     //se true indica che il profilo non è stato ancora caricato
     const [isProfileLoading, setIsProfileLoading] = useState(true);
+
+    //variabile che contiene il listener per l'invio delle notifiche
+    const notificationListener = useRef();
+    //variabile che contiene il listener per la ricezione delle notifiche
+    const notificationReceiverListener = useRef();
+    //se true indica che c'è stata una notifica
+    const [notification, setNotification] = useState(false);
 
     //simulo la Promise.allSettled che da problemi ma è vitale in questo caso
     //raccoglie tutti gli url delle immagini di galleria e di profilo dell'utente. I risultati errati verranno marchiati come
@@ -116,7 +139,7 @@ export default function HomeNavigator({navigation}) {
                       }
                */
                   getListOfConversations()
-                  .then((chats)=>{
+                  .then(async (chats)=>{
                     try{
                       console.log("Prelevo informazioni chat utente:");
                       if(chats.exists)
@@ -127,22 +150,48 @@ export default function HomeNavigator({navigation}) {
                       //dovessi fallire carico comunque il profilo. E' una inconsistenza comunque non grave
                       if(getAgeFromTimestamp(info_utente.date_of_birth) == info_utente.age){
                         console.log("età consistente");
-                        //info contiene le info dell'utente
-                        setInformazioniProfiloUtente(info_utente);
-                        setIsProfileLoading(false);
                       }
                       else {
                         console.log("età inconsistente. Necessita di aggiornamento");
-                        updateAge(getAgeFromTimestamp(info_utente.date_of_birth)).
-                          then((ris)=>{
-                            console.log("età aggiornata con successo.");
-                            info_utente.age = getAgeFromTimestamp(info_utente.date_of_birth);
-                          }).finally((f)=>{
-                            //info contiene le info dell'utente
-                            setInformazioniProfiloUtente(info_utente);
-                            setIsProfileLoading(false);
-                          })
+                        await updateAge(getAgeFromTimestamp(info_utente.date_of_birth)).
+                        console.log("età aggiornata con successo.");
+                        info_utente.age = getAgeFromTimestamp(info_utente.date_of_birth);
                       }
+
+                            /*
+                              REGISTRAZIONE PUSH NOTIFICATION
+                            */
+                              //1) registriamoci a expo push notification ed otteniamo il token
+                              console.log("registrazione push notifications...")
+                              let token = await registerForPushNotificationsAsync();
+                              //se il token non lo abbiamo, lo salviamo in firestore
+                              console.log("controllo se il token esiste")
+                              if(!info_utente.hasOwnProperty('push_notification_token')){
+                                  console.log("token non esiste. Lo salvo:"+token)
+                                  await saveNewPushNotificationToken(token);
+                                  info_utente["push_notification_token"] = token;
+                              }else
+                                  console.log("token esiste già");
+
+                                console.log("mi registro alla notifica tipo 1");
+                                //2) mi registro affinchè sia avvertito ogni volta che una notifica arrivi quando l'app è in FOREGROUND
+                                notificationListener.current = Notifications.addNotificationReceivedListener(notif => {
+                                  //se sono qui allora potrebbe essere arrivata (true o false) una notifica mentre ero in foreground
+                                  console.log("NOTIFICABBBBB");
+                                  //setNotification(notif);
+                                })
+
+                                console.log("mi registro alla notifica tipo 2");
+                                //3) mi registro affinchè possa far partire un azione personalizzata quando l'utente riceve una notifica e vi clicca. Funziona quando l'app è sia in foreground, che background che killata!
+                                notificationReceiverListener.current = Notifications.addNotificationResponseReceivedListener( response => {
+                                  console.log("NOTIFICAAAAAAAAA");
+                                  console.log(response);
+                                });
+
+                                //faccio partire tutto
+                                setInformazioniProfiloUtente(info_utente); //info contiene le info dell'utente
+                                setIsProfileLoading(false);
+
                   }catch(e){
                     console.log("E' avvenuto un errore. Carico comunque il profilo:"+e);
                     setIsProfileLoading(false);
@@ -167,6 +216,12 @@ export default function HomeNavigator({navigation}) {
   }catch(e){
     console.log("si è verificato un errore:"+e);
   }
+
+  return () => {
+    Notifications.removeNotificationSubscription(notificationListener.current);
+    Notifications.removeNotificationSubscription(notificationReceiverListener.current);
+  }
+
 },[user])
 
     //se il profilo sta ancora caricando...
