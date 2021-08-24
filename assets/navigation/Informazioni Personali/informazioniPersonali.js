@@ -419,7 +419,7 @@ function aggiornaPhoneNumber(){
                     doc["location.lat"]=posizioneUtente.current[0];
                     doc["location.lng"]=posizioneUtente.current[1];
                     let hash = geohashForLocation([posizioneUtente.current[0], posizioneUtente.current[1]]);
-                    doc["location.geohash"] = hash;
+                    doc["location.geohash"] = hash.substring(0,5);
                 }
                 else if(i==3) doc["gender_identity"] = identitaDiGenere;
                 else if(i==4) doc["gender_preference"] = orientamentoSessuale;

@@ -27,7 +27,7 @@ const IMAGE_HEIGHT = width*0.86*1.5;
 //mantiene della flatlist le informazioni sull'item attualmente mostrato
 var currentItemDisplayed = null;
 
-/*const info_profiles2 = [
+const info_profiles3 = [
     {
         id: "1",
         key: "1",
@@ -120,7 +120,7 @@ var currentItemDisplayed = null;
             3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
         }
     },
-]*/
+]
 
 const info_profiles2 = [
     {
@@ -191,7 +191,7 @@ let endDateToSearch = null;
     successivo aggiornamento.
     NB: se viene cambiato, cambiare anche l'omonimo in firestore.service.js
 */
-const MAX_CARD_INTO_LIST = 4;
+const MAX_CARD_INTO_LIST = 10;
 
 //variabili di appoggio
 var radius = 25;
@@ -319,39 +319,15 @@ export default function AroundYouComponent(props){
         
             async function init(){
                 await reset();
-                //setInfoProfiles([]);
-                setActiveSlide(0);
-                setActiveIndex(0);
                 isSwipeAnimationFinished.current = false;
                 //trova successivi 10 elementi (all'inizio si parte dall'elemento zero di bounds)
-                findNext10ClosestUsers(false);
+                findNext10ClosestUsers(false,null,true);
             }
     
-       if(info_profiles.length == 0)
-                init();
-        else {
-            setInfoProfiles([]);
-        }
+       init();
 
     },[refresh,informazioniProfiloUtente.action_range_preference, informazioniProfiloUtente.gender_preference,informazioniProfiloUtente.age_range]);
 
-
-    useEffect(()=>{
-
-        async function init(){
-            await reset();
-            //setInfoProfiles([]);
-            setActiveSlide(0);
-            setActiveIndex(0);
-            isSwipeAnimationFinished.current = false;
-            //trova successivi 10 elementi (all'inizio si parte dall'elemento zero di bounds)
-            findNext10ClosestUsers(false);
-        }
-
-        if(info_profiles.length == 0)
-            init();
-
-    },[info_profiles])
 
     //resetta dati di ricerca cosi da ricominciare da capo in caso non trova nessuno una volta giunto alla fine
     async function reset(){
@@ -368,13 +344,14 @@ export default function AroundYouComponent(props){
                 if(action_range<=0.25) radius = 25;
                 else if (action_range<=0.50) radius = 250;
                 else if (action_range<=0.75) radius = 2500;
-                else radius = 40000;
+                else radius = 400000;
             }
             const radiusInM = radius*1000;
 
-            console.log("neighbors");
+            console.log("neighbors in "+action_range);
             //ottengo l'array bounds fatto di N elementi (startAt e endAt ogni elemento)
             bounds.current = geohashQueryBounds(center, radiusInM);
+            console.log(geohashQueryBounds(center, radiusInM));
             current_bounds_index.current = 0;
             lastDocumentDownloaded.current = null;
 
@@ -392,136 +369,132 @@ export default function AroundYouComponent(props){
                 age_range = age_range.split(","); //["x","y"]
                 rangeEta = range(parseInt(age_range[0]),parseInt(age_range[1])); //creo range [x,x+1,...,y-1,y]
             }
-            //startDateToSearch = new Date(new Date().getFullYear()-30, 0, 1); //primo gennaio di quell'anno
-            //endDateToSearch = new Date(new Date().getFullYear()-20, 11, 31);
 
-        // setActiveIndex(0);
-        // animatedValue.current = new Animated.Value(0);
-        // reactiveAnimated.current = new Animated.Value(0);
-
-        startFrom.current = 0;
+            setInfoProfiles([]);
+            setActiveSlide(0);
+            
         }catch(e){
             snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un errore.");
         }
     }
 
-    async function findNext10ClosestUsers(isReset){
-   
+    async function findNext10ClosestUsers(isRecursive, newIndex, isRefresh){
         try{
-            console.log("Cerco altri 10 utenti.Resetto:"+isReset);
-            console.log(bounds.current.length+","+current_bounds_index.current);
+
             setIsLoading(true);
-            /*
-                la funzione viene richiamata ricorsivamente, quindi se l'indice corrente dell'elemento di bounds da
-                esaminare è maggiore del suo massimo allora esco
-            */
-            if(current_bounds_index.current > bounds.current.length-1){
-                /*
-                    Invece di mostrare uno snack message, ritorniamo da capo e ricarichiamo i vecchi profili. (a ciclo)
-                */
-                //snackMessageRef.current.setta_messaggio_da_mostrare("Non è possible trovare nessun'altro che rispetti le tue preferenze.");
-                console.log("Non è possibile trovare nessun'altro. Ritorno a capo:"+info_profiles.length);
-                //se l'array fin'ora ottenuto ha una lunghezza maggiore di zero allora posso ritornare a loop a capo:
-                //richiamo ricorsivamente
-                if(info_profiles.length==0){
-                    snackMessageRef.current.setta_messaggio_da_mostrare("Sembra non ci sia nessuno che rispetti le tue preferenze.");
-                    setIsLoading(false);
+                console.log("chiamata di findNext10ClosesUsers. E' ricorsiva?"+isRecursive+","+newIndex);
+                //se è ricorsiva e il successivo indice è uguale alla dimensione dell'array bound mi fermo
+                if(isRecursive && newIndex>=bounds.current.length){
+                    console.log("non esiste più nulla da controllare. Fine");
+                    //resetto. Ogni volta che resetto, però, riparto a loop. Se l'array è vuoto allora tale loop ritornerà qui e rifarà lo stesso. 
+                    setActiveSlide(0);
+                    setInfoProfiles([]);
                     setNoOne(true);
-                }
-                await reset();
-                setIsLoading(false);
-                if(info_profiles.length!=0)
-                    findNext10ClosestUsers(true);
-                return;
-            }
-            /*
-                Passo gli startAt e gli endAt dell'elemento corrente.
-                Se però lastDocumentDownloaded!= null allora passerò lui come startAt
-            */
-                //inizio e fine a livello di geohash o documento!
-                let startAt = (lastDocumentDownloaded.current==null) ? bounds.current[current_bounds_index.current][0] : lastDocumentDownloaded.current;
-                let endAt = bounds.current[current_bounds_index.current][1];
-
-                //ritorna in result[0] un array con i nuovi profili, mentre in result[1] l'ultimo documento
-                let result = await findNextTenClosestUsers(startAt, endAt, rangeEta);
-
-                let nearest_users = result[0];
-                
-                console.log("Utenti trovati?");
-                //console.log(nearest_users);
-                /*
-                    se non è stato trovato nessuno, passo al successivo elemento dell'array automaticamente, ma
-                    resetto lastDocumentDownloaded
-                */
-                if(nearest_users.length == 0){
-                    console.log("nessuno");
-                    //resetto per ricominciare, ma passo avanti
-                    lastDocumentDownloaded.current = null;
-                    //se non sono già alla fine (ho visitato tutte le zone)
-                    current_bounds_index.current = current_bounds_index.current + 1;
-                    //se l'array fin'ora ottenuto ha una lunghezza maggiore di zero allora posso ritornare a loop a capo:
-                    //richiamo ricorsivamente
-                    if(info_profiles.length>0)
-                        await findNext10ClosestUsers(false);
-                    //altrimenti smetto perchè ciclerei a loop senza mai trovare nessuno
-                    else {
-                        snackMessageRef.current.setta_messaggio_da_mostrare("Sembra non ci sia nessuno che rispetti le tue preferenze.");
-                        setIsLoading(false);
-                        setNoOne(true);
-                    }
-                    //esco
+                    setIsLoading(false);
                     return;
                 }
-                //altrimenti, se è stato trovato qualcuno setto lastDocumentDownloaded come quello trovato in result
-                else {
-                    console.log("Si!");
-                    lastDocumentDownloaded.current = result[1];
+
+                //se l'indice attuale è maggiore o uguale alla lunghezza di bound allora resetta
+                //questa situazione, a differenza di sopra, viene incontrata quando arriviamo alla fine senza azioni ricorsive
+                if(current_bounds_index.current>=bounds.current.length){
+                    console.log("non esiste più nulla da controllare. Fine");
+                    //resetto. Ogni volta che resetto, però, riparto a loop. Se l'array è vuoto allora tale loop ritornerà qui e rifarà lo stesso. 
+                    setActiveSlide(0);
+                    setInfoProfiles([]);
+                    setNoOne(true);
+                    setIsLoading(false);
+                    return;
                 }
-                /*
-                    Renderizzo. Siccome voglio almeno sempre 10 elementi, prima di eliminare totalmente i vecchi 10,
-                    mi chiedo quanti siano quelli nuovi. Se sono almeno 10, cancello i vecchi, altrimenti prendo dei
-                    vecchi quanto mi serve per arrivare a 10 con i nuovi.
-                */
-                console.log("renderizzo:"+isReset);
-                let tmp = null;
-                
-                //se la lista è fatta da 10 elementi o se si ricomincia da capo, includere solo i nuovi
-                if(nearest_users.length==MAX_CARD_INTO_LIST || isReset == true){
-                    console.log(".lista piena. Resetto?:"+isReset);
-                    tmp = [...nearest_users];
-                    //scrollo all'inizio
-                    startFrom.current = 0;
+
+                console.log("Prelevo starting e ending point:");
+                let startAt = null;
+                let endAt = null;
+                //se è ricorsiva significa che devo ripartire da zero ma dal newIndex
+                if(isRecursive==true){
+                    startAt = bounds.current[newIndex][0]
+                    endAt = bounds.current[newIndex][1];
+                }else {
+                    startAt = (lastDocumentDownloaded.current==null) ? bounds.current[current_bounds_index.current][0] : lastDocumentDownloaded.current;
+                    endAt = bounds.current[current_bounds_index.current][1];
+                }
+                //console.log("start: "+typeof(startAt)=="string"?startAt:startAt.data().name+"   end:"+endAt);
+                console.log("start "+typeof(startAt));
+                //ritorna in result[0] un array con i nuovi profili, mentre in result[1] l'ultimo documento trovato
+                let result = await findNextTenClosestUsers(startAt, endAt, rangeEta);
+        
+                let nearest_users = result[0];
+                console.log("Quanti nuovi utenti sono stati trovati?:"+nearest_users.length);
+
+                //indico nuovo starting point per il futuro. Se non è stato trovato nulla allora result[1] sarà ancora null
+                lastDocumentDownloaded.current = result[1];
+
+                //se M è il numero degli attuali elementi ed N sono il numero di nuovi elementi trovati io devo
+                // avere un array che contiene gli N elementi e se N<MAX_CARD_INTO_LIST aggiungo MX_CARD_INTO_LIST-N ultimi elementi del vecchio array
+                //Quindi, se i nuovi elementi sono pari al massimo consentito
+                if(nearest_users.length == MAX_CARD_INTO_LIST){
+                    console.log("Massimo numero di novità")
+                    setInfoProfiles([...nearest_users]);
+                    //imposto la slide a 0
+                    setActiveSlide(0);
+                    setIsLoading(false);
+                }
+                //altrimenti, se comunque i nuovi sono >0
+                else if (nearest_users.length > 0){
+                    console.log("Qualcuno è stato trovato.")
+                    let numero_nuovi = nearest_users.length; //es. 4
+                    let numero_attuali = isRefresh==true?0:info_profiles.length; //es.7
+                    //se il numero di prima con quello di ora è minore o uguale di MAX
+                    if(numero_nuovi+numero_attuali<= MAX_CARD_INTO_LIST){
+                        //es. vecchi=3, nuovi=1 --> metto tutto --> mi posizione come slide all'indice vecchi
+                        if(isRefresh==true){
+                            setInfoProfiles([...nearest_users]);
+                            setActiveSlide(0); //non faccio overflow perchè esiste almeno un elemento nuovo
+                        }else {
+                            setInfoProfiles([...info_profiles,...nearest_users]);
+                            setActiveSlide(info_profiles.length); //non faccio overflow perchè esiste almeno un elemento nuovo
+                        }
+                    }else{
+                        let numero_attuali_da_lasciare = MAX_CARD_INTO_LIST-numero_nuovi; //10-4=6
+                        let attualiCheDevonoRimanere = info_profiles.splice(-numero_attuali_da_lasciare);
+                        //creo nuovo array
+                        setInfoProfiles([...attualiCheDevonoRimanere,...nearest_users]);
+                        //attualmente sono alla posizione es.7, ossia l'ultima dei vecchi
+                        //secondo l'esempio adesso avrò un array di 6 (vecchi) + 4 nuovi, ossia 10 elementi.
+                        //mi dovrò spostare alla posizione pari a numero_attuali_da_lasciare + 1, ma non metto +1 perchè l'array comincia da 0
+                        setActiveSlide(numero_attuali_da_lasciare);
+                    }
                     
+                    setIsLoading(false);
+                    //console.log("Risultato");
+                    //console.log("Vecchio array:");
+                    //console.log(info_profiles);
+                    //console.log("Novità:");
+                    //console.log(nearest_users);
+                    console.log("indice attivo: "+activeIndex);
                 }
-                else{
-                    console.log(".lista non piena...lunghezza info profiles:"+info_profiles.length+" lunghezza novità:"+nearest_users.length);
-                    //calcolo quanto manca ad arrivare a 10
-                    let offset = MAX_CARD_INTO_LIST - nearest_users.length;
-                    if(isReset==false)
-                        startFrom.current = offset;
-                    else
-                       startFrom.current = 0;
-                    //se il vecchio ha elementi minori di offset allora lo metto tutto
-                    if(info_profiles.length<=offset)
-                        tmp = [...info_profiles, ...nearest_users];
-                    //altrimenti prendo solo i suoi ultimi offset
-                    else
-                        tmp = [...info_profiles.slice(-offset),...nearest_users];
+                //altrimenti se non è stato trovato nulla, ripeto la query passando la successivo
+                //NB: se non viene ritornato nulla allora è sicuro che possiamo passare al successivo bound
+                else if(nearest_users.length == 0) {
+                    console.log("Nessuno trovato.")
+                    lastDocumentDownloaded.current = null;
+                    let indiceCorrente = current_bounds_index.current;
+                    current_bounds_index.current = current_bounds_index.current + 1;
+                    //metto che isRecursive=true cosi da dirgli di prendere come valori di documento e indice corrente quelli passati come argomenti in quanto i "current" potrebbero non essere aggiornati
+                    await findNext10ClosestUsers(true,indiceCorrente+1,false);
+                    return;
                 }
-                console.log("setto nuovo info profiles:");
-                //console.log(tmp);
-                setInfoProfiles(tmp);
-                
-                //console.log(nearest_users);
             
             }catch(e){
                 console.log("errore:"+e);
                 snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un errore. Riprova più tardi.");
+                setIsLoading(false);
             }
 
-        setIsLoading(false);
-        
     }
+
+   // console.log("INFO PROFILES");
+   // console.log(info_profiles);
+
 
 
     function getDistance(lat, lng){
@@ -563,18 +536,15 @@ export default function AroundYouComponent(props){
             if(ev.nativeEvent.state === State.END){
                // console.log("swipe alto:"+activeIndex);//sarà chiamato quando faccio swipe dal basso verso l'alto (incrementando ogni volta activeIndex)
                 //se arrivo alla fine ricarico con nuovi elementi
+                console.log("slide: "+activeIndex+1);
                 if(activeIndex === info_profiles.length -1){
                     console.log("ricarico con nuovi elementi aggiuntivi");
                     //se non sta già caricando...
                     if(isLoading==false){
-                        await findNext10ClosestUsers(false);
-                        console.log("riprendi da "+startFrom.current);
-                        setActiveSlide(startFrom.current); 
-                        setActiveIndex(startFrom.current); 
+                        await findNext10ClosestUsers(false,null,false);
                     }
                     return;
                 }
-                console.log("next");
                 setActiveSlide(activeIndex + 1);
             }
     }}>
@@ -703,7 +673,7 @@ export default function AroundYouComponent(props){
     <View style={{width:width, height:height, position:"absolute", justifyContent:"center", alignItems:"center"}}>
         <AntDesign name="frowno" size={height*0.2} color="rgba(68, 68, 68,0.3)" />
         <Text style={{fontSize:fontSizeCampi,fontFamily: "Raleway_200ExtraLight", textAlign:"center", marginTop:10}}>
-            Sembra non ci sia nessuno che rispetti le tue preferenze. Prova a cambiare qualche parametro, come il raggio di azione o la fascia di età.
+            Sembra non ci sia nessun'altro che rispetti le tue preferenze. Prova a cambiare qualche parametro, come il raggio di azione o la fascia di età.
         </Text>
     </View>
     }

@@ -52,7 +52,7 @@ const Chat = [
 ]
 
 
-export default function ChatScreen({navigation}){
+export default function ChatScreen({navigation, route}){
 
     //riferimento tab notifiche
     const tabNotificheRef = useRef();
@@ -107,7 +107,7 @@ export default function ChatScreen({navigation}){
                 </View>
 
                 {/* LISTA CHAT */}
-                <ChatListComponent navigation={navigation} />
+                <ChatListComponent navigation={navigation} route={route} />
 
                 {/* RIQUADRO A COMPARSA PER LE NOTIFICHE */}
                 <View style={{position:"absolute", width:larghezzaDevice, height:altezzaDevice, top:altezzaBarraScreen}}>

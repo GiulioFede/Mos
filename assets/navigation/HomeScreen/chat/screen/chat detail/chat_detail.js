@@ -20,6 +20,7 @@ import AudioModel, { resetMessageModel } from "./components/audioModel";
 import ListaMessaggi from "./components/listaMessaggi";
 import RecordingKeyboard from "./components/recordingKeyboard";
 import { RowsOfMessagesToUpdate } from "../context/chatContext";
+import DecisionScreen from "./components/decisionScreen";
 
 //contiene le row da passare alla flat list per indicargli di aggiornare lo stato in "succeed"
 //const [arrayOfRowsToUpdateState, setarrayOfRowsToUpdateState] = useState({});
@@ -37,18 +38,23 @@ var arrayOfRowsToUpdateState = {};
 
 var idChatAlreadyOpened = [];
 let ascoltatoreNuoviMessaggi = null;
+let ascoltatoreStatistics = null;
+let THRESHOLD = 3;
 export default function ChatDetail({ navigation,route}){
 
     const [messaggio, setMessaggio] = useState("");
     //conterrà l'intera chat
     const [chat, setChat] = useState([]);
     //contesto autenticazione
-    const {getUtenteCorrente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi} = useContext(AutenticazioneUtente);
+    const {getUtenteCorrente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi, ottieniAscoltatoreStatistics, makeDecision, upgradeConversation} = useContext(AutenticazioneUtente);
     
     const {addNewUpdate} = useContext(RowsOfMessagesToUpdate);
 
+    //memorizzerà l'ultimo messaggio inviato/ricevuto costantemente rimpiazzando il precedente cosi che quando si torna allo schermo precedente possa aggiornare la chat_preview
+    const lastMessage = useRef(null);
+
     //uid utente
-    const {chatId, contactUid} = route.params;
+    const {chatId, contactUid, name} = route.params;
     console.log(" MYID CHAT");
     console.log(route.params);
     //reference alla flat list
@@ -73,7 +79,7 @@ export default function ChatDetail({ navigation,route}){
         try{
             console.log("torno indietro");
             await resetMessageModel();
-            navigation.goBack();
+            navigation.navigate("Chat",lastMessage.current);
         }catch(e){
             console.log("chat_detail go back errore:"+e);
         }
@@ -104,6 +110,8 @@ export default function ChatDetail({ navigation,route}){
                                     console.log("Messaggio salvato in locale");
                                     console.log("Salvo nella chat "+contactUid+" di chiave "+nuovaChiave+" lo stato succeed"); 
                                     addNewUpdate(contactUid,nuovaChiave,"succeed");
+                                    //salvo come ultimo messaggio da ritornare allo schermo di prima
+                                    lastMessage.current = {code:"UPDATE_LAST_MEX", chatId: chatId, type:"text", value: messaggio, author:getUtenteCorrente(), timestamp:new Date().getTime()};
                                     if(isMounted.current==true)
                                         refFlatList.current.scrollToOffset({animated:true, offset: chat.length-1});
                                 }catch(e){
@@ -141,6 +149,103 @@ export default function ChatDetail({ navigation,route}){
     }
 
     const isMounted = useRef(false);
+
+    //DA ELIMINARE
+    /*useEffect(()=>{
+        async function test(){
+            try{
+            let db = firebase.firestore();
+            const path = db.collection("chats").doc("BQCktyNpkjv9Lb8kBsoj");
+            path.update({
+                lastMessage: {
+                    author: getUtenteCorrente(),
+                    timestamp: new Date(),
+                    type: "text",
+                    value: "prova2"
+                },
+                numberOfMessages: firebase.firestore.FieldValue.increment(1)
+            }).then((ris)=>{
+                console.log("test chat: successo");
+            }).catch((e)=>{
+                console.log("test chat fallito: "+e);
+            })
+        }catch(e){
+            console.log("test chat eccezione:"+e);
+        }
+        }
+
+        test();
+    },[])*/
+
+
+    /*
+        Mi metto in ascolto del documento statistics:
+            - number_of_messages: 17
+            - last_author: ABCD...
+            - ABCD.._response: null/false/true
+            - KYDZ.._response: null/false/true
+            - administrator: ABCD...
+    */
+   const statistics = useRef();
+   const decisionScreenRef = useRef();
+   useEffect(()=>{
+
+    async function ascoltaStatistics(){
+        try{
+            ascoltatoreStatistics = ottieniAscoltatoreStatistics(chatId)
+                .onSnapshot(
+                    /*
+                        Includo nel listener anche l'avviso al cambiamento dei metadati. Infatti per risparmiare traffico, gli eventi generati dal dispositivo X
+                        non vengono notificati dal Server al dispositivo X, ma è lo stesso che "simula" ciò. Però devo almeno avere la conferma che il documento
+                        è stato scritto sul server prima di generarmi tale listener, e lo faccio controllando che hasPendingWrites=false.
+                    */
+                    { includeMetadataChanges: true },
+                    (doc) => {
+                                console.log("ascolto nuove statistiche dal "+doc.metadata.hasPendingWrites==true?"Local":"Server");
+                                //se è stato salvato nel server
+                                if(doc.metadata.hasPendingWrites==false){
+
+                                    let stat = doc.data();
+                                    console.log(stat);
+                                    statistics.current = JSON.parse(JSON.stringify(stat));
+
+                                    //se il numero di messaggi è un multiplo di THRESHOLD
+                                    if( stat.number_of_messages!=0 && (stat.number_of_messages % THRESHOLD) == 0){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
+                                        /*
+                                            mostro la finestra in cui chiedo di prendere una decisione se svelarsi o meno.
+                                            La finestra mostrerà i seguenti messaggi (letti da statistics.current):
+                                                - se l'utente corrente non ha ancora risposto (null) --> "Vuoi renderti più visibile?"
+                                                - se l'utente corrente ha già risposto:
+                                                    - indipendentemente se l'altro utente ha risposto o meno io mostrerò "In attesa della risposta dell'altro utente"
+                                        */
+                                        //se sono qua dentro significa che ancora manca almeno una risposta, la mia, la sua o entrambe
+                                        //mostro la decision screen. Se manca la sua risposta vedrà "Attendi...", altrimenti "Vuoi renderti più visibile?"
+
+                                        decisionScreenRef.current.show(stat);
+
+
+
+                                        
+                                    }
+
+                                }
+                                
+                              
+                });
+        }catch(e){
+            console.log("Si è verificato un errore. Impossibile avviare la conversazione:"+e);
+            setSnackBarMessage("Si è verificato un errore. Impossibile avviare la conversazione.");
+        }
+    }
+
+    ascoltaStatistics();
+
+    return () => {
+            console.log("rimuovo ascoltatore statistiche");
+            if(ascoltatoreStatistics) ascoltatoreStatistics();
+    }
+   },[])
+
 
     useEffect(()=>{
         isMounted.current = true;
@@ -204,7 +309,7 @@ export default function ChatDetail({ navigation,route}){
     }
 
     //dato che la funzione è async e non uso .then() allora verrà eseguita in maniera asincrona
-    ottieniPrimi10Messaggi();
+    //ottieniPrimi10Messaggi();
 
 
         return () => {
@@ -511,19 +616,29 @@ export default function ChatDetail({ navigation,route}){
           <TouchableOpacity  onPress={tornaIndietro} style={{position:"absolute",left:0,zIndex:10, paddingLeft:Dimensions.get("window").width*0.03}}>
               <Ionicons name="chevron-back" size={fontSizeTitoloBarra} color="#52575D" />
           </TouchableOpacity>
-          <Text style={styles.titolo}>Laura</Text>
+          <Text style={styles.titolo}>{name}</Text>
           <TouchableOpacity style={{position:"absolute", right:Dimensions.get("window").width*0.04}}>
               <Octicons name="kebab-vertical" size={fontSizeTitoloBarra} color="#52575D" />
           </TouchableOpacity>
       </View>
 
+     {chat.length>0 &&
      <ListaMessaggi refFlatList={refFlatList} 
                     lista_messaggi={chat} 
                     caricaSuccessivi10Messaggi={caricaSuccessivi10Messaggi} 
                     getUtenteCorrente={getUtenteCorrente} 
                     setSnackBarMessage={setSnackBarMessage}
                     contactUid = {contactUid}
-                    ultimaData = {null} /> 
+                    ultimaData = {null} /> }
+      {chat.length==0 && 
+        <View style={{flex:1}}>
+            {isChatLoaded==true &&
+                <View>
+                    <Text>Ciao //TODO: SPIEGA COME FUNZIONA LA CHAT</Text> 
+                </View>
+            }
+        </View>
+      }
      
       <LinearGradient
           // Background Linear Gradient sopra chat
@@ -575,10 +690,11 @@ export default function ChatDetail({ navigation,route}){
                              setChat = {setChat}
                              refFlatList = {refFlatList}
                              inviaNuovoMessaggio = {inviaNuovoMessaggio}
+                             lastMessage = {lastMessage}
                              contactUid = {contactUid}
                              isMounted = {isMounted}
                              arrayOfRowsToUpdateState = {arrayOfRowsToUpdateState}
-                             //setarrayOfRowsToUpdateState = {setarrayOfRowsToUpdateState}
+                             chatId = {chatId}
                              setRefresh = {setRefresh}
                              refresh = {refresh} />
           </>
@@ -589,6 +705,14 @@ export default function ChatDetail({ navigation,route}){
       {isChatLoaded==false && <View style={{position:"absolute", width:larghezzaDevice, height:altezzaDevice, justifyContent: 'center', alignItems: 'center'}}>
                 <ActivityIndicator size={fontSizeTitoloBarra} color={MosPurple} /> 
       </View>}
+
+      {/* schermata decision screen */}
+      <DecisionScreen ref={decisionScreenRef} 
+                      makeDecision={makeDecision}
+                      upgradeConversation = {upgradeConversation} 
+                      chatID={chatId}
+                      uidCurrentUser={getUtenteCorrente()}
+                      contactUid = {contactUid}/>
 
       <Snackbar
             visible={snackBarMessage?true:false}
@@ -613,7 +737,7 @@ const styles = StyleSheet.create({
       flex:1
     },
     titolo:{
-        fontSize:fontSizeTitoloBarra,
+        fontSize:fontSizeTitoloBarra*0.8,
         position:"absolute",
         fontFamily: "Raleway_400Regular",
         color: "#52575D",
@@ -633,12 +757,15 @@ const styles = StyleSheet.create({
         backgroundColor:"#fff",
     },
     tastiera:{
-        flex:0.15,
+        //flex:0.15,
         flexDirection: 'row',
         justifyContent:"center",
         alignItems:"center",
         width: larghezzaDevice,
-        backgroundColor:"#fff"
+        backgroundColor:"#fff",
+        paddingTop:fontSizeTitoloBarra*0.5,
+        paddingBottom:fontSizeTitoloBarra*0.5
+        
     },
     input:{
         textAlign:"right",

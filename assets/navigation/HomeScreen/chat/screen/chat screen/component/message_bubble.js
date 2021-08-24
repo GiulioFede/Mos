@@ -12,7 +12,7 @@ import {
 // Import react-native-svg
 // from 'https://github.com/react-native-community/react-native-svg'
 import Svg, { Path } from 'react-native-svg'
-
+import { Entypo } from '@expo/vector-icons';
 // Import react-native-size-matters
 // from 'https://github.com/nirsky/react-native-size-matters'
 import { moderateScale } from 'react-native-size-matters' //installa con: yarn add react-native-size-matters
@@ -25,13 +25,17 @@ import { fontSizeCampi } from '../../../../../../context/variabili_globali/varia
 // 3. image (image file) => renders image inside bubble
 
 // Declare component 
-function MessageBubble({messaggio}) {
+function MessageBubble({messaggio, type}) {
     return (
         <View>
         <View style={[styles.item, styles.itemIn]}>
-        <View style={[styles.balloon, {backgroundColor: messaggio==null?MosViola:MosCeleste,  }]}>
+        <View style={[styles.balloon, {backgroundColor: messaggio==null?MosViola:MosCeleste, flexDirection:"row"  }]}>
         {/* non preoccuparti per la lunghezza dato che verranno consentiti al massimo solo brevi messaggi*/}
-          {messaggio!=null && <Text style={{paddingTop: 5, color: 'white', fontSize:fontSizeCampi}}>{messaggio}</Text>} 
+        {type=="audio" &&
+                            <View style={{ paddingRight:5, justifyContent:"center"}}>
+                                <Entypo name="megaphone" size={fontSizeCampi} color="white"/>
+                            </View> } 
+          {messaggio!=null && <Text style={{paddingTop: 5, color: 'white', fontSize:fontSizeCampi, fontStyle:type=="text"?"normal":"italic"}}>{type=="text"?messaggio:"messaggio vocale"}</Text>} 
           {messaggio==null && <Text style={{paddingTop: 5, color: "white", fontSize:fontSizeCampi, fontStyle:"italic"}}>fai il primo passo!</Text>} 
           <View
           style={[

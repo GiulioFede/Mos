@@ -751,6 +751,20 @@ export function _isProfiloCompletato(uid){
         
     }
 
+    export function _ottieniAscoltatoreStatistics(chatID){
+        try{
+            //ascolto documento statistics nella raccolta chats/chatID/events
+            let db = firebase.firestore();
+            return db.collection("chats")
+                .doc(chatID)
+                .collection("events")
+                .doc("statistics");
+        }catch(e){
+            throw e;
+        }
+
+    }
+
     export async function _removeNotification(id){
         try {
             let db = firebase.firestore();
@@ -765,7 +779,7 @@ export function _isProfiloCompletato(uid){
             AROUND YOU
     */
 
-    const MAX_CARD_INTO_LIST = 4;
+    const MAX_CARD_INTO_LIST = 10;
     export async function _findNextTenClosestUsers(startAt, endAt, gender_preference, ageRange){
         return new Promise(async(resolveMaster, rejectMaster)=>{
             try{
@@ -908,5 +922,51 @@ export function _isProfiloCompletato(uid){
 
         }catch(e){
             throw e;
+        }
+    }
+
+    export function _makeDecision(response, chatID){ //response deve essere true o false
+        try{
+            let nomeCampo = firebase.auth().currentUser.uid+"_response";
+            let db = firebase.firestore();
+            return db.collection("chats")
+                     .doc(chatID)
+                     .collection("events")
+                     .doc("statistics")
+                     .set({
+                        [`${nomeCampo}`]: response
+                     },{merge:true})
+        }catch(e){
+            throw e;
+        }
+    }
+
+    export function _upgradeConversation(chatID, isUpgrade, contactUid){
+        try{
+            let db = firebase.firestore();
+            var batch = firebase.firestore().batch();
+            //path documento riassuntivo
+            const pathDocumentoRiassuntivo = db.collection("chats").doc(chatID);
+            //path documento statistiche
+            const pathDocumentoStatistiche = db.collection("chats").doc(chatID).collection("events").doc("statistics");
+
+            //se c'è un upgrade modifico livello di visibilità
+            if(isUpgrade==true){
+                batch.set(pathDocumentoRiassuntivo,{
+                    level_of_visibility: firebase.firestore.FieldValue.increment(1)
+                },{merge:true});
+            }
+            //in ogni caso resetto il documento statistiche
+            let nomeCampoContatto = contactUid+"_response";
+            let nomeCampoUtenteCorrente = firebase.auth().currentUser.uid+"_response";
+            batch.update(pathDocumentoStatistiche,
+                {
+                    [`${nomeCampoContatto}`]: null,
+                    [`${nomeCampoUtenteCorrente}`]: null
+                })
+
+            return batch.commit();
+        }catch(e){
+
         }
     }

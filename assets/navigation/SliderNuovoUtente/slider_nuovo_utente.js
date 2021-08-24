@@ -164,7 +164,7 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                                                                  identitaDiGenere.current,
                                                                  preferenzaSesso.current,
                                                                  descrizione.current,
-                                                                 hash.substring(0,6), //per privacy prendo una regione fatta da solo 6 lettere di geohash (es. sqc0p1 )
+                                                                 hash.substring(0,5), //per privacy prendo una regione fatta da solo 5 lettere di geohash (es. sqc0p )
                                                                  Number.parseFloat(posizione.current[0]).toPrecision(5), //per privacy prendo solo le prime 3 cifre dopo il punto
                                                                  Number.parseFloat(posizione.current[1]).toPrecision(5),
                                                                  posizione.current[2], //città

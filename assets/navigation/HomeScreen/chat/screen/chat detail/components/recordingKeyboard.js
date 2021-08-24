@@ -30,7 +30,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
     const {addNewUpdate} = useContext(RowsOfMessagesToUpdate);
 
     //prelevo metodi
-    const {setOpenRecordingKeyboard, setSnackBarMessage, ultimaRow, getUtenteCorrente, chat,setChat, refFlatList, inviaNuovoMessaggio, contactUid, isMounted, arrayOfRowsToUpdateState, setRefresh, refresh} = props;
+    const {setOpenRecordingKeyboard, setSnackBarMessage, ultimaRow, getUtenteCorrente, chat,setChat, refFlatList,chatId, inviaNuovoMessaggio, lastMessage, contactUid, isMounted, arrayOfRowsToUpdateState, setRefresh, refresh} = props;
     //indica la durata attuale dell'audio mentre lo si registra
     const [durataAudio, setDurataAudio] = useState(0);
     //contiene info sul recording
@@ -245,6 +245,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                            //aggiorno database locale
                                 console.log("Salvo nella chat "+contactUid+" di chiave "+nuovaChiave+" lo stato succeed"); 
                                 addNewUpdate(contactUid,nuovaChiave,"succeed");
+                                lastMessage.current = {code:"UPDATE_LAST_MEX", chatId: chatId, type:"audio", value: "", author:getUtenteCorrente(), timestamp:new Date().getTime()};
                            }catch(e){
                                 console.log("Non Salvo nella chat "+contactUid+" di chiave "+nuovaChiave+" lo stato failed"); 
                                 addNewUpdate(contactUid,nuovaChiave,"failed");

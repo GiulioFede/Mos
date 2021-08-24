@@ -1,7 +1,7 @@
 import React, {useEffect, useContext, useState, useRef} from "react";
 import {View, Text, StyleSheet, FlatList,Button, TouchableOpacity, Dimensions} from "react-native";
 import ChatPreview from "./chat_preview.component";
-import { FAB, Snackbar, ActivityIndicator, Dialog, Portal } from 'react-native-paper';
+import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Divider } from 'react-native-paper';
 import { AutenticazioneUtente } from "../../../../../../context/firebase/autenticazione";
 import { MosCeleste } from "../../../../../../resources/colors";
 import { altezzaBarraScreen, altezzaDevice, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../../context/variabili_globali/variabiliGlobali";
@@ -44,7 +44,7 @@ const Chat = [
 ]
 
 
-export default function ChatListComponent({navigation}){
+export default function ChatListComponent({navigation, route}){
 
     //contesto autenticazione
     var {listOfConversations, getChatSummaryInformation, getMediaProfiloContatto} = useContext(AutenticazioneUtente);
@@ -157,7 +157,7 @@ export default function ChatListComponent({navigation}){
                     data={chatsSummary}
                     keyExtractor={item=>item.key}
                     renderItem={({item})=>(
-                        
+                        <>
                         <ChatPreview
                                     navigation ={navigation}
                                     chatId = {item.chatId}
@@ -165,7 +165,10 @@ export default function ChatListComponent({navigation}){
                                     contactUid = {item.contactUid}
                                     content = {item.value}
                                     media = {mediaContatti[parseInt(item.key)]} 
+                                    route = {route}
                                     />
+                        <Divider />
+                        </>
                     )}
                 >
 

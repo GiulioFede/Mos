@@ -29,16 +29,16 @@ function ListaMessaggi({lista}){
             )
         }
 
-
-    return (
-        <FlatList
-            data={lista}
-            horizontal={false}
-            showsVerticalScrollIndicator={false}
-            keyExtractor={item => item.id.toString()}
-            renderItem={({ item }) => <MessageModel item={item}/>}
-        />
+        return (
+            <FlatList
+                data={list}
+                horizontal={false}
+                showsVerticalScrollIndicator={false}
+                keyExtractor={item => item.id.toString()}
+                renderItem={({ item }) => <MessageModel item={item}/>}
+            />
     )
+        
   }
 
   //questa funzione serve per dire quando renderizzare GalleriaImmagini

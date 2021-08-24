@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import {View, StyleSheet, Image,Text,TouchableOpacity, Touchable} from "react-native";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
@@ -7,14 +7,39 @@ import { altezzaDevice, fontSizeCampi, fontSizeSottoTitolo, fontSizeTitolo, font
 import { MosCeleste, MosViola } from "../../../../../../resources/colors";
 
 
-const ChatPreview =({navigation,chatId, nome,contactUid, content, media}) => {
+let date = new Date();
+function getHHMMfromDate(milliseconds){
+    date = new Date(milliseconds);
+    return date.getHours()+":"+date.getMinutes();
+}
 
-    console.log("Chat ID-->");
+
+/*
+    content ha la seguente struttura:
+        Object {
+        "lastMessage": Object {
+            "author": null,
+            "timestamp": null,
+            "type": null,
+            "value": null,
+            },
+        "numberOfMessages": 0,
+        }   
+
+*/
+
+const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route}) => {
+
+    console.log("Chat ID di "+nome+" -->");
     console.log(chatId);
+    console.log("Chat CONTENT-->");
+    console.log(content);
+
+    const [lastContent, setLastContent] = useState(content);
 
     function apriDettagliChat(){
         console.log("apro dettagli chat con utente "+contactUid);
-        navigation.navigate("Chat detail",{chatId: chatId, contactUid: contactUid});
+        navigation.navigate("Chat detail",{chatId: chatId, contactUid: contactUid, name: nome});
     }
 
     function apriDettagliProfilo(){
@@ -22,6 +47,48 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media}) => {
     }
 
     const [uriProfileImage, setUriProfileImage] = useState(media.value.profileImageUrl=="" ? null : media.value.profileImageUrl);
+
+    /*
+        Quando gli screen come ContactProfile ma quasi sempre Chat detail vogliono portare un dato al vecchio screen (ossia qui)
+        modificano la route. In route.params troviamo il messaggio. I messaggi sono strutturati in modo diverso ma tutti hanno in comune
+        sempre lo stesso campo: code. Questo indica che tipo di messaggio è. I possibili sono:
+
+        1) MESSAGGIO DI AGGIORNAMENTO ULTIMO MESSAGGIO SCAMBIATO: indica di aggiornare la chatId con l'ultimo messaggio scambiato
+            "params": Object {
+                "code": "UPDATE_LAST_MEX",
+                "author": "1anAHDbd82...",
+                "chatId": "1agd6aaAAN..",
+                "type": "text",
+                "value": "ciao come va?",
+                "timestamp": "26/04/1996...",
+            },
+
+    */
+    useEffect(()=>{
+        console.log("Nuovi dati passati dal vecchio screen nella chat con nome +"+nome);
+        console.log(route.params);
+        elaboraAzione(route.params);
+    },[route])
+
+    function elaboraAzione(messaggio){
+        if(messaggio==null) return;
+
+        if(messaggio.code == "UPDATE_LAST_MEX"){
+            //se la chat_preview dove siamo è quella di interesse
+            if(messaggio.chatId == chatId){
+                //modifico contenuto
+                let newLastContent = {lastMessage:{}};
+                newLastContent.lastMessage.author = messaggio.author;
+                newLastContent.lastMessage.timestamp = messaggio.timestamp;
+                newLastContent.lastMessage.type = messaggio.type;
+                newLastContent.lastMessage.value = messaggio.value;
+
+                setLastContent(newLastContent);
+
+                //TODO: cosa fare con numberOfMessages?
+            }
+        }
+    }
 
         //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
@@ -34,16 +101,13 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media}) => {
         <TouchableOpacity activeOpacity={.7} style={[styles.container,{backgroundColor:"white"}]} onPress={()=>{apriDettagliChat()}}>
             {/* IMMAGINE PROFILO */}
             <View style={styles.contenitoreMediaProfilo}>
-                        {/* immagine SOSTITUIRE CON QUELLA DELL'UTENTE ma ovviamente non usare require ma (forse) fetch*/}
-                        <TouchableOpacity onPress={()=>{apriDettagliProfilo()}} style={styles.contenitoreImmagineProfilo}>
-                                {uriProfileImage && <Image source={{uri:uriProfileImage}} resizeMode="cover"  style={styles.immagineProfilo} onError={(e)=>{setUriProfileImage(null)}}></Image>}
-                                {!uriProfileImage && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
-                        </TouchableOpacity>
-                        <View style={styles.ultimoMessaggio}>
-                            <MessageBubble messaggio={content.lastMessage.value} />
-                        </View>
-
-                        
+                <TouchableOpacity onPress={()=>{apriDettagliProfilo()}} style={[styles.contenitoreImmagineProfilo,{ borderColor:(lastContent.lastMessage.value==null)?MosViola:'transparent', borderWidth: (lastContent.lastMessage.value==null)?2:0 }]}>
+                        {uriProfileImage && <Image source={{uri:uriProfileImage}} resizeMode="cover"  style={styles.immagineProfilo} onError={(e)=>{setUriProfileImage(null)}}></Image>}
+                        {!uriProfileImage && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
+                </TouchableOpacity>
+                <View style={styles.ultimoMessaggio}>
+                    <MessageBubble messaggio={lastContent.lastMessage.value} type={lastContent.lastMessage.type}/>
+                </View>          
             </View>
                     
             <View style={styles.contenitoreInfo}>
@@ -53,7 +117,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media}) => {
                 </View>
                {/* data ultimo messaggio */}
                 <View style={styles.contenitoreDataUltimoMessaggio}>
-                    <Text style={[styles.dataUltimoMessaggio,{color:content.lastMessage.value==null?"white":"#52575D"}]}>{content.lastMessage.timestamp}</Text>
+                    <Text style={[styles.dataUltimoMessaggio,{color:lastContent.lastMessage.value==null?"white":"#52575D", textAlign:"right"}]}>{getHHMMfromDate(lastContent.lastMessage.timestamp)}</Text>
                 </View>
         </View>
         </TouchableOpacity>
@@ -96,8 +160,6 @@ const styles = StyleSheet.create({
         width: altezzaDevice*0.2,
         height: altezzaDevice*0.2,
         borderRadius: altezzaDevice*0.2/2,
-        borderColor:MosViola,
-        borderWidth:2,
         overflow: "hidden",
         position:"absolute",
         zIndex: 10,
@@ -110,7 +172,7 @@ const styles = StyleSheet.create({
         })
     },
     contenitoreInfo: {
-        width:larghezzaDevice*0.5
+        width:larghezzaDevice*0.46
     },
     immagineProfilo: {
         flex:1,
@@ -144,14 +206,14 @@ const styles = StyleSheet.create({
     },
     contenitoreDataUltimoMessaggio:{
         position:"absolute",
-        left: larghezzaDevice*0.5*0.1,
         zIndex:10,
+        width:"100%"
     },
     dataUltimoMessaggio:{
         fontSize:20,
         fontFamily: "Raleway_400Regular",
         color: "#52575D",
-        fontSize:fontSizeCampi
+        fontSize:fontSizeCampi,
     },
     ultimoMessaggio: {
         position: "absolute",

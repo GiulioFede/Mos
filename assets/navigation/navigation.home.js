@@ -18,6 +18,7 @@ import * as FileSystem from 'expo-file-system';
 import { getAgeFromTimestamp } from '../context/utilities/functions.utilities';
 import * as Notifications from 'expo-notifications'
 import registerForPushNotificationsAsync from '../context/push_notifications/registerForPushNotifications';
+import Constants from 'expo-constants';
 
 /*
   NB: Questa funzione decide solo come comportarsi quando si riceve una notifica MA l'app è in FOREGROUND.
@@ -163,31 +164,33 @@ export default function HomeNavigator({navigation}) {
                             */
                               //1) registriamoci a expo push notification ed otteniamo il token
                               console.log("registrazione push notifications...")
-                              let token = await registerForPushNotificationsAsync();
-                              //se il token non lo abbiamo, lo salviamo in firestore
-                              console.log("controllo se il token esiste")
-                              if(!info_utente.hasOwnProperty('push_notification_token')){
-                                  console.log("token non esiste. Lo salvo:"+token)
-                                  await saveNewPushNotificationToken(token);
-                                  info_utente["push_notification_token"] = token;
-                              }else
-                                  console.log("token esiste già");
+                              //se non sono nell'emulatore..
+                              if (Constants.isDevice){
+                                let token = await registerForPushNotificationsAsync();
+                                //se il token non lo abbiamo, lo salviamo in firestore
+                                console.log("controllo se il token esiste")
+                                if(!info_utente.hasOwnProperty('push_notification_token')){
+                                    console.log("token non esiste. Lo salvo:"+token)
+                                    await saveNewPushNotificationToken(token);
+                                    info_utente["push_notification_token"] = token;
+                                }else
+                                    console.log("token esiste già");
 
-                                console.log("mi registro alla notifica tipo 1");
-                                //2) mi registro affinchè sia avvertito ogni volta che una notifica arrivi quando l'app è in FOREGROUND
-                                notificationListener.current = Notifications.addNotificationReceivedListener(notif => {
-                                  //se sono qui allora potrebbe essere arrivata (true o false) una notifica mentre ero in foreground
-                                  console.log("NOTIFICABBBBB");
-                                  //setNotification(notif);
-                                })
+                                  console.log("mi registro alla notifica tipo 1");
+                                  //2) mi registro affinchè sia avvertito ogni volta che una notifica arrivi quando l'app è in FOREGROUND
+                                  notificationListener.current = Notifications.addNotificationReceivedListener(notif => {
+                                    //se sono qui allora potrebbe essere arrivata (true o false) una notifica mentre ero in foreground
+                                    console.log("NOTIFICABBBBB");
+                                    //setNotification(notif);
+                                  })
 
-                                console.log("mi registro alla notifica tipo 2");
-                                //3) mi registro affinchè possa far partire un azione personalizzata quando l'utente riceve una notifica e vi clicca. Funziona quando l'app è sia in foreground, che background che killata!
-                                notificationReceiverListener.current = Notifications.addNotificationResponseReceivedListener( response => {
-                                  console.log("NOTIFICAAAAAAAAA");
-                                  console.log(response);
-                                });
-
+                                  console.log("mi registro alla notifica tipo 2");
+                                  //3) mi registro affinchè possa far partire un azione personalizzata quando l'utente riceve una notifica e vi clicca. Funziona quando l'app è sia in foreground, che background che killata!
+                                  notificationReceiverListener.current = Notifications.addNotificationResponseReceivedListener( response => {
+                                    console.log("NOTIFICAAAAAAAAA");
+                                    console.log(response);
+                                  });
+                              }
                                 //faccio partire tutto
                                 setInformazioniProfiloUtente(info_utente); //info contiene le info dell'utente
                                 setIsProfileLoading(false);

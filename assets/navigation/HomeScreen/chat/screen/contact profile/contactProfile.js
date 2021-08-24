@@ -46,7 +46,7 @@ export default function ContactProfile({navigation, route}){
     
 
     function tornaIndietro(){
-        navigation.goBack();
+        navigation.navigate("Chat");
     }
    
     return (

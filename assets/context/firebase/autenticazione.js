@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche,_ottieniAscoltatoreStatistics, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken, _makeDecision, _upgradeConversation} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -107,11 +107,14 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     getMediaProfiloContatto,
                     inviaNuovoMessaggio,
                     ottieniAscoltatoreNuoviMessaggi,
+                    ottieniAscoltatoreStatistics,
                     ottieniAscoltatoreNuoveNotifiche,
                     removeNotification,
                     getAllMediaOfCurrentUser,
                     findNextTenClosestUsers,
-                    createNewConversation
+                    createNewConversation,
+                    makeDecision,
+                    upgradeConversation
                 }}
                 >
                 {children}
@@ -449,6 +452,14 @@ export const AutenticazioneUtenteProvider = ({children}) => {
       return _ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored);
   }
 
+  function ottieniAscoltatoreStatistics(chatID){
+      try{
+        return _ottieniAscoltatoreStatistics(chatID);
+      }catch(e){
+          throw e;
+      }
+  }
+
   function ottieniAscoltatoreNuoveNotifiche(ultimoTimestamp){//NB: ultimoTimestamp deve essere un numero (i secondi)
       try{
         return _ottieniAscoltatoreNuoveNotifiche(ultimoTimestamp);
@@ -460,6 +471,22 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     async function removeNotification(documentID){
         try{
             return await _removeNotification(documentID);
+        }catch(e){
+            throw e;
+        }
+    }
+
+    async function makeDecision(response, chatID){
+        try{
+            return await _makeDecision(response, chatID);
+        }catch(e){
+            throw e;
+        }
+    }
+
+    async function upgradeConversation(chatID, isUpgrade, contactUid){
+        try{
+            return await _upgradeConversation(chatID, isUpgrade, contactUid);
         }catch(e){
             throw e;
         }
