@@ -26,7 +26,7 @@ import { fromDateToHHMM } from "../../../../../../context/utilities/functions.ut
 
 */
 
-const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route}) => {
+const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,indicePosizioneChatInArray, ordinaListaChat}) => {
 
     console.log("Chat ID di "+nome+" -->");
     console.log(chatId);
@@ -67,35 +67,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route})
            useNativeDriver: true
         }).start();
     }
-    /*
-        Quando gli screen come ContactProfile ma quasi sempre Chat detail vogliono portare un dato al vecchio screen (ossia qui)
-        modificano la route. In route.params troviamo il messaggio. I messaggi sono strutturati in modo diverso ma tutti hanno in comune
-        sempre lo stesso campo: code. Questo indica che tipo di messaggio è. I possibili sono:
-
-        1) MESSAGGIO DI AGGIORNAMENTO ULTIMO MESSAGGIO SCAMBIATO: indica di aggiornare la chatId con l'ultimo messaggio scambiato
-            "params": Object {
-                "code": "UPDATE_LAST_MEX",
-                "author": "1anAHDbd82...",
-                "chatId": "1agd6aaAAN..",
-                "type": "text",
-                "value": "ciao come va?",
-                "timestamp": "26/04/1996...",
-            },
-
-    */
-   /*
-    useEffect(()=>{
-        console.log("Nuovi dati passati dal vecchio screen nella chat con nome +"+nome);
-        console.log(route.params);
-        elaboraAzione(route.params);
-    },[route])*/
-
-    useEffect(()=>{
-        if(ultimoMessaggioDoc!=null){
-            console.log("aggiorno vista ultimo messaggio");
-            elaboraAzione(ultimoMessaggioDoc);
-        }
-    },[ultimoMessaggioDoc])
+  
 
     useEffect(()=>{
 
@@ -108,9 +80,25 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route})
                             try{
                                 if(doc.metadata.hasPendingWrites==false){
                                     console.log("ultimo messaggio ricevuto:");
+                                    /*
+                                    Object {
+                                        "lastMessage": Object {
+                                            "author": "AglqTSW161f8cNRcOhiZQMqLtlk1",
+                                            "timestamp": Object {
+                                            "nanoseconds": 0,
+                                            "seconds": 1629669601,
+                                            },
+                                            "type": "text",
+                                            "value": "prova6",
+                                        },
+                                        "level_of_visibility": 0,
+                                    }
+                                    */
                                     let lastMex = doc.data();
                                     console.log(lastMex);
-                                    setUltimoMessaggioDoc(JSON.parse(JSON.stringify(lastMex)));
+                                    //setUltimoMessaggioDoc(JSON.parse(JSON.stringify(lastMex)));
+                                    //avviso la classe superiore di renderizzare l'intera lista (peccato, potremmo farlo qui, ma è necessario per mettere sopra l'ultima chat)
+                                    ordinaListaChat(indicePosizioneChatInArray,lastMex);
                                 }
                             }catch(e){
                                 console.log("Si è verificato un errore durante la ricezione/elaborazione delle statistiche:"+e);       

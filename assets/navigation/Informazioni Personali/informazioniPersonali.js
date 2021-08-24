@@ -3,7 +3,7 @@ import {View, Text,Dimensions,StyleSheet, TouchableOpacity, TextInput, ScrollVie
 import { FAB, Snackbar, ActivityIndicator, Divider, Checkbox } from 'react-native-paper';
 import { altezzaDevice, fontSizeCampi, fontSizeSottoTitolo, fontSizeTitoloBarra, fontSizeTitoloCampo, iconSize, larghezzaDevice } from "../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste, MosPurple, MosViola } from "../../resources/colors";
-import {Ionicons, AntDesign, Entypo} from "@expo/vector-icons";
+import {Ionicons, AntDesign,MaterialIcons, Entypo} from "@expo/vector-icons";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { DatePicker } from "./components/datePicker";
@@ -15,6 +15,7 @@ import SliderKMPreference from "./components/sliderKmPreference";
 import localStorage from "../../context/local_storage/localStorage";
 import AgeRange from "./components/ageRange";
 import { getAgeFromTimestamp } from "../../context/utilities/functions.utilities";
+import { LocationAccuracy } from "expo-location";
 
 
 let tmpKeywordArray = [];
@@ -52,6 +53,10 @@ export default function InformazioniPersonali({ navigation }) {
     const sliderKMRef = useRef();
 
     const rangeEtaRef = useRef();
+
+    const [provaAlternativaGeocode, setProvaAlternativaGeocode] = useState(false);
+    const [geocodeResponse, setGeocodeResponse] = useState(null); //3 stati: nullo, false (almeno una tra città, regione o paese non è stata calcolata), <valore> (contiene la stringa città,regione e paese)
+    const [indirizzo, setUltimoIndirizzo] = useState("");
 
     const [isLocationLoading, setIsLocationLoading] = useState("");
 
@@ -187,39 +192,55 @@ function aggiornaPhoneNumber(){
         setIsLocationLoading("loading");
         //controllo se la locazione è attiva...
         try{
+        console.log("controllo se il provider è acceso...")
         Location.hasServicesEnabledAsync()
             .then((ris)=>{
                 //se la locazione non è attiva
                 if(ris==false){
+                    console.log("provider non acceso:"+ris);
                     setSnackMessage("Per conoscere la tua posizione devi attivare la geolocalizzazione.");
                     setIsLocationLoading("");
                 }
                 //altrimenti se è attiva...
                 else {
+                    console.log("provider acceso:"+ris+". Controllo permessi:");
                     //controlla se l'utente ha già accontentito a darci i permessi
                     Location.requestForegroundPermissionsAsync()
-                        .then((ris)=>{
+                        .then(async(ris)=>{
                             //se l'utente non ha permesso più di chiedere la posizione ancora una volta...
-                            if(ris.canAskAgain==false){
+                            if(ris.status != "granted"){
+                                console.log("permessi negati:"+ris);
                                 setIsLocationLoading("");
                                 setSnackMessage("Vai in impostazioni e consenti a Mosaic di chiedere di nuovo la posizione.");
                                 return;
                             }
+                            console.log("permessi concessi:");
+                            console.log(ris);
                             var isAccepted= "none";                            
                             if(Platform.OS==="android")
-                                isAccepted = ris.android.scope;
+                                isAccepted = ris.android.accuracy;
                             else if(Platform.OS==="ios")
                                 isAccepted = ris.scope;
-                            
+                            console.log(isAccepted);
                             if(isAccepted=="none"){
                                 //non ha accettato
+                                console.log("isAccepted è none!")
                                 setIsLocationLoading("");
                                 setSnackMessage("Non è possibile aggiornare la tua posizione se non consenti a Mosaic di accedervi.");
                                 return;
                             }else {
+                                console.log("ha accettato. Ottengo posizione...");
                                 //ha accettato
-                                Location.getCurrentPositionAsync()
+                                Location.getCurrentPositionAsync({ enableHighAccuracy: true })
                                     .then((pos)=>{
+                                        console.log("posizione ottenuta");
+                                        if(pos==null) {
+                                            console.log("errore in informazioni personali:"+e);
+                                            setIsLocationLoading("");
+                                            setSnackMessage("Si è verificato un errore. Riprovare più tardi.");
+                                            return;
+                                        }
+                                        console.log(pos);
                                         setIsLocationLoading("aggiornata");
                                         //ottieni la posizione
                                         const user_position = [pos.coords.latitude,pos.coords.longitude];
@@ -243,11 +264,18 @@ function aggiornaPhoneNumber(){
                                                 setSnackMessage("Si è verificato un problema. Riprova a riottenere la posizione.")
                                             });
                                     }).catch((e)=>{
+                                        console.log("errore in informazioni personali:"+e);
                                         setIsLocationLoading("");
-                                        setSnackMessage("Si è verificato un errore. Riprovare più tardi.")
+                                        if(provaAlternativaGeocode==false){
+                                            setSnackMessage("Si è verificato un errore col tuo provider di posizione. Prova questa alternativa.");
+                                            setProvaAlternativaGeocode(true);
+                                        }
+                                        else 
+                                            setSnackMessage("Si è verificato un errore. Riprova più tardi.");
                                     });
                             } 
                         }).catch((e)=>{
+                            console.log("errore in informazioni personali:"+e);
                             setIsLocationLoading("");
                             setSnackMessage("Si è verificato un errore. Riprovare più tardi.")
                         })
@@ -418,6 +446,9 @@ function aggiornaPhoneNumber(){
                 else if(i==2) {
                     doc["location.lat"]=posizioneUtente.current[0];
                     doc["location.lng"]=posizioneUtente.current[1];
+                    doc["location.city"]=posizioneUtente.current[2];
+                    doc["location.region"]=posizioneUtente.current[3];
+                    doc["location.country"]=posizioneUtente.current[4];
                     let hash = geohashForLocation([posizioneUtente.current[0], posizioneUtente.current[1]]);
                     doc["location.geohash"] = hash.substring(0,5);
                 }
@@ -532,6 +563,10 @@ function aggiornaPhoneNumber(){
         await sliderKMRef.current.resetta();
         await rangeEtaRef.current.resetta();
 
+        setGeocodeResponse(null);
+        setUltimoIndirizzo("");
+        setProvaAlternativaGeocode(false);
+
         //resetto tutti gli errori
         scrollView.current.scrollTo({y: 0});
         indiciModifiche.current = [false,false,false,false,false, false, false];
@@ -539,6 +574,53 @@ function aggiornaPhoneNumber(){
         setErroreData(null);
         setIsDatePickerOpened(false);
         setSnackMessage(null);
+    }
+
+    async function calcolaGeocode(){
+        try{
+        setIsLocationLoading(true);
+            if(indirizzo.length>0){
+            let ind = await Location.geocodeAsync(indirizzo);
+            console.log("indirizzo:");
+            if(ind.length>0 && ind[0].latitude!=null && ind[0].latitude!=0 && ind[0].longitude!=null && ind[0].longitude!=0){
+                //calcolo citta, regione e paese
+                console.log("valido");
+                let user_position = [];
+                user_position.push(ind[0].latitude);
+                user_position.push(ind[0].longitude);
+                try{
+                    let ris = await Location.reverseGeocodeAsync({latitude:ind[0].latitude, longitude:ind[0].longitude}, {useGoogleMaps:false})
+                    console.log("reverso calcolato");
+                    console.log(ris);
+                    user_position.push(ris[0].city==null?"null":(ris[0].city) );
+                    user_position.push(ris[0].region==null?"null":(ris[0].region));
+                    user_position.push(ris[0].country==null?"null":(ris[0].country));
+                    posizioneUtente.current=user_position;
+                    if(ris[0].city==null){ setSnackMessage("Non siamo riusciti a trovare la città."); setIsLocationLoading(false); return;}
+                    else if(ris[0].region==null) { setSnackMessage("Non siamo riusciti a trovare la regione."); setIsLocationLoading(false); return;}
+                    else if(ris[0].country==null) {setSnackMessage("Non siamo riusciti a trovare il paese."); setIsLocationLoading(false); return;}
+                    //altrimenti tutto ok
+                    setGeocodeResponse(ris[0].city+","+ris[0].region+","+ris[0].country);
+                    setIsLocationLoading(false);
+                }catch(e){
+                    console.log("errore geocode 2:"+e);
+                    setSnackMessage("Si è verificato un problema. Riprova più tardi.");
+                    setIsLocationLoading(false);
+                }
+            }else {
+                setSnackMessage("Inserisci un indirizzo valido.");
+                setIsLocationLoading(false);
+            }
+            console.log(ind);
+        }else {
+            setSnackMessage("Inserisci un indirizzo valido.");
+            setIsLocationLoading(false);
+        }
+        }catch(e){
+            console.log("errore geocode:"+e);
+            setSnackMessage("Si è verificato un errore durante il calcolo della tua posizione.");
+            setIsLocationLoading(false);
+        }
     }
 
     async function tornaIndietro(){
@@ -748,21 +830,70 @@ function aggiornaPhoneNumber(){
 
                         {/*AGGIORNA LA TUA POSIZIONE*/}
                         <Text style={[styles.titoloCampo,{marginTop:20}]}>Aggiorna la tua posizione</Text>
-                        <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10,flexDirection:"row", }}>
-                        <TouchableOpacity 
-                                style={{ 
-                                borderRadius:Dimensions.get("window").width*0.4/2,
-                                justifyContent: 'center', 
-                                alignItems:'center',
-                                marginRight:10
-                                }}
-                                onPress = { () => ottieniPosizioneUtente()}
-                                > 
-                            { (isLocationLoading!="aggiornata")  && <Text style={[styles.campo,{color:MosViola}]}>AGGIORNA</Text>}
-                            { (isLocationLoading=="aggiornata")  && <Text style={[styles.campo,{color:"#15e302"}]}>AGGIORNATA</Text>}
-                        </TouchableOpacity>
-                        { isLocationLoading=="loading" && <ActivityIndicator animating={true} color={MosCeleste}/>}
-                        </View>
+                        {provaAlternativaGeocode==false &&
+                            <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10,flexDirection:"row", }}>
+                                <TouchableOpacity 
+                                        style={{ 
+                                        borderRadius:Dimensions.get("window").width*0.4/2,
+                                        justifyContent: 'center', 
+                                        alignItems:'center',
+                                        marginRight:10
+                                        }}
+                                        onPress = { () => ottieniPosizioneUtente()}
+                                        > 
+                                    { (isLocationLoading!="aggiornata")  && <Text style={[styles.campo,{color:MosViola}]}>AGGIORNA</Text>}
+                                    { (isLocationLoading=="aggiornata")  && <Text style={[styles.campo,{color:"#15e302"}]}>AGGIORNATA</Text>}
+                                </TouchableOpacity>
+                                { isLocationLoading=="loading" && <ActivityIndicator animating={true} color={MosCeleste}/>}
+                            </View>
+                        }
+
+                        {provaAlternativaGeocode==true &&
+                        <>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Inserisci il tuo indirizzo civico seguito dalla città, regione e paese dove vivi. Calcoleremo la tua posizione usando queste informazioni.</Text>
+                        <View style={{paddingLeft:Dimensions.get("window").width*0.03, flexDirection:"row",alignItems:"center"}}>
+                                    <TextInput
+                                        style={[styles.campo,{fontSize:fontSizeCampi*0.8, width:Dimensions.get("window").width*0.8,margin:10, padding:10, borderBottomColor:MosViola,borderBottomWidth:1, color:MosCeleste}]}
+                                        onChangeText={ind => setUltimoIndirizzo(ind)}
+                                        value={indirizzo}
+                                        maxLength={100}
+                                        placeholder="<indirizzo civico> <città> <regione> <paese>"
+                                        keyboardType="name-phone-pad"
+                                    />
+                                    <TouchableOpacity disabled={isLocationLoading} onPress={()=>{setUltimoIndirizzo(""); setGeocodeResponse(null); calcolaGeocode();}}>
+                                        <MaterialIcons name="gps-fixed" size={fontSizeCampi*1.5} color={MosViola} />
+                                    </TouchableOpacity>
+                                    </View>
+                                    {geocodeResponse==false && isLocationLoading==false &&
+                                     <Text style={[styles.sottoCampo,{marginVertical:5}]}>Non siamo riusciti a localizzarti. Prova con un indirizzo più conosciuto, non per forza molto vicino a dove stai. Infatti Mosaic utilizzerà una macroarea per mostrare gli utenti vicini.</Text>}
+                                    {geocodeResponse!=null && geocodeResponse!=false && isLocationLoading==false &&
+                                        <>
+                                        <View style={{flexDirection:"row",padding:Dimensions.get("window").height*0.01}}>
+                                            <Entypo name="location-pin" size={fontSizeCampi*1.5} color="#52575D" />
+                                            <Text style={[styles.sottoCampo,{marginVertical:5}]}>{geocodeResponse}. E' corretto?</Text>
+                                        </View>
+                                        <View style={{flexDirection:"row",margin:Dimensions.get("window").height*0.02 }}>
+                                            <TouchableOpacity onPress={()=>{
+                                                //avverto che è avvenuta una modifica
+                                                indiciModifiche.current[2]=true;
+                                                notificaModifiche();
+                                                //console.log("nuove modifiche alla posizione:");
+
+                                            }} style={{flex:1}}>
+                                                <Text style={[styles.sottoCampo,{marginVertical:5, color:"white",textAlignVertical:"center", textAlign:"center", backgroundColor:MosCeleste}]}> Si </Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity onPress={()=>{setGeocodeResponse(null); setSnackMessage("Prova ad essere più preciso oppure utilizza un indirizzo maggiormente conosciuto ma vicino a dove abiti.")}} style={{flex:1}}>
+                                                <Text style={[styles.sottoCampo,{marginVertical:5, flex:1, color:"white", textAlignVertical:"center", textAlign:"center", backgroundColor:MosViola}]}> No </Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                        </>
+                                    }
+                        </>
+                        }
+
+
+
+
                         <Divider />
 
                         {/*SESSO*/}

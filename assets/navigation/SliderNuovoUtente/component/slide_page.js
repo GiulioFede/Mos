@@ -7,7 +7,7 @@ import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { DatePicker } from "./feature/date_picker";
 import * as Location from 'expo-location';
-import { AntDesign, Entypo  } from '@expo/vector-icons';  
+import { AntDesign, Entypo,MaterialIcons  } from '@expo/vector-icons';  
 import PhotoManager from "./photo";
 import { LocationAccuracy } from "expo-location";
 import { FlatList } from "react-native-gesture-handler";
@@ -37,30 +37,40 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
     //riferimento flatlist keyword
     const flatListKeywordRef = useRef();
 
+    //nel caso il gps non funzioni
+    const [provaAlternativaGeocode, setProvaAlternativaGeocode] = useState(false);
+    const [geocodeResponse, setGeocodeResponse] = useState(null); //3 stati: nullo, false (almeno una tra città, regione o paese non è stata calcolata), <valore> (contiene la stringa città,regione e paese)
+    const [indirizzo, setUltimoIndirizzo] = useState("");
+
     //posizione
     const [isLocationSet, setIsLocationSet] = useState(null);
     const [isLocationLoading, setIsLocationLoading] = useState(false);
     function ottieniPosizioneUtente(){
+        if(isLocationLoading==true) return;
 
         setIsLocationLoading(true);
         //controllo se la locazione è attiva...
         try{
+            console.log("controllo servizio attivo");
         Location.hasServicesEnabledAsync()
             .then((ris)=>{
                 //se la locazione non è attiva
                 if(ris==false){
+                    console.log("servizio non attivo");
                     setError("Per conoscere la tua posizione devi attivare la geolocalizzazione.");
                     setIsLocationLoading(false);
+                    return;
                 }
                 //altrimenti se è attiva...
                 else {
+                    console.log("servizio è attivo. Richiedo permessi.");
                     //controlla se l'utente ha già accontentito a darci i permessi
                     Location.requestForegroundPermissionsAsync()
-                        .then((ris)=>{
+                        .then(async(ris)=>{
                             console.log("ok getFroreground:");
                             console.log(ris);
                             //se l'utente non ha permesso più di chiedere la posizione ancora una volta...
-                            if(ris.canAskAgain==false){
+                            if(ris.status != "granted"){
                                 setIsLocationLoading(false);
                                 setError("Vai in impostazioni e consenti a Mosaic di chiedere di nuovo la posizione");
                                 return;
@@ -71,16 +81,20 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                             else if(Platform.OS==="ios")
                                 isAccepted = ris.scope;
                             
+                            console.log("controllo isAccepted:");
                             if(isAccepted=="none"){
+                                console.log("none");
                                 //non ha accettato
                                 setIsLocationLoading(false);
                                 setError("Non è possibile usare Mosaic se non consenti di conoscere la tua posizione.");
                                 return;
                             }else {
+                                console.log("ha accettato. Richiedo posizione");
                                 //ha accettato
-                                Location.getCurrentPositionAsync({accuracy:LocationAccuracy.Lowest})
+
+                                Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Lowest })
                                     .then((pos)=>{
-                                        
+                                       console.log("posizione ottenuta");
                                         //ottieni la posizione
                                         const user_position = [pos.coords.latitude,pos.coords.longitude];
                                         console.log(pos);
@@ -96,16 +110,25 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                                 setPosizioneUtente(user_position);
                                                 setIsLocationSet(true);
                                             }).catch((e)=>{
+                                                console.log("errore posizione:"+e);
                                                 setError("Si è verificato un problema. Riprova a riottenere la posizione.")
                                             }).finally(()=>{
                                                 setIsLocationLoading(false);
                                             })
                                     }).catch((e)=>{
+                                        console.log("errore posizione:"+e);
                                         setIsLocationLoading(false);
-                                        setError("Si è verificato un errore. Riprovare più tardi.")
+                                        setError("Sembra esserci un problema con il tuo provider di posizione. Prova questa alternativa.");
+                                        if(provaAlternativaGeocode==false){
+                                            setError("Si è verificato un errore col tuo provider di posizione. Prova questa alternativa.");
+                                            setProvaAlternativaGeocode(true);
+                                        }
+                                        else 
+                                            setError("Si è verificato un errore. Riprova più tardi.");
                                     });
                             } 
                         }).catch((e)=>{
+                            console.log("errore posizione:"+e);
                             setIsLocationLoading(false);
                             setError("Si è verificato un errore. Riprovare più tardi.")
                         })
@@ -119,6 +142,63 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
         }catch(e){
             setIsLocationLoading(false);
             setError("Si è verificato un errore. Riprovare più tardi.")
+        }
+    }
+
+    async function calcolaGeocode(){
+        try{
+        setIsLocationLoading(true);
+            if(indirizzo.length>0){
+            let ind = await Location.geocodeAsync(indirizzo);
+            console.log("indirizzo:");
+            if(ind.length>0 && ind[0].latitude!=null && ind[0].latitude!=0 && ind[0].longitude!=null && ind[0].longitude!=0){
+                //calcolo citta, regione e paese
+                console.log("valido");
+                let user_position = [];
+                user_position.push(ind[0].latitude);
+                user_position.push(ind[0].longitude);
+                try{
+                    let ris = await Location.reverseGeocodeAsync({latitude:ind[0].latitude, longitude:ind[0].longitude}, {useGoogleMaps:false})
+                    console.log("reverso calcolato");
+                    console.log(ris);
+                    user_position.push(ris[0].city==null?"null":(ris[0].city) );
+                    user_position.push(ris[0].region==null?"null":(ris[0].region));
+                    user_position.push(ris[0].country==null?"null":(ris[0].country));
+                    if(ris[0].city==null){ setError("Non siamo riusciti a trovare la città."); setIsLocationLoading(false); return;}
+                    else if(ris[0].region==null) { setError("Non siamo riusciti a trovare la regione."); setIsLocationLoading(false); return;}
+                    else if(ris[0].country==null) {setError("Non siamo riusciti a trovare il paese."); setIsLocationLoading(false); return;}
+                    //altrimenti tutto ok
+                    setGeocodeResponse(ris[0].city+","+ris[0].region+","+ris[0].country);
+                    setIsLocationLoading(false);
+                    setPosizioneUtente(user_position);
+                    setIsLocationSet(true);
+                    setError("Se non è quello il luogo dove vivi puoi riprovare con un nuovo indirizzo invece di procedere.");
+                }catch(e){
+                    console.log("errore geocode 2:"+e);
+                    setError("Si è verificato un problema. Riprova più tardi.");
+                    setIsLocationLoading(false);
+                    setPosizioneUtente([]);
+                    setIsLocationSet(false);
+                }
+            }else {
+                setError("Inserisci un indirizzo valido.");
+                setIsLocationLoading(false);
+                setPosizioneUtente([]);
+                setIsLocationSet(false);
+            }
+            console.log(ind);
+        }else {
+            setError("Inserisci un indirizzo valido.");
+            setIsLocationLoading(false);
+            setPosizioneUtente([]);
+            setIsLocationSet(false);
+        }
+        }catch(e){
+            console.log("errore geocode:"+e);
+            setError("Si è verificato un errore durante il calcolo della tua posizione.");
+            setIsLocationLoading(false);
+            setPosizioneUtente([]);
+            setIsLocationSet(false);
         }
     }
 
@@ -188,6 +268,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
         setKeywordUtente(tmpKeywordArray);
     }
 
+    console.log("keyword array");
     console.log(keywordArray);
     
     function creaNuovoUser(){
@@ -226,6 +307,21 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                 <View style={{flex:0.5, width:"100%",alignItems:"center", justifyContent:"center", alignSelf:"center"}} >
                     <Text style={styles.titolo}>{item.title}</Text>
                     <Text style={[styles.sottoTesto,{textAlign:"center"}]}>{item.subTitle}</Text>
+                    { isLocationLoading && <ActivityIndicator animating={true} color={MosCeleste} />}
+                    {item.id=='3' && provaAlternativaGeocode==true && 
+                        <>
+                        {geocodeResponse==false && isLocationLoading==false &&
+                                     <Text style={[styles.sottoTesto,{paddingTop:20, textAlign:"center"}]}>Non siamo riusciti a localizzarti. Prova con un indirizzo più conosciuto, non per forza molto vicino a dove stai. Infatti Mosaic utilizzerà una macroarea per mostrare gli utenti vicini.</Text>}
+                                    {geocodeResponse!=null && geocodeResponse!=false && isLocationLoading==false &&
+                                        <>
+                                        <View style={{flexDirection:"row",padding:Dimensions.get("window").height*0.01, justifyContent:"center", alignItems:"center"}}>
+                                            <Entypo name="location-pin" size={fontSizeCampi*1.5} color={MosCeleste} />
+                                            <Text style={[styles.sottoTesto,{textAlign:"center",textAlignVertical:"center"}]}>{geocodeResponse}</Text>
+                                        </View>
+                                        </>
+                                    }
+                        </>
+                    }
                 </View>
                 <View style={{flex:0.5,width:"100%", justifyContent:"center", alignItems:"center"}}>
 
@@ -249,7 +345,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                         {item.id=='2' && <DatePicker setData={setDataUtente} /> }
 
                         {/*PAGINA 3 --> POSIZIONE */}
-                        {item.id=='3' && 
+                        {item.id=='3' && provaAlternativaGeocode==false &&
                                 <View>
                                     {/*se stiamo acquisendo la locazione... */}
                                     { isLocationLoading && <ActivityIndicator animating={true} color={MosCeleste} />}
@@ -267,6 +363,29 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     {/*se la locazione è settata... */}
                                     {isLocationSet && <AntDesign name="checkcircle" size={altezzaSchermoInterno*0.05} color="#15e302" /> }
                                 </View>    
+                        }
+                        {item.id=='3' && provaAlternativaGeocode==true &&
+                                <View style={{flex:1}} >
+                                    {<Text style={[styles.info,{paddingTop:20, textAlign:"center"}]}>Inserisci il tuo indirizzo civico seguito dalla città, regione e paese dove vivi. Calcoleremo la tua posizione usando queste informazioni.</Text>}
+                                <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
+                                    <Text style={{color:MosPurple,fontFamily:"Raleway_400Regular",fontSize:fontSizeSottoTitolo*0.7,opacity:(keywordArray.length<10?1:0.3) }}>Indirizzo:</Text>
+                                    
+                                    <TextInput
+                                        style={[styles.sottoTesto,{flex:1, color:MosCeleste, fontFamily:"Raleway_400Regular",fontSize:fontSizeSottoTitolo*0.5,borderBottomColor:MosCeleste, borderBottomWidth:1, textAlign:"center", margin:25, paddingVertical:3}]}
+                                        onChangeText={ind => setUltimoIndirizzo(ind)}    
+                                        value={indirizzo}
+                                        maxLength={100}
+                                        placeholder="<indirizzo civico> <città> <regione> <paese>"
+                                        keyboardType="name-phone-pad"
+                                />
+                               
+                                    <TouchableOpacity disabled={isLocationLoading} onPress={()=>{setUltimoIndirizzo(""); setGeocodeResponse(null); calcolaGeocode();}}>
+                                        <MaterialIcons name="gps-fixed" size={fontSizeSottoTitolo*0.7} color={MosViola} />
+                                    </TouchableOpacity>
+                                </View>
+                                
+                                <Divider />
+                            </View> 
                         }
 
                         {/*PAGINA 4 --> SESSO BIOLOGICO */}

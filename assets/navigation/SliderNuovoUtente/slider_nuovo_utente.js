@@ -14,7 +14,7 @@ import { geohashForLocation } from "geofire-common";
 import { getAgeFromDate } from "../../context/utilities/functions.utilities";
 
 export default function SliderNuovoUtente({route, navigation}){ //NB: route.params.uid contiene l'uid col quale salvare l'utente (e' uguale all'uid di autenticazione)
-
+    console.log("Slider nuovo utente");
     //contesto autenticazione
     var {creaNuovoProfiloUtente, logOut, caricaNuovaImmagine} = useContext(AutenticazioneUtente);
     //estraggo argomenti dalla funzione
@@ -79,7 +79,10 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
         //position conterrà un array di questo genere --> [lat, long, città, regione, stato]
         posizione.current = position;
         console.log(position);
-        setShowForwardArrow(true);
+        if(position.length==5)
+            setShowForwardArrow(true);
+        else
+            setShowForwardArrow(false);
     }
 
     function setSesso(sex){

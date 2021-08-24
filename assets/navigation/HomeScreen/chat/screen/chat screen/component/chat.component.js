@@ -43,6 +43,20 @@ const Chat = [
     }
 ]
 
+function orderChatByTimestamp(chat){
+    var sorted = chat.sort(function(a, b) {
+        console.log("CONFRONTO");
+        console.log(a);
+        console.log(b);
+        let tempo1 = (a.value.lastMessage.timestamp==null)?a.creation_data.seconds:a.value.lastMessage.timestamp.seconds;
+        let tempo2 = (b.value.lastMessage.timestamp==null)?b.creation_data.seconds:b.value.lastMessage.timestamp.seconds;
+        console.log("confronto "+a.contactName+" con "+b.contactName+" con timestamp rispettivamente di: "+tempo1+" e "+tempo2+" , ossia in date "+new Date(tempo1*1000).toString()+" e "+new Date(tempo2*1000).toString());
+        return tempo2 - tempo1
+    });
+
+    return sorted;
+}
+
 
 export default function ChatListComponent({navigation, route}){
 
@@ -84,6 +98,78 @@ export default function ChatListComponent({navigation, route}){
         setIsChatLoading(true);
 
         //2) Scarico la lista dei documenti delle conversazioni riassuntive
+        //NB: alla fine della funzione avremo ciò:
+        /*
+            1) chatSummary: 
+            [
+                Object {
+                    "chatId": "BQCktyNpkjv9Lb8kBsoj",
+                    "contactName": "Teresa",
+                    "contactUid": "AglqTSW161f8cNRcOhiZQMqLtlk1",
+                    "key": "2",
+                    "creation_data": Object {
+                        "nanoseconds": 0,
+                        "seconds": 1629282023,
+                    }
+                    "value": Object {
+                        "lastMessage": Object {
+                            "author": "AglqTSW161f8cNRcOhiZQMqLtlk1",
+                            "timestamp": Object {
+                            "nanoseconds": 0,
+                            "seconds": 1629669601,
+                            },
+                            "type": "text",
+                            "value": "prova4",
+                        },
+                    "level_of_visibility": 0,
+                    },
+                },
+                Object {
+                    "chatId": "3eU5T6CaHcRc3kWiDlo9",
+                    "contactName": "Erica",
+                    "contactUid": "Ud3EZplnClVk9pyDlSBme8vTDUL2",
+                    "key": "1",<------------------------------------------- NB: la chat viene ordinata quindi le chiavi possono essere disposte in modo divers. I relativi media si trovano sempre allo stesso posto, anche dopo il riordinamento in quanto tanto ci si accede con key
+                    "creation_data": Object {
+                        "nanoseconds": 0,
+                        "seconds": 1629061261,
+                    }
+                    "value": Object {
+                        "lastMessage": Object {
+                            "author": null,
+                            "timestamp": null,
+                            "type": null,
+                            "value": null,
+                        },
+                    "level_of_visibility": 0,
+                    },
+                }
+                ]
+
+            2) mediaContatti:
+                    [
+                        Object {
+                            "key": "0",
+                            "value": Object {
+                            "gallery": Object {},
+                            "profileImageUrl": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FAglqTSW161f8cNRcOhiZQMqLtlk1%2FprofileImage1?alt=media&token=88e33e69-0640-4262-a742-8fbf5c13ca14",
+                            },
+                        },
+                        Object {
+                            "key": "1",
+                            "value": Object {
+                            "gallery": Object {},
+                            "profileImageUrl": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FUd3EZplnClVk9pyDlSBme8vTDUL2%2FprofileImage1?alt=media&token=b5c356cd-ddba-47ec-97de-849a3d791d66",
+                            },
+                        },
+                        Object {
+                            "key": "2",
+                            "value": Object {
+                            "gallery": Object {},
+                            "profileImageUrl": "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2Fu98FyRlSpsdn2FHftO3r094iuDb2%2FprofileImage1?alt=media&token=6e3ec093-2b2f-427b-8374-32492cc2ba4c",
+                            },
+                        },
+                    ]
+        */
         //console.log("Lista conversazioni");
         //console.log(listOfConversations);
         //se possiede delle conversazioni...
@@ -105,13 +191,16 @@ export default function ChatListComponent({navigation, route}){
                     for(var i = 0; i < listOfConversations["conversations"].length; i++) {
                         //sfrutto questo ciclo per salvarmi i sommari delle conversazioni
                         let conversation = listOfConversations["conversations"][i];
-                        chatsSummaryTmp.push({key:i.toString(),chatId:conversation.chatId,  value: summaries[i].data(), contactName:conversation.contactName, contactUid:conversation.uid });
+                        chatsSummaryTmp.push({key:i.toString(),chatId:conversation.chatId, creation_data: conversation.creation_data,  value: summaries[i].data(), contactName:conversation.contactName, contactUid:conversation.uid });
                         //TODO-->NB: QUI BISOGNERA' SCEGLIERE UNA LOGICA PER CAPIRE QUALE LIVELLO DI VISIBILITà ADOTTARE, PER ADESSO METTO SEMPRE A 0
                         const livelloDiVisibilità = "0";
                         promisesMediaContatti.push(getMediaProfiloContatto(conversation.uid, livelloDiVisibilità));
                     }
 
-                    setChatsSummary(chatsSummaryTmp);
+                    //ordino per timestamp
+                    let chatsSummaryTmpOrdered = orderChatByTimestamp(chatsSummaryTmp);
+
+                    setChatsSummary(chatsSummaryTmpOrdered);
 
                     //avvio promises
                     Promise.all(promisesMediaContatti)
@@ -126,6 +215,9 @@ export default function ChatListComponent({navigation, route}){
                             setMediaContatti(mediaContattiTmp);
                             //indico termine del caricamente delle chat
                             setIsChatLoading(false);
+                            console.log("fine caricamento conversazioni");
+                            console.log(chatsSummaryTmp);
+                            console.log(mediaContattiTmp);
                         }).catch((err)=>{
                             console.log("Si è verificato un errore durante il recupero dei media dei contatti: "+err);
                         })
@@ -146,6 +238,20 @@ export default function ChatListComponent({navigation, route}){
         caricaChat();
     },[listOfConversations])
 
+    function ordinaListaChat(indiceChat, newChatUpdated){
+        console.log("richiesta di aggiornare la chat all'indice:"+indiceChat);
+        console.log(newChatUpdated);
+        //modifica nell'attuale array la chat all'indice 'indiceChat'
+        let listUpdated = [...chatsSummary];
+        listUpdated[indiceChat].value.lastMessage = newChatUpdated.lastMessage;
+        listUpdated[indiceChat].level_of_visibility = newChatUpdated.level_of_visibility;
+        //ordino chat
+        let newChatList = orderChatByTimestamp(listUpdated);
+        console.log("chat ordinata:");
+        console.log(newChatList);
+        setChatsSummary([...newChatList]);
+    }
+
     //console.log("chats summary");
     //console.log(chatsSummary);
     
@@ -156,7 +262,7 @@ export default function ChatListComponent({navigation, route}){
                 <FlatList
                     data={chatsSummary}
                     keyExtractor={item=>item.key}
-                    renderItem={({item})=>(
+                    renderItem={({item, index})=>(
                         <>
                         <ChatPreview
                                     navigation ={navigation}
@@ -166,6 +272,8 @@ export default function ChatListComponent({navigation, route}){
                                     content = {item.value}
                                     media = {mediaContatti[parseInt(item.key)]} 
                                     route = {route}
+                                    indicePosizioneChatInArray={index}
+                                    ordinaListaChat={ordinaListaChat}
                                     />
                         <Divider />
                         </>

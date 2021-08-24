@@ -246,11 +246,11 @@ export default function AroundYouComponent(props){
                 //aggiungo la coppia {chatId: newChatId, uid: uidOfCard} alle mie informazioni personali cosi da aggiornare lo screen chat
                 let listOfConversationsTMP = {conversations: []};
                 if(listOfConversations==null){
-                    listOfConversationsTMP["conversations"]=[{chatId: newChatId, uid: uidOfCard, contactName: nameOfCard}];
+                    listOfConversationsTMP["conversations"]=[{chatId: newChatId, uid: uidOfCard, contactName: nameOfCard, creation_data: {nanoseconds: 0, seconds: Math.round(new Date().getTime() / 1000)}}];
                 } 
                 else {
                     listOfConversationsTMP = JSON.parse(JSON.stringify(listOfConversations));
-                    listOfConversationsTMP["conversations"].push({chatId: newChatId, uid: uidOfCard, contactName: nameOfCard});
+                    listOfConversationsTMP["conversations"].push({chatId: newChatId, uid: uidOfCard, contactName: nameOfCard, creation_data: {nanoseconds: 0, seconds: Math.round(new Date().getTime() / 1000)}});
                 }
                 setListOfConversations(listOfConversationsTMP);
                 //manda una push notification al contatto per avvertirlo che hai creato una conversazione

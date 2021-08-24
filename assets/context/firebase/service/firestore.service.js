@@ -523,9 +523,9 @@ export function _isProfiloCompletato(uid){
                 let nomeCampoUtenteCorrente = firebase.auth().currentUser.uid+"_response";
                 transaction.set(eventsChannel,{[`${nomeCampoContatto}`]:null, administrator: firebase.auth().currentUser.uid, lastAuthor: null, number_of_messages:0, [`${nomeCampoUtenteCorrente}`]:null});
                 //creo nel mio profilo la coppia {chatId: nuovoId, uid: contatto}
-                transaction.update(myConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:uidNewContact, contactName: nameNewContact})});
+                transaction.update(myConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:uidNewContact, contactName: nameNewContact, creation_data: new Date()})});
                 //creo nel profilo del contatto la coppia {chatId: nuovoId, uid: mioUid}
-                transaction.update(contactConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:firebase.auth().currentUser.uid,contactName: myName})});   
+                transaction.update(contactConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:firebase.auth().currentUser.uid,contactName: myName, creation_data: new Date()})});   
                 //creo nel profilo del contatto una notifica
                 transaction.set(contactNotificationChannel,{author: firebase.auth().currentUser.uid, type: "JOIN", timestamp: new Date()}); 
 

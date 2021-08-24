@@ -153,7 +153,9 @@ export default function ProfileComponent(props){
                     i++;
             }
         } */  
-        var tmp = [...informazioniProfiloUtente.urlGalleryImages];   
+        console.log("Nuove immagini di galleria:");
+        console.log(informazioniProfiloUtente.urlGalleryImages);
+        let tmp = [...informazioniProfiloUtente.urlGalleryImages];   
         tmp.reverse();
         console.log("tmp reverse:");
         //console.log(tmp);
@@ -216,7 +218,7 @@ export default function ProfileComponent(props){
         inizializzaGalleria();
 
         return () => isMounted.current = false;
-    },[informazioniProfiloUtente.age, informazioniProfiloUtente.self_description, user, visibility])
+    },[informazioniProfiloUtente.urlGalleryImages, informazioniProfiloUtente.age, informazioniProfiloUtente.self_description, user, visibility])
 
     //viene usato da uploadImageLoaderScreen per lasciare un messaggio a questo attuale schermo su come è andato l'upload
     useEffect(()=>{
@@ -287,7 +289,15 @@ export default function ProfileComponent(props){
                                        local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_75),
                                        local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_100)]).finally(()=>{
                                                 //rimuovo elemento
-                                                delete infoUrlGalleryImages[index];
+                                                console.log("sto per rimuove elemento da:");
+                                                console.log(infoUrlGalleryImages);
+                                                //faccio questo if else perchè "delete" si comporta male quando l'array ha un solo elemento
+                                                if(infoUrlGalleryImages.length>1)
+                                                    delete infoUrlGalleryImages[index];
+                                                else
+                                                    infoUrlGalleryImages = [];
+                                                console.log("elemento eliminato. Nuovo stato:");
+                                                console.log(infoUrlGalleryImages);
                                                 var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
                                                 nuoveInformazioniProfilo.urlGalleryImages = infoUrlGalleryImages;
                                                 setInformazioniProfiloUtente(nuoveInformazioniProfilo);
