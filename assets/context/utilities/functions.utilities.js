@@ -62,3 +62,22 @@ export function fromDateToGGMMYYYYHHMM(seconds){
 }
 
 function pad2(n) { return n < 10 ? '0' + n : n }
+
+export function fromDateToHHMM(seconds){
+
+  //data di oggi
+  const today = new Date();
+  const date = new Date(seconds*1000);
+
+  //se le due date sono dello stesso giorno, ritorno solo l'ora e il minuto
+  if(datesAreOnSameDay(today,date))
+    return ( pad2( date.getHours() ) +":"+ pad2( date.getMinutes() ) );
+  
+  //altrimenti ritorna data intera  
+  return ( date.getFullYear().toString() + "/"+pad2(date.getMonth() + 1) +"/"+ pad2( date.getDate()) +"  "+ pad2( date.getHours() ) +":"+ pad2( date.getMinutes() ) );
+}
+
+const datesAreOnSameDay = (first, second) =>
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate();

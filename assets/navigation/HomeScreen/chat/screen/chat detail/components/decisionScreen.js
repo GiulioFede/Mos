@@ -103,6 +103,8 @@ const DecisionScreen = forwardRef((props, ref) => {
         }).start();
     }
 
+    console.log("STATISTICHE ATTUALI");
+    console.log(current_statistics.current);
     useEffect(()=>{
         opacityTransition();
         motionTransition();
@@ -149,7 +151,7 @@ const DecisionScreen = forwardRef((props, ref) => {
             }
             setQuestion(loadPhrase);
         }catch(e){
-            console.log("Errore nel prendere la decisione");
+            console.log("Errore nel prendere la decisione:"+e);
         }
     }
 

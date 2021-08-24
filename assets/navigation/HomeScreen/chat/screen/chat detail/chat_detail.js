@@ -200,7 +200,8 @@ export default function ChatDetail({ navigation,route}){
                         è stato scritto sul server prima di generarmi tale listener, e lo faccio controllando che hasPendingWrites=false.
                     */
                     { includeMetadataChanges: true },
-                    (doc) => {
+                    async(doc) => {
+                        try{
                                 console.log("ascolto nuove statistiche dal "+doc.metadata.hasPendingWrites==true?"Local":"Server");
                                 //se è stato salvato nel server
                                 if(doc.metadata.hasPendingWrites==false){
@@ -209,8 +210,8 @@ export default function ChatDetail({ navigation,route}){
                                     console.log(stat);
                                     statistics.current = JSON.parse(JSON.stringify(stat));
 
-                                    //se il numero di messaggi è un multiplo di THRESHOLD
-                                    if( stat.number_of_messages!=0 && (stat.number_of_messages % THRESHOLD) == 0){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
+                                    //se il numero di messaggi è un multiplo di THRESHOLD MA la visibilità è minore di 2 (dove 2 sta per massima visibilità)
+                                    if( stat.number_of_messages!=0 && (stat.number_of_messages % THRESHOLD) == 0 ){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
                                         /*
                                             mostro la finestra in cui chiedo di prendere una decisione se svelarsi o meno.
                                             La finestra mostrerà i seguenti messaggi (letti da statistics.current):
@@ -221,14 +222,48 @@ export default function ChatDetail({ navigation,route}){
                                         //se sono qua dentro significa che ancora manca almeno una risposta, la mia, la sua o entrambe
                                         //mostro la decision screen. Se manca la sua risposta vedrà "Attendi...", altrimenti "Vuoi renderti più visibile?"
 
+
+                                        console.log("Dettagli");
+                                        console.log(stat[contactUid+"_response"]);
+                                        console.log(stat[getUtenteCorrente()+"_response"]);
+
+                                        //se non sono amministartore dovrò attendere fino a che il % numero messaggi è != da THRESHOLD
+                                        //se invece sono amministratore devo fare ogni volta i seguenti controlli
+                                        //in particolare tali controlli dovrò farli solo se ho già dato la mia risposta in quanto le stesse azioni verranno fatte in DecisionScreen.js quando invece non ho preso decisioni
+                                        if(stat[getUtenteCorrente()+"_response"]!=null && getUtenteCorrente()==stat.administrator) {
+                                            //se l'utente corrente ha risposto
+                                            if(stat[contactUid+"_response"]!=null){
+                                                    //se la risposta dell'utente è true e la mia è true faccio l'upgrade
+                                                    if(stat[contactUid+"_response"]==true && stat[getUtenteCorrente()+"_response"]==true){
+                                                        //faccio upgrade
+                                                        await upgradeConversation(chatId,true,contactUid);
+                                                        console.log("upgrade riuscito con successo");
+                                                    }
+                                                    //altrimenti in qualsiasi altro caso resetto
+                                                    else {
+                                                        //resetto solo
+                                                        await upgradeConversation(chatId,false,contactUid);
+                                                        console.log("'continua con lo stesso livello di visibilità' riuscito con successo");
+                                                    }
+                                                }
+                                            }
+                    
+                                        //altrimenti, se non ho risposto oppure ho risposto ma manca l'altro oppure semplicemente non sono l'amministratore mi metto in attesa
                                         decisionScreenRef.current.show(stat);
 
 
 
                                         
                                     }
+                                    //altrimenti non blocco la chat
+                                    else{
+                                        decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
+                                    }
 
                                 }
+                            }catch(e){
+                                console.log("Si è verificato un errore durante la ricezione/elaborazione delle statistiche:"+e);       
+                            }
                                 
                               
                 });
@@ -239,6 +274,7 @@ export default function ChatDetail({ navigation,route}){
     }
 
     ascoltaStatistics();
+    
 
     return () => {
             console.log("rimuovo ascoltatore statistiche");

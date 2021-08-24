@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche,_ottieniAscoltatoreStatistics, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken, _makeDecision, _upgradeConversation} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche,_ottieniAscoltatoreStatistics,_ottieniAscoltatoreUltimoMessaggio, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken, _makeDecision, _upgradeConversation} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -109,6 +109,7 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     ottieniAscoltatoreNuoviMessaggi,
                     ottieniAscoltatoreStatistics,
                     ottieniAscoltatoreNuoveNotifiche,
+                    ottieniAscoltatoreUltimoMessaggio,
                     removeNotification,
                     getAllMediaOfCurrentUser,
                     findNextTenClosestUsers,
@@ -459,6 +460,14 @@ export const AutenticazioneUtenteProvider = ({children}) => {
           throw e;
       }
   }
+
+  function ottieniAscoltatoreUltimoMessaggio(chatID){
+    try{
+      return _ottieniAscoltatoreUltimoMessaggio(chatID);
+    }catch(e){
+        throw e;
+    }
+}
 
   function ottieniAscoltatoreNuoveNotifiche(ultimoTimestamp){//NB: ultimoTimestamp deve essere un numero (i secondi)
       try{

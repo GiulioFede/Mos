@@ -1,17 +1,15 @@
-import React, {useState, useEffect} from "react";
-import {View, StyleSheet, Image,Text,TouchableOpacity, Touchable} from "react-native";
+import React, {useState, useEffect,useContext, useRef} from "react";
+import {View, StyleSheet, Image,Text,TouchableOpacity, Animated} from "react-native";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import MessageBubble from "./message_bubble";
+import { Divider } from "react-native-paper";
 import { altezzaDevice, fontSizeCampi, fontSizeSottoTitolo, fontSizeTitolo, fontSizeTitoloPiccolo, larghezzaDevice } from "../../../../../../context/variabili_globali/variabiliGlobali";
-import { MosCeleste, MosViola } from "../../../../../../resources/colors";
+import { MosCeleste, MosPurple, MosViola } from "../../../../../../resources/colors";
+import { AutenticazioneUtente } from "../../../../../../context/firebase/autenticazione";
+import { fromDateToHHMM } from "../../../../../../context/utilities/functions.utilities";
 
 
-let date = new Date();
-function getHHMMfromDate(milliseconds){
-    date = new Date(milliseconds);
-    return date.getHours()+":"+date.getMinutes();
-}
 
 
 /*
@@ -36,6 +34,10 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route})
     console.log(content);
 
     const [lastContent, setLastContent] = useState(content);
+    const ascoltatoreUltimoMessaggio = useRef(null);
+    const [ultimoMessaggioDoc, setUltimoMessaggioDoc] = useState(null);
+
+    const {ottieniAscoltatoreUltimoMessaggio, user} = useContext(AutenticazioneUtente);
 
     function apriDettagliChat(){
         console.log("apro dettagli chat con utente "+contactUid);
@@ -48,6 +50,23 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route})
 
     const [uriProfileImage, setUriProfileImage] = useState(media.value.profileImageUrl=="" ? null : media.value.profileImageUrl);
 
+    const transitionAnimation = useRef(new Animated.Value(20)).current;
+    const transitionProfileImage = () => {
+        Animated.timing( transitionAnimation, {
+           toValue: 0,
+           duration: 1000,
+           useNativeDriver: false
+        }).start();
+    }
+
+    const opacityAnimation = useRef(new Animated.Value(0)).current;
+    const opacityTransition = () => {
+        Animated.timing( opacityAnimation, {
+           toValue: 1,
+           duration: 900,
+           useNativeDriver: true
+        }).start();
+    }
     /*
         Quando gli screen come ContactProfile ma quasi sempre Chat detail vogliono portare un dato al vecchio screen (ossia qui)
         modificano la route. In route.params troviamo il messaggio. I messaggi sono strutturati in modo diverso ma tutti hanno in comune
@@ -64,29 +83,71 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route})
             },
 
     */
+   /*
     useEffect(()=>{
         console.log("Nuovi dati passati dal vecchio screen nella chat con nome +"+nome);
         console.log(route.params);
         elaboraAzione(route.params);
-    },[route])
+    },[route])*/
+
+    useEffect(()=>{
+        if(ultimoMessaggioDoc!=null){
+            console.log("aggiorno vista ultimo messaggio");
+            elaboraAzione(ultimoMessaggioDoc);
+        }
+    },[ultimoMessaggioDoc])
+
+    useEffect(()=>{
+
+        async function ascoltaUltimoMessaggio(){
+            try{
+                ascoltatoreUltimoMessaggio.current = ottieniAscoltatoreUltimoMessaggio(chatId)
+                    .onSnapshot(
+                        { includeMetadataChanges: true },
+                        async(doc) => {
+                            try{
+                                if(doc.metadata.hasPendingWrites==false){
+                                    console.log("ultimo messaggio ricevuto:");
+                                    let lastMex = doc.data();
+                                    console.log(lastMex);
+                                    setUltimoMessaggioDoc(JSON.parse(JSON.stringify(lastMex)));
+                                }
+                            }catch(e){
+                                console.log("Si è verificato un errore durante la ricezione/elaborazione delle statistiche:"+e);       
+                            }
+                });
+
+            }catch(e){
+                console.log("errore nell'ascoltare ultimo messaggio:"+e);
+            }
+        }
+
+        ascoltaUltimoMessaggio();
+
+        return () =>{
+            console.log("rimuovo ascoltatore ultimo messaggio");
+            if(ascoltatoreUltimoMessaggio.current!=null) ascoltatoreUltimoMessaggio.current();
+        }
+    },[])
 
     function elaboraAzione(messaggio){
-        if(messaggio==null) return;
+        if(messaggio==null) 
+            return;
+        //modifico contenuto
+        let newLastContent = JSON.parse(JSON.stringify(messaggio));
+        setLastContent(newLastContent);
 
-        if(messaggio.code == "UPDATE_LAST_MEX"){
-            //se la chat_preview dove siamo è quella di interesse
-            if(messaggio.chatId == chatId){
-                //modifico contenuto
-                let newLastContent = {lastMessage:{}};
-                newLastContent.lastMessage.author = messaggio.author;
-                newLastContent.lastMessage.timestamp = messaggio.timestamp;
-                newLastContent.lastMessage.type = messaggio.type;
-                newLastContent.lastMessage.value = messaggio.value;
-
-                setLastContent(newLastContent);
-
-                //TODO: cosa fare con numberOfMessages?
-            }
+        }
+    
+    function getVisibilityString(num){
+        if(num==0){
+            return "Visibilità: 0%";
+        }
+        else if(num==1){
+            return "Visibilità: 50%"
+        }
+        else if(num==2){
+            return "Visibilità: 100%"
         }
     }
 
@@ -97,31 +158,49 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route})
             return <View></View>
 
     return (
-        <View style={{marginVertical:0.5, backgroundColor:"white"}}>
-        <TouchableOpacity activeOpacity={.7} style={[styles.container,{backgroundColor:"white"}]} onPress={()=>{apriDettagliChat()}}>
+        <Animated.View style={{marginVertical:0.5, opacity:opacityAnimation}}>
+            {uriProfileImage && (lastContent.lastMessage.value==null) && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={{position:"absolute", width:"100%", height:"100%"}} blurRadius={5} onLoadEnd={()=>{opacityTransition();}} onError={(e)=>{setUriProfileImage(null); opacityTransition();}}></Animated.Image>}
+        <TouchableOpacity activeOpacity={.7} style={[styles.container,{}]} onPress={()=>{apriDettagliChat()}}>
             {/* IMMAGINE PROFILO */}
-            <View style={styles.contenitoreMediaProfilo}>
-                <TouchableOpacity onPress={()=>{apriDettagliProfilo()}} style={[styles.contenitoreImmagineProfilo,{ borderColor:(lastContent.lastMessage.value==null)?MosViola:'transparent', borderWidth: (lastContent.lastMessage.value==null)?2:0 }]}>
-                        {uriProfileImage && <Image source={{uri:uriProfileImage}} resizeMode="cover"  style={styles.immagineProfilo} onError={(e)=>{setUriProfileImage(null)}}></Image>}
+            <Animated.View style={[styles.contenitoreMediaProfilo,{top:transitionAnimation}]}>
+                <TouchableOpacity onPress={()=>{apriDettagliProfilo()}} style={[styles.contenitoreImmagineProfilo,{borderColor:"white", borderTopWidth:1, borderBottomWidth:1, borderLeftWidth:1, borderRightWidth:1 }]}  >
+                        {uriProfileImage && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={[styles.immagineProfilo,{}]} onLoadEnd={()=>{transitionProfileImage(); opacityTransition();}} onError={(e)=>{setUriProfileImage(null); transitionProfileImage();opacityTransition();}}></Animated.Image>}
                         {!uriProfileImage && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
                 </TouchableOpacity>
-                <View style={styles.ultimoMessaggio}>
-                    <MessageBubble messaggio={lastContent.lastMessage.value} type={lastContent.lastMessage.type}/>
+                <View style={[styles.ultimoMessaggio,{opacity:1}]}>
+                    <MessageBubble messaggio={lastContent.lastMessage.value} type={lastContent.lastMessage.type} author = {lastContent.lastMessage.author} currentUser={user}/>
                 </View>          
-            </View>
+            </Animated.View>
                     
             <View style={styles.contenitoreInfo}>
                 {/* nome */}
                 <View style={styles.contenitoreNome}>
-                    <Text style={[styles.nome,{color:"#52575D"}]}>{nome}</Text>
+                    <View style={{padding:5}}>
+                        <Text style={[styles.nome,{color:(lastContent.lastMessage.value==null)?"white":"#52575D", textShadowColor:(lastContent.lastMessage.value==null)?'#444':'transparent',textShadowOffset:(lastContent.lastMessage.value==null)?{width: 1, height: 1}:{width:0, height:0},textShadowRadius:(lastContent.lastMessage.value==null)?1:0}]}>{nome}</Text>
+                    </View>
+                {/* livello di visibilità */}
+                <Divider  />
+                {lastContent.level_of_visibility!=undefined && lastContent.level_of_visibility!=null &&
+                <View style={styles.contenitoreLivelloDiVisibilita}>
+                    <Text style={styles.livelloDiVisibilita}>{getVisibilityString(lastContent.level_of_visibility)}</Text>
+                </View>
+                } 
                 </View>
                {/* data ultimo messaggio */}
+               {lastContent.lastMessage.timestamp!=null  && lastContent.lastMessage.timestamp!=undefined &&
                 <View style={styles.contenitoreDataUltimoMessaggio}>
-                    <Text style={[styles.dataUltimoMessaggio,{color:lastContent.lastMessage.value==null?"white":"#52575D", textAlign:"right"}]}>{getHHMMfromDate(lastContent.lastMessage.timestamp)}</Text>
+                    <Text style={[styles.dataUltimoMessaggio,{color:lastContent.lastMessage.value==null?"white":"#52575D", textAlign:"right"}]}>{fromDateToHHMM(lastContent.lastMessage.timestamp.seconds)}</Text>
                 </View>
+                }
+                {/* NEW se la chat è inviolata */}
+               {(lastContent.lastMessage.timestamp==null || lastContent.lastMessage.timestamp==undefined) &&
+                <View style={styles.contenitoreDataUltimoMessaggio}>
+                    <Text style={[styles.dataUltimoMessaggio,{color:"orange", textAlign:"right", textShadowColor:(lastContent.lastMessage.value==null)?'#444':'transparent',textShadowOffset:(lastContent.lastMessage.value==null)?{width: 1, height: 1}:{width:0, height:0},textShadowRadius:(lastContent.lastMessage.value==null)?1:0}]}>NEW</Text>
+                </View>
+                }    
         </View>
         </TouchableOpacity>
-        </View>
+        </Animated.View>
     )
 }
 
@@ -199,7 +278,6 @@ const styles = StyleSheet.create({
         zIndex:10,
     },
     nome:{
-        fontSize:20,
         fontFamily: "Raleway_400Regular",
         color: "#52575D",
         fontSize:fontSizeSottoTitolo*1.1
@@ -210,10 +288,21 @@ const styles = StyleSheet.create({
         width:"100%"
     },
     dataUltimoMessaggio:{
-        fontSize:20,
         fontFamily: "Raleway_400Regular",
         color: "#52575D",
-        fontSize:fontSizeCampi,
+        fontSize:fontSizeCampi*0.8,
+    },
+    contenitoreLivelloDiVisibilita:{
+        backgroundColor:"orange",
+        padding:5,
+        margin:5,
+        borderRadius:10
+    },
+    livelloDiVisibilita:{
+        fontFamily: "Raleway_400Regular",
+        color: "white",
+        fontSize:fontSizeCampi*0.8,
+        fontStyle:"italic",
     },
     ultimoMessaggio: {
         position: "absolute",

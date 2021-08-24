@@ -25,18 +25,18 @@ import { fontSizeCampi } from '../../../../../../context/variabili_globali/varia
 // 3. image (image file) => renders image inside bubble
 
 // Declare component 
-function MessageBubble({messaggio, type}) {
+function MessageBubble({messaggio, type, author, currentUser}) {
     return (
         <View>
         <View style={[styles.item, styles.itemIn]}>
-        <View style={[styles.balloon, {backgroundColor: messaggio==null?MosViola:MosCeleste, flexDirection:"row"  }]}>
+        <View style={[styles.balloon, {backgroundColor: messaggio==null?"white":(author==currentUser)?MosCeleste:MosViola, flexDirection:"row", elevation:10  }]}>
         {/* non preoccuparti per la lunghezza dato che verranno consentiti al massimo solo brevi messaggi*/}
         {type=="audio" &&
                             <View style={{ paddingRight:5, justifyContent:"center"}}>
                                 <Entypo name="megaphone" size={fontSizeCampi} color="white"/>
                             </View> } 
           {messaggio!=null && <Text style={{paddingTop: 5, color: 'white', fontSize:fontSizeCampi, fontStyle:type=="text"?"normal":"italic"}}>{type=="text"?messaggio:"messaggio vocale"}</Text>} 
-          {messaggio==null && <Text style={{paddingTop: 5, color: "white", fontSize:fontSizeCampi, fontStyle:"italic"}}>fai il primo passo!</Text>} 
+          {messaggio==null && <Text style={{paddingTop: 5, color: messaggio==null?MosPurple:"white", fontSize:fontSizeCampi, fontStyle:"italic"}}>fai il primo passo!</Text>} 
           <View
           style={[
             styles.arrowContainer,
@@ -47,7 +47,7 @@ function MessageBubble({messaggio, type}) {
            <Svg style={styles.arrowLeft} width={moderateScale(15.5, 0.6)} height={moderateScale(17.5, 0.6)} viewBox="32.484 17.5 15.515 17.5"  enable-background="new 32.485 17.5 15.515 17.5">
                 <Path
                     d="M38.484,17.5c0,8.75,1,13.5-6,17.5C51.484,35,52.484,17.5,38.484,17.5z"
-                    fill={messaggio==null?MosViola:MosCeleste}
+                    fill={messaggio==null?"white":(author==currentUser)?MosCeleste:MosViola}
                     x="0"
                     y="0"
                 />

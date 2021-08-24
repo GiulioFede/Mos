@@ -511,12 +511,17 @@ export function _isProfiloCompletato(uid){
                //se tutto va bene allora creo conversazione
                //creo nuova chat nella collezione chats
                await transaction.set(nuovaConversazionePath, {lastMessage:
-                                                            {author:null,
-                                                            timestamp:null,
-                                                            type:null,
-                                                            value:null},
-                                                        numberOfMessages:0});
+                                                                {author:null,
+                                                                timestamp:null,
+                                                                type:null,
+                                                                value:null},
+                                                               level_of_visibility:0});
                 
+                //creo canale events e documento statistics cosi da sentire gli update utili per l'upgrade della conversazione
+                var eventsChannel = db.collection("chats").doc(nuovaConversazionePath.id).collection("events").doc("statistics");
+                let nomeCampoContatto = uidNewContact+"_response";
+                let nomeCampoUtenteCorrente = firebase.auth().currentUser.uid+"_response";
+                transaction.set(eventsChannel,{[`${nomeCampoContatto}`]:null, administrator: firebase.auth().currentUser.uid, lastAuthor: null, number_of_messages:0, [`${nomeCampoUtenteCorrente}`]:null});
                 //creo nel mio profilo la coppia {chatId: nuovoId, uid: contatto}
                 transaction.update(myConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:uidNewContact, contactName: nameNewContact})});
                 //creo nel profilo del contatto la coppia {chatId: nuovoId, uid: mioUid}
@@ -762,7 +767,18 @@ export function _isProfiloCompletato(uid){
         }catch(e){
             throw e;
         }
+    }
 
+    
+    export function _ottieniAscoltatoreUltimoMessaggio(chatID){
+        try{
+            //ascolto documento ultimo messaggio nella raccolta chats/chatID/events
+            let db = firebase.firestore();
+            return db.collection("chats")
+                     .doc(chatID)
+        }catch(e){
+            throw e;
+        }
     }
 
     export async function _removeNotification(id){
@@ -956,11 +972,12 @@ export function _isProfiloCompletato(uid){
                     level_of_visibility: firebase.firestore.FieldValue.increment(1)
                 },{merge:true});
             }
-            //in ogni caso resetto il documento statistiche
+            //in ogni caso resetto il documento statistiche  (e incremento di 1 number_of_messages per sbloccare la chat)
             let nomeCampoContatto = contactUid+"_response";
             let nomeCampoUtenteCorrente = firebase.auth().currentUser.uid+"_response";
             batch.update(pathDocumentoStatistiche,
                 {
+                    number_of_messages: firebase.firestore.FieldValue.increment(1),
                     [`${nomeCampoContatto}`]: null,
                     [`${nomeCampoUtenteCorrente}`]: null
                 })
