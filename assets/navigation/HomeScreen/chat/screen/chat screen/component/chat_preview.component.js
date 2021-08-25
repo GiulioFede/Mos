@@ -28,10 +28,10 @@ import { fromDateToHHMM } from "../../../../../../context/utilities/functions.ut
 
 const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,indicePosizioneChatInArray, ordinaListaChat}) => {
 
-    console.log("Chat ID di "+nome+" -->");
-    console.log(chatId);
-    console.log("Chat CONTENT-->");
-    console.log(content);
+    //console.log("Chat ID di "+nome+" -->");
+    //console.log(chatId);
+    //console.log("Chat CONTENT-->");
+    //console.log(content);
 
     const [lastContent, setLastContent] = useState(content);
     const ascoltatoreUltimoMessaggio = useRef(null);

@@ -307,7 +307,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                 <View style={{flex:0.5, width:"100%",alignItems:"center", justifyContent:"center", alignSelf:"center"}} >
                     <Text style={styles.titolo}>{item.title}</Text>
                     <Text style={[styles.sottoTesto,{textAlign:"center"}]}>{item.subTitle}</Text>
-                    { isLocationLoading && <ActivityIndicator animating={true} color={MosCeleste} />}
+                    {item.id=='3' && provaAlternativaGeocode==true && isLocationLoading && <ActivityIndicator animating={true} color={MosCeleste} />}
                     {item.id=='3' && provaAlternativaGeocode==true && 
                         <>
                         {geocodeResponse==false && isLocationLoading==false &&
@@ -429,7 +429,8 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                         {item.id=='5' &&
 
 
-                            <ScrollView contentContainerStyle={{justifyContent:"center", }} >
+                            <ScrollView horizontal={true} contentContainerStyle={{justifyContent:"center", }} >
+                               
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
                                     <RadioButton
                                         color={MosCeleste}
@@ -601,12 +602,13 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         />
                                         <Text style={styles.campiDaCompilare}>DEMI-FLUX</Text>
                                     </View>
+                                   
                             </ScrollView>
                         }
 
                         {/*PAGINA 6 --> ORIENTAMENTO SESSUALE*/}
                         {item.id=='6' &&
-                            <ScrollView contentContainerStyle={{justifyContent:"center", }}>
+                            <ScrollView horizontal={true} contentContainerStyle={{justifyContent:"center", }}>
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
                                     <RadioButton
                                         value="maschio"

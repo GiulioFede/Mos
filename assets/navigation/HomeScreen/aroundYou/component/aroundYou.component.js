@@ -22,7 +22,7 @@ import { sendPushNotification } from '../../../../context/push_notifications/fun
 
 const {width, height} = Dimensions.get("window");
 const IMAGE_WIDTH = width*0.86;
-const IMAGE_HEIGHT = width*0.86*1.5;
+const IMAGE_HEIGHT = (width<height/2)?width*0.86*1.5:width*0.85*1.3;
 
 //mantiene della flatlist le informazioni sull'item attualmente mostrato
 var currentItemDisplayed = null;
@@ -252,9 +252,14 @@ export default function AroundYouComponent(props){
                     listOfConversationsTMP = JSON.parse(JSON.stringify(listOfConversations));
                     listOfConversationsTMP["conversations"].push({chatId: newChatId, uid: uidOfCard, contactName: nameOfCard, creation_data: {nanoseconds: 0, seconds: Math.round(new Date().getTime() / 1000)}});
                 }
+                console.log("invio una push notification a "+nameOfCard+" al token "+token);
+                try{
+               //manda una push notification al contatto per avvertirlo che hai creato una conversazione
+                    await sendPushNotification(token,"Qualcuno ti trova interessante!", (informazioniProfiloUtente.name+" vorrebbe parlare con te."));
+                }catch(e){
+                    console.log("errore nell'invio della push notification:"+e);
+                }
                 setListOfConversations(listOfConversationsTMP);
-                //manda una push notification al contatto per avvertirlo che hai creato una conversazione
-                await sendPushNotification(token,"Qualcuno ti trova interessante!", (informazioniProfiloUtente.name+" vorrebbe parlare con te."));
                 //mandalo in chat
                 navigation.navigate("Chat");
             }).catch((err)=>{
@@ -611,7 +616,7 @@ export default function AroundYouComponent(props){
                        // if(item.key!="empty"){
                         return (
                             <>
-                            <Animated.View style={{position:'absolute',width:width, height:height, opacity, transform: [{translateY}, {scale} ] }}>
+                            <Animated.View style={{position:'absolute', width:width, height:height, opacity, transform: [{translateY}, {scale} ] }}>
                             {item.key!="empty" &&
                             <TouchableOpacity onPress={()=>{apriChiudiBottomSheetMenu(item)}}>
                                     <Image source = {{ uri: item.profileImageUrl}} style={styles.image} />
@@ -645,7 +650,7 @@ export default function AroundYouComponent(props){
                         {item.key!="empty" &&
                             <View style={{ backgroundColor:MosCeleste, top:IMAGE_HEIGHT*0.8, left:IMAGE_WIDTH*0.75, width:IMAGE_WIDTH*0.18, height:IMAGE_WIDTH*0.18, borderRadius:IMAGE_WIDTH*0.2/2, alignItems:"center", justifyContent:"center" }}>
                                 <TouchableOpacity onPress={()=>{dialogCreaNuovaConversazioneRef.current.open_dialog(item.name, item.id, item.push_notification_token)}}>
-                                    <Ionicons name="ios-chatbubble-sharp" size={24} color="white" />
+                                    <Ionicons name="ios-chatbubble-sharp" size={IMAGE_WIDTH*0.18/2} color="white" />
                                 </TouchableOpacity>
                             </View>
                         }

@@ -145,6 +145,7 @@ export default function HomeNavigator({navigation}) {
                       console.log("Prelevo informazioni chat utente:");
                       if(chats.exists)
                         setListOfConversations(chats.data())
+
                       console.log(chats.data())
 
                       //controllo che l'età attuale sia uguale a quella memorizzata. Se diversa la aggiorno e se 
@@ -167,14 +168,16 @@ export default function HomeNavigator({navigation}) {
                               //se non sono nell'emulatore..
                               if (Constants.isDevice){
                                 let token = await registerForPushNotificationsAsync();
-                                //se il token non lo abbiamo, lo salviamo in firestore
-                                console.log("controllo se il token esiste")
-                                if(!info_utente.hasOwnProperty('push_notification_token')){
-                                    console.log("token non esiste. Lo salvo:"+token)
+                                console.log("token ricevuto:");
+                                console.log(token);
+                                //NB: spesso il token sarà sempre uguale a quello già ricevuto, quindi non andremo a salvare nulla di nuovo su firestore
+                                if(!info_utente.hasOwnProperty('push_notification_token') || (info_utente.hasOwnProperty('push_notification_token') && info_utente['push_notification_token']==null)|| (info_utente.hasOwnProperty('push_notification_token') && info_utente['push_notification_token']!=token)){
+                                    console.log("token non esistente o diverso da prima. Lo salvo:"+token)
                                     await saveNewPushNotificationToken(token);
-                                    info_utente["push_notification_token"] = token;
-                                }else
-                                    console.log("token esiste già");
+                                }
+                                info_utente["push_notification_token"] = token;
+                                //}else
+                                //    console.log("token esiste già");
 
                                   console.log("mi registro alla notifica tipo 1");
                                   //2) mi registro affinchè sia avvertito ogni volta che una notifica arrivi quando l'app è in FOREGROUND

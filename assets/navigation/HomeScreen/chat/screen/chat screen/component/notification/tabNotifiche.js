@@ -100,8 +100,8 @@ const TabNotifiche = forwardRef((props, ref) => {
 
                 //prelevo vecchie notifiche e inizializzo l'array listOfNotifications
                 let listOfNotificationsResult = await localStorage.getListOfNotifications(user,0);
-                console.log("lista notifiche recuperate in locale:");
-                console.log(listOfNotificationsResult);
+                //console.log("lista notifiche recuperate in locale:");
+                //console.log(listOfNotificationsResult);
                 let listOfNotificationsResultArray = [...JSON.parse(listOfNotificationsResult)];
                 listOfNotifications.current = [...listOfNotificationsResultArray];
                 setList([...listOfNotificationsResultArray]);
@@ -152,6 +152,7 @@ const TabNotifiche = forwardRef((props, ref) => {
                                     console.log("ascolto nuovo doc in notifiche");
                                     if (change.type != "added") 
                                         return;
+                                    
                                     //se sono qui allora c'è una nuova notifica
                                     console.log("documento nuovo:");
                                     let doc = change.doc.data();
@@ -184,10 +185,11 @@ const TabNotifiche = forwardRef((props, ref) => {
                         console.log("aggiorno notifiche");
                         console.log(listOfNotifications.current);
                         console.log(arrayTmp);
-                        
+                        let lastListOfNotifications = [...listOfNotifications.current];
+                        listOfNotifications.current = [ ...arrayTmp, ...listOfNotifications.current];
                          //aggiorno lo stato con l'array di notifiche prelevate
                         if(arrayTmp.length!=0)
-                            setList([ ...arrayTmp, ...listOfNotifications.current]);
+                            setList([ ...arrayTmp, ...lastListOfNotifications]);
                         setIsLoading(false);
 
                         })

@@ -193,9 +193,9 @@ export default function ProfileComponent(props){
         const getLocalUri = async() =>{
             let actual_remote_uri = "";
             if(visibility=="0") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_0"];
-            else if(visibility=="25") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_25"];
+            //else if(visibility=="25") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_25"];
             else if(visibility=="50") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_50"];
-            else if(visibility=="75") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_75"];
+            //else if(visibility=="75") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_75"];
             else if(visibility=="100") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_100"];
 
             try{
@@ -265,12 +265,7 @@ export default function ProfileComponent(props){
         if(isLoading==false){
             try{
             setIsLoading(true);
-            //const index = indiceFotoDaEliminare.current; //non è l'indice su firebase, ma sull'array locale
-            //const url = galleria[index].url;
-            //const nome = informazioniProfiloUtente.gallery[informazioniProfiloUtente.gallery.length-1-index];
-            //const nome = getNomeImmagineDaUrl(url);
             let nome = galleria[indiceFotoDaEliminare.current].name;
-            //console.log("Nome immagine: "+nome);
             const index = galleria.length -1 - indiceFotoDaEliminare.current;
             closeDialog();
             //elimino
@@ -284,9 +279,9 @@ export default function ProfileComponent(props){
                     console.log(infoUrlGalleryImages);
                     console.log(infoUrlGalleryImages[index]);
                     Promise.all([local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index]["url_0"]),
-                                       local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_25),
+                                       //local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_25),
                                        local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_50),
-                                       local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_75),
+                                       //local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_75),
                                        local_storage.removeImageLocally(getUtenteCorrente(),infoUrlGalleryImages[index].url_100)]).finally(()=>{
                                                 //rimuovo elemento
                                                 console.log("sto per rimuove elemento da:");
@@ -302,9 +297,6 @@ export default function ProfileComponent(props){
                                                 nuoveInformazioniProfilo.urlGalleryImages = infoUrlGalleryImages;
                                                 setInformazioniProfiloUtente(nuoveInformazioniProfilo);
                                                 indiceFotoDaEliminare.current = -1;
-                                                //var tmp = [...galleria];
-                                                //tmp.splice(index,1);
-                                                //setGalleria(tmp);
                                                 setSnackMessage("Foto eliminata con successo.");
                                        })
                 }).catch((e)=>{
@@ -438,7 +430,7 @@ export default function ProfileComponent(props){
                             </View>
                         {/* pallino online */}
                         <View style={styles.onlineCircle} />
-                        {/* icona chat */}
+                        {/* icona matita */}
                         <TouchableOpacity style={styles.modificaImmagineProfiloIcon} onPress={()=>aggiungiNuovaImmagine(true)}>
                             <Entypo name="pencil" size={altezzaSezioneImmagineProfilo*0.1} color={MosCeleste} />
                         </TouchableOpacity>

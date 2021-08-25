@@ -27,10 +27,10 @@ const SliderKMPreference = forwardRef((props, ref) => {
             let val = await localStorage.readPreference(currentUser,"action_range");
             console.log("Il valore di preferenza del raggio di azione è:");
             console.log(val);
-            //se è nullo allora si imposta di default a zero
+            //se è nullo allora si imposta di default a zero (25KM)
             if(val==null){
-                setPos(2);
-                setStartMarker(0.375);
+                setPos(1);
+                setStartMarker(0);
             }else {
                 if(val<=0.25) setPos(1);
                 else if(val<=0.50) setPos(2);

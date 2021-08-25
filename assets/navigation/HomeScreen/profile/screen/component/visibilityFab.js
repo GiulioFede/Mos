@@ -30,24 +30,27 @@ const VisibilityFAB = (props) => {
                 color: props.visibility=="100"?MosViola:"grey",
                 onPress: () => props.setVisibility("100"),
               },
-              {
+/*              {
                 icon: 'circle-slice-2',
                 label: '25% di visibilità',
                 color: props.visibility=="75"?MosViola:"grey",
                 onPress: () => props.setVisibility("75"),
               },
+*/
               {
                 icon: 'circle-slice-4',
                 label: '50% di visibilità',
                 color: props.visibility=="50"?MosViola:"grey",
                 onPress: () => props.setVisibility("50"),
               },
+/*
             {
               icon: 'circle-slice-6',
               label: '75% di visibilità',
               color: props.visibility=="25"?MosViola:"grey",
               onPress: () => props.setVisibility("25"),
             },
+*/
             {
               icon: 'circle-slice-8',
               label: '100% di visibilità',

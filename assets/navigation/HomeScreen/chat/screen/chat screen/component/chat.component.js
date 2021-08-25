@@ -45,9 +45,9 @@ const Chat = [
 
 function orderChatByTimestamp(chat){
     var sorted = chat.sort(function(a, b) {
-        console.log("CONFRONTO");
-        console.log(a);
-        console.log(b);
+        //console.log("CONFRONTO");
+        //console.log(a);
+        //console.log(b);
         let tempo1 = (a.value.lastMessage.timestamp==null)?a.creation_data.seconds:a.value.lastMessage.timestamp.seconds;
         let tempo2 = (b.value.lastMessage.timestamp==null)?b.creation_data.seconds:b.value.lastMessage.timestamp.seconds;
         console.log("confronto "+a.contactName+" con "+b.contactName+" con timestamp rispettivamente di: "+tempo1+" e "+tempo2+" , ossia in date "+new Date(tempo1*1000).toString()+" e "+new Date(tempo2*1000).toString());
@@ -57,11 +57,13 @@ function orderChatByTimestamp(chat){
     return sorted;
 }
 
+//mantiene il riferimento al listener su nuove chat che sono state create (qualcuno ha creato una chat con me)
+var newChatListener = null;
 
 export default function ChatListComponent({navigation, route}){
 
     //contesto autenticazione
-    var {listOfConversations, getChatSummaryInformation, getMediaProfiloContatto} = useContext(AutenticazioneUtente);
+    var {listOfConversations,setListOfConversations,ottieniAscoltatoreNuoveConversazioni, getChatSummaryInformation, getMediaProfiloContatto} = useContext(AutenticazioneUtente);
     //se true indica che si stanno caricando le chat
     const [isChatLoading, setIsChatLoading] = useState(true);
     //lista delle conversazioni con relative informazioni
@@ -172,6 +174,12 @@ export default function ChatListComponent({navigation, route}){
         */
         //console.log("Lista conversazioni");
         //console.log(listOfConversations);
+        //se non possiede delle conversazioni devo comunque settare [] cosi da fare il refresh di chatsSummary e mediaContatti per aggiornare la grafica
+        if(listOfConversations.conversations.length==0){
+            setChatsSummary([]);
+            setMediaContatti([]);
+        }
+
         //se possiede delle conversazioni...
         if(listOfConversations!=null && listOfConversations["conversations"].length>0){
             const promises = []; //qui inserisco tutte le promise per i summary delle chat
@@ -192,9 +200,14 @@ export default function ChatListComponent({navigation, route}){
                         //sfrutto questo ciclo per salvarmi i sommari delle conversazioni
                         let conversation = listOfConversations["conversations"][i];
                         chatsSummaryTmp.push({key:i.toString(),chatId:conversation.chatId, creation_data: conversation.creation_data,  value: summaries[i].data(), contactName:conversation.contactName, contactUid:conversation.uid });
-                        //TODO-->NB: QUI BISOGNERA' SCEGLIERE UNA LOGICA PER CAPIRE QUALE LIVELLO DI VISIBILITà ADOTTARE, PER ADESSO METTO SEMPRE A 0
-                        const livelloDiVisibilità = "0";
-                        promisesMediaContatti.push(getMediaProfiloContatto(conversation.uid, livelloDiVisibilità));
+                        /*
+                            il chats summary, ogni suoi elemento, possiede un campo 'level_of_visibility' 
+                            che se è a zero allora la sgranatura è massima, se 1 è di 50%, se è 2 la visibilità è massima
+                        */
+                       const livelloDiSgranatura= "100";
+                       if(conversation.level_of_visibility==1) livelloDiSgranatura = "50";
+                       else if(conversation.level_of_visibility==2) livelloDiSgranatura = "100";
+                        promisesMediaContatti.push(getMediaProfiloContatto(conversation.uid, livelloDiSgranatura));
                     }
 
                     //ordino per timestamp
@@ -216,8 +229,9 @@ export default function ChatListComponent({navigation, route}){
                             //indico termine del caricamente delle chat
                             setIsChatLoading(false);
                             console.log("fine caricamento conversazioni");
-                            console.log(chatsSummaryTmp);
-                            console.log(mediaContattiTmp);
+                            //console.log(chatsSummaryTmp);
+                            //console.log(mediaContattiTmp);
+                            console.log(listOfConversations);
                         }).catch((err)=>{
                             console.log("Si è verificato un errore durante il recupero dei media dei contatti: "+err);
                         })
@@ -225,12 +239,62 @@ export default function ChatListComponent({navigation, route}){
                     console.log("Si è verificato un errore durante il recupero delle informazioni sommarie sulle conversazioni: "+err);
                 })
 
-                console.log(listOfConversations);
+               
         }else
             setIsChatLoading(false);
         
 
     }
+
+    //listener per nuove conversazioni create nel mio profilo (es. un utente X crea nel mio profilo una nuova chat)
+    useEffect(()=>{
+
+        async function ascoltaNuoveConversazioni(){
+            try{
+                newChatListener = ottieniAscoltatoreNuoveConversazioni()
+                    .onSnapshot(
+                        { includeMetadataChanges: true },
+                        async(doc) => {
+                            try{
+                                if(doc.metadata.hasPendingWrites==false){
+                                    console.log("ci sono nuove conversazioni:");
+                                    /*
+                                    Object {
+                                        "lastMessage": Object {
+                                            "author": "AglqTSW161f8cNRcOhiZQMqLtlk1",
+                                            "timestamp": Object {
+                                            "nanoseconds": 0,
+                                            "seconds": 1629669601,
+                                            },
+                                            "type": "text",
+                                            "value": "prova6",
+                                        },
+                                        "level_of_visibility": 0,
+                                    }
+                                    */
+                                    let newConversations = doc.data();
+                                    console.log(newConversations);
+                                    console.log("precedenti conversazioni");
+                                    console.log(listOfConversations);
+                                    setListOfConversations(newConversations);
+                                }
+                            }catch(e){
+                                console.log("Si è verificato un errore durante la ricezione delle nuove conversazioni:"+e);       
+                            }
+                });
+
+            }catch(e){
+                console.log("errore nell'ascoltare nuove conversazioni:"+e);
+            }
+        }
+
+        ascoltaNuoveConversazioni();
+
+        return () =>{
+            console.log("rimuovo ascoltatore nuove conversazioni");
+            if(newChatListener!=null) newChatListener();
+        }
+    },[])
 
     //INIZIO: carica tutte le chat. TODO: aggiungere dipendenza (ricarica quando cambia...)
     useEffect(()=>{
@@ -247,8 +311,8 @@ export default function ChatListComponent({navigation, route}){
         listUpdated[indiceChat].level_of_visibility = newChatUpdated.level_of_visibility;
         //ordino chat
         let newChatList = orderChatByTimestamp(listUpdated);
-        console.log("chat ordinata:");
-        console.log(newChatList);
+        //console.log("chat ordinata:");
+        //console.log(newChatList);
         setChatsSummary([...newChatList]);
     }
 

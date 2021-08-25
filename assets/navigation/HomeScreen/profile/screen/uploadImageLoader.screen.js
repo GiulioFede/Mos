@@ -41,9 +41,7 @@ export default function UploadImageLoader({navigation,route}){
               ritorna (dentro result.data):
                 name: fileName,
                 url_0: urls[0],
-                url_25: urls[1],
                 url_50: urls[2],
-                url_75: urls[3],
                 url_100: urls[4]
             */
             console.log("chiamata riuscita. Nuovo url generato:");
@@ -59,11 +57,13 @@ export default function UploadImageLoader({navigation,route}){
                 }).finally(()=>{
                   //aggiorno localmente. Elimino localmente le vecchie foto memorizzate
                   Promise.all([local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_0),
-                                       local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_25),
+                                       //local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_25),
                                        local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_50),
-                                       local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_75),
+                                       //local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_75),
                                        local_storage.removeImageLocally(getUtenteCorrente(),informazioniProfiloUtente.urlProfileImage.url_100)]).finally(()=>{
-                    informazioniProfiloUtente.urlProfileImage = {url_0: result.data.url_0, url_25: result.data.url_25, url_50: result.data.url_50, url_75: result.data.url_75, url_100: result.data.url_100}; 
+
+                    //informazioniProfiloUtente.urlProfileImage = {url_0: result.data.url_0, url_25: result.data.url_25, url_50: result.data.url_50, url_75: result.data.url_75, url_100: result.data.url_100}; 
+                    informazioniProfiloUtente.urlProfileImage = {url_0: result.data.url_0, url_50: result.data.url_50, url_100: result.data.url_100}; 
                     var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
                     setInformazioniProfiloUtente(nuoveInformazioniProfilo); 
                     setMessaggioAuth("Immagine di profilo aggiornata.");
@@ -75,7 +75,8 @@ export default function UploadImageLoader({navigation,route}){
                 var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
                 console.log(nuoveInformazioniProfilo);
                 //nuoveInformazioniProfilo.urlGalleryImages[result.data.name]=result.data.url;
-                nuoveInformazioniProfilo.urlGalleryImages.push({name: result.data.name, url_0: result.data.url_0, url_25: result.data.url_25, url_50: result.data.url_50, url_75: result.data.url_75, url_100: result.data.url_100});
+                //nuoveInformazioniProfilo.urlGalleryImages.push({name: result.data.name, url_0: result.data.url_0, url_25: result.data.url_25, url_50: result.data.url_50, url_75: result.data.url_75, url_100: result.data.url_100});
+                nuoveInformazioniProfilo.urlGalleryImages.push({name: result.data.name, url_0: result.data.url_0, url_50: result.data.url_50, url_100: result.data.url_100});
                 console.log(nuoveInformazioniProfilo);
                 setInformazioniProfiloUtente(nuoveInformazioniProfilo);
               }

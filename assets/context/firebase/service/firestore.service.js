@@ -151,20 +151,20 @@ export function _isProfiloCompletato(uid){
         var db = firebase.firestore();
         const idUser = firebase.auth().currentUser.uid;
         
-        //faccio un batch per eliminare tutti i riferimenti su firestore nei 4 documenti dei media
+        //faccio un batch per eliminare tutti i riferimenti su firestore nei 2 documenti dei media
         var batch = db.batch();
             //elimino riferimento immagine originale
         var eliminoUrlImmagineOriginale = db.collection("users").doc(idUser).collection("media").doc("0");
         batch.update(eliminoUrlImmagineOriginale,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
             //elimino riferimento immagine 25
-        var eliminoUrlImmagine25 = db.collection("users").doc(idUser).collection("media").doc("25");
-        batch.update(eliminoUrlImmagine25,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
+        //var eliminoUrlImmagine25 = db.collection("users").doc(idUser).collection("media").doc("25");
+        //batch.update(eliminoUrlImmagine25,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
             //elimino riferimento immagine 50
         var eliminoUrlImmagine50 = db.collection("users").doc(idUser).collection("media").doc("50");
         batch.update(eliminoUrlImmagine50,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
             //elimino riferimento immagine 75
-        var eliminoUrlImmagine75 = db.collection("users").doc(idUser).collection("media").doc("75");
-        batch.update(eliminoUrlImmagine75,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
+        //var eliminoUrlImmagine75 = db.collection("users").doc(idUser).collection("media").doc("75");
+        //batch.update(eliminoUrlImmagine75,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
             //elimino riferimento immagine 100
         var eliminoUrlImmagine100 = db.collection("users").doc(idUser).collection("media").doc("100");
         batch.update(eliminoUrlImmagine100,{[`gallery.${nome}`]: firebase.firestore.FieldValue.delete()});
@@ -173,19 +173,21 @@ export function _isProfiloCompletato(uid){
         return batch.commit().then((ris)=>{
             //riferimento in firestore eliminato...
             //elimino dallo storage tutte le 5 versioni
-            console.log("Elimino le 5 versioni sullo storage");
+            console.log("Elimino le 3 versioni sullo storage");
             var storage = firebase.storage().ref();
             
             var immagineOriginale = storage.child("users/"+idUser+"/"+nome);
-            var immagine25 = storage.child("users/"+idUser+"/"+nome+"_25");
+            //var immagine25 = storage.child("users/"+idUser+"/"+nome+"_25");
             var immagine50 = storage.child("users/"+idUser+"/"+nome+"_50");
-            var immagine75 = storage.child("users/"+idUser+"/"+nome+"_75");
+            //var immagine75 = storage.child("users/"+idUser+"/"+nome+"_75");
             var immagine100 = storage.child("users/"+idUser+"/"+nome+"_100");
 
-            const promises = [immagineOriginale.delete(), immagine25.delete(), immagine50.delete(),immagine75.delete(), immagine100.delete()];
+            //const promises = [immagineOriginale.delete(), immagine25.delete(), immagine50.delete(),immagine75.delete(), immagine100.delete()];
+            const promises = [immagineOriginale.delete(), immagine50.delete(), immagine100.delete()];
+            
             return Promise.all(promises)
                         .then((ris)=>{
-                            console.log("Le 5 versioni sono state correttamente eliminate");
+                            console.log("Le 3 versioni sono state correttamente eliminate");
                             return "all-versions-deleted";
                         }).catch((e)=>{
                             console.log("Non tutte le versioni sono state eliminate");
@@ -202,16 +204,18 @@ export function _isProfiloCompletato(uid){
     export function _eliminaImmagineDiProfilo(nome){
         console.log("elimino immagine................................................................................:");
         var idUser = firebase.auth().currentUser.uid;
-        //elimino dallo storage tutte le 5 versioni dell'immagine di profilo
+        //elimino dallo storage tutte le 3 versioni dell'immagine di profilo
         var storage = firebase.storage().ref();
         
         var immagineOriginale = storage.child("users/"+idUser+"/"+nome);
-        var immagine25 = storage.child("users/"+idUser+"/"+nome+"_25");
+        //var immagine25 = storage.child("users/"+idUser+"/"+nome+"_25");
         var immagine50 = storage.child("users/"+idUser+"/"+nome+"_50");
-        var immagine75 = storage.child("users/"+idUser+"/"+nome+"_75");
+        //var immagine75 = storage.child("users/"+idUser+"/"+nome+"_75");
         var immagine100 = storage.child("users/"+idUser+"/"+nome+"_100");
 
-        const promises = [immagineOriginale.delete(), immagine25.delete(), immagine50.delete(),immagine75.delete(), immagine100.delete()];
+        //const promises = [immagineOriginale.delete(), immagine25.delete(), immagine50.delete(),immagine75.delete(), immagine100.delete()];
+        const promises = [immagineOriginale.delete(), immagine50.delete(), immagine100.delete()];
+        
         return Promise.all(promises)
                     .then((ris)=>{
                         return "all-versions-deleted";
@@ -424,21 +428,22 @@ export function _isProfiloCompletato(uid){
        export async function _getAllMediaOfCurrentUser(){
             let uid = firebase.auth().currentUser.uid;
             return Promise.all([_getMediaProfiloContatto(uid,"0"),
-                               _getMediaProfiloContatto(uid,"25"),
+                               //_getMediaProfiloContatto(uid,"25"),
                                _getMediaProfiloContatto(uid,"50"),
-                               _getMediaProfiloContatto(uid,"75"),
+                               //_getMediaProfiloContatto(uid,"75"),
                                _getMediaProfiloContatto(uid,"100")])
                                     .then((ris)=>{
                                         let media = new Object();
-                                        media["profileImageUrl"]={url_0: ris[0].data().profileImageUrl, url_25: ris[1].data().profileImageUrl, url_50: ris[2].data().profileImageUrl, url_75: ris[3].data().profileImageUrl, url_100: ris[4].data().profileImageUrl }
+                                        //media["profileImageUrl"]={url_0: ris[0].data().profileImageUrl, url_25: ris[1].data().profileImageUrl, url_50: ris[2].data().profileImageUrl, url_75: ris[3].data().profileImageUrl, url_100: ris[4].data().profileImageUrl }
+                                        media["profileImageUrl"]={url_0: ris[0].data().profileImageUrl, url_50: ris[1].data().profileImageUrl, url_100: ris[2].data().profileImageUrl }
                                         media["gallery"] = {};
                                         let gallery = [];
-                                        for(key in ris[0].data().gallery){
+                                        for(let key in ris[0].data().gallery){
                                             console.log("chiave:"+key);
                                             console.log("media attuali:");
                                             console.log(media);
-                                            //media["gallery"][key]= {url_0: ris[0].data().gallery[key], url_25: ris[1].data().gallery[key], url_50: ris[2].data().gallery[key], url_75: ris[3].data().gallery[key], url_100: ris[4].data().gallery[key] }
-                                            gallery.push({name: key, url_0: ris[0].data().gallery[key], url_25: ris[1].data().gallery[key], url_50: ris[2].data().gallery[key], url_75: ris[3].data().gallery[key], url_100: ris[4].data().gallery[key] });
+                                            //gallery.push({name: key, url_0: ris[0].data().gallery[key], url_25: ris[1].data().gallery[key], url_50: ris[2].data().gallery[key], url_75: ris[3].data().gallery[key], url_100: ris[4].data().gallery[key] });
+                                            gallery.push({name: key, url_0: ris[0].data().gallery[key], url_50: ris[1].data().gallery[key], url_100: ris[2].data().gallery[key] });
                                         
                                         }
                                         
@@ -522,12 +527,12 @@ export function _isProfiloCompletato(uid){
                 let nomeCampoContatto = uidNewContact+"_response";
                 let nomeCampoUtenteCorrente = firebase.auth().currentUser.uid+"_response";
                 transaction.set(eventsChannel,{[`${nomeCampoContatto}`]:null, administrator: firebase.auth().currentUser.uid, lastAuthor: null, number_of_messages:0, [`${nomeCampoUtenteCorrente}`]:null});
-                //creo nel mio profilo la coppia {chatId: nuovoId, uid: contatto}
+                //creo nel mio profilo la coppia {chatId: nuovoId, uid: contatto, creation_data: data di oggi}
                 transaction.update(myConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:uidNewContact, contactName: nameNewContact, creation_data: new Date()})});
-                //creo nel profilo del contatto la coppia {chatId: nuovoId, uid: mioUid}
+                //creo nel profilo del contatto la coppia {chatId: nuovoId, uid: mioUid, creation_data: data di oggi}
                 transaction.update(contactConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:firebase.auth().currentUser.uid,contactName: myName, creation_data: new Date()})});   
                 //creo nel profilo del contatto una notifica
-                transaction.set(contactNotificationChannel,{author: firebase.auth().currentUser.uid, type: "JOIN", timestamp: new Date()}); 
+                transaction.set(contactNotificationChannel,{author: myName, type: "JOIN", timestamp: new Date()}); 
 
                 return nuovaConversazionePath.id;
             });
@@ -780,6 +785,20 @@ export function _isProfiloCompletato(uid){
             throw e;
         }
     }
+    
+
+    export function _ottieniAscoltatoreNuoveConversazioni(){
+        try{
+            //ascolto documento conversations nella raccolta users/chats/Conversations/
+            let db = firebase.firestore();
+            return db.collection("users")
+                     .doc(firebase.auth().currentUser.uid)
+                     .collection("chats")
+                     .doc("Conversations");
+        }catch(e){
+            throw e;
+        }
+    }
 
     export async function _removeNotification(id){
         try {
@@ -849,8 +868,8 @@ export function _isProfiloCompletato(uid){
                                 console.log("Trovato: "+doc.data().location.geohash);
                                 //e se il suo id è diverso da quello dell'utente corrente
                                 if(doc.id != firebase.auth().currentUser.uid){
-                                    //scarico media
-                                    //console.log("scarico media per documento "+doc.id+" ...");
+                                    //scarico media, ma solo quelli con granatura massima (evito controllo rules, ottimo per prestazioni)
+                                    
                                     promises.push(_getMediaProfiloContatto(doc.id,"100"));
                                     console.log("fine "+doc.data().location.geohash);
                                 }

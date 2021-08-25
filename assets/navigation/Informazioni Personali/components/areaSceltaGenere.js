@@ -25,10 +25,10 @@ const AreaSceltaGenere = (props) => {
         <Dialog.ScrollArea>
             <View style={{height:altezzaDevice*0.6, paddingVertical:20, justifyContent:"center",alignItems:"center"}}>
           <ScrollView contentContainerStyle={{flexGrow: 1, justifyContent: 'center'}} showsVerticalScrollIndicator={false}>
-          <TouchableOpacity color={MosPurple} onPress={()=>{setGender("maschio")}}>
+          <TouchableOpacity color={MosPurple} onPress={()=>{setGender("male")}}>
               <Text style={[styles.sottoCampo,{textAlign:"center", justifyContent:"center", color:MosPurple}]}>Maschio</Text>
           </TouchableOpacity>
-          <TouchableOpacity color={MosPurple} onPress={()=>{setGender("femmina")}}>
+          <TouchableOpacity color={MosPurple} onPress={()=>{setGender("female")}}>
               <Text style={[styles.sottoCampo,{textAlign:"center", justifyContent:"center", color:MosPurple}]}>Femmina</Text>
           </TouchableOpacity>
           <TouchableOpacity color={MosPurple} onPress={()=>{setGender("agender")}}>
