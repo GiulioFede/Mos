@@ -1,5 +1,5 @@
 
-export async function sendPushNotification(expoPushToken, title, content){
+export async function sendPushNotification(expoPushToken, title, content, chatId){
   
   try{
     console.log("send push notification a "+expoPushToken);
@@ -7,7 +7,8 @@ export async function sendPushNotification(expoPushToken, title, content){
           to: expoPushToken, //a chi?
           sound: 'default',
           title: title,
-          body: content
+          body: content,
+          data: {chatId: chatId}
       };
 
       await fetch('https://exp.host/--/api/v2/push/send', {

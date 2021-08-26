@@ -255,7 +255,7 @@ export default function AroundYouComponent(props){
                 console.log("invio una push notification a "+nameOfCard+" al token "+token);
                 try{
                //manda una push notification al contatto per avvertirlo che hai creato una conversazione
-                    await sendPushNotification(token,"Qualcuno ti trova interessante!", (informazioniProfiloUtente.name+" vorrebbe parlare con te."));
+                    await sendPushNotification(token,"Qualcuno ti trova interessante!", (informazioniProfiloUtente.name+" vorrebbe parlare con te."),"");
                 }catch(e){
                     console.log("errore nell'invio della push notification:"+e);
                 }

@@ -48,9 +48,9 @@ function orderChatByTimestamp(chat){
         //console.log("CONFRONTO");
         //console.log(a);
         //console.log(b);
-        let tempo1 = (a.value.lastMessage.timestamp==null)?a.creation_data.seconds:a.value.lastMessage.timestamp.seconds;
-        let tempo2 = (b.value.lastMessage.timestamp==null)?b.creation_data.seconds:b.value.lastMessage.timestamp.seconds;
-        console.log("confronto "+a.contactName+" con "+b.contactName+" con timestamp rispettivamente di: "+tempo1+" e "+tempo2+" , ossia in date "+new Date(tempo1*1000).toString()+" e "+new Date(tempo2*1000).toString());
+        let tempo1 = (a.value.lastMessage.timestamp==null)?(a.creation_data.seconds)*1000:a.value.lastMessage.timestamp;
+        let tempo2 = (b.value.lastMessage.timestamp==null)?(b.creation_data.seconds)*1000:b.value.lastMessage.timestamp;
+        console.log("confronto "+a.contactName+" con "+b.contactName+" con timestamp rispettivamente di: "+tempo1+" e "+tempo2+" , ossia in date "+new Date(tempo1).toString()+" e "+new Date(tempo2).toString());
         return tempo2 - tempo1
     });
 
@@ -63,13 +63,15 @@ var newChatListener = null;
 export default function ChatListComponent({navigation, route}){
 
     //contesto autenticazione
-    var {listOfConversations,setListOfConversations,ottieniAscoltatoreNuoveConversazioni, getChatSummaryInformation, getMediaProfiloContatto} = useContext(AutenticazioneUtente);
+    var {listOfConversations,setListOfConversations,ottieniAscoltatoreNuoveConversazioni, getChatSummaryInformation, getMediaProfiloContatto, getUserInformation} = useContext(AutenticazioneUtente);
     //se true indica che si stanno caricando le chat
     const [isChatLoading, setIsChatLoading] = useState(true);
     //lista delle conversazioni con relative informazioni
     const [chatsSummary, setChatsSummary] = useState([]);
     //lista delle informazioni sui media di ogni itente delle conversazioni sopra
     const [mediaContatti, setMediaContatti] = useState([]);
+    //lista delle informazioni base dei contatti
+    const [infoProfiloContatti, setInfoProfiloContatti] = useState([]);
 
 
     console.log("TUTTE LE CONVERSAZIONI E I PROFILI UTENTI SONO STATI CARICATI");
@@ -194,11 +196,14 @@ export default function ChatListComponent({navigation, route}){
                     //qui tutte le informazioni sommarie sono state caricate. Li inserisco nell'array che userò ovunque (sfrutto ciclo for sotto)
                     console.log(summaries[0].data());
                     //Prelevo media utente
-                    const promisesMediaContatti = []; //qui inserisco tutte le promise 
-                    const chatsSummaryTmp = [];
+                    const promisesMediaContatti = []; //qui inserisco tutte le promise per le immagini
+                    const chatsSummaryTmp = []; //qui avrò tutte le informazioni sulla conversazione
+                    const promisesInfoProfileContatti = []; //qui avrò tutte le informazioni sul profilo dei contatti
                     for(var i = 0; i < listOfConversations["conversations"].length; i++) {
                         //sfrutto questo ciclo per salvarmi i sommari delle conversazioni
                         let conversation = listOfConversations["conversations"][i];
+                        console.log("conversazione scaricata");
+                        console.log(conversation);
                         chatsSummaryTmp.push({key:i.toString(),chatId:conversation.chatId, creation_data: conversation.creation_data,  value: summaries[i].data(), contactName:conversation.contactName, contactUid:conversation.uid });
                         /*
                             il chats summary, ogni suoi elemento, possiede un campo 'level_of_visibility' 
@@ -208,6 +213,9 @@ export default function ChatListComponent({navigation, route}){
                        if(conversation.level_of_visibility==1) livelloDiSgranatura = "50";
                        else if(conversation.level_of_visibility==2) livelloDiSgranatura = "100";
                         promisesMediaContatti.push(getMediaProfiloContatto(conversation.uid, livelloDiSgranatura));
+
+                        //prelevo informazioni base utente
+                        promisesInfoProfileContatti.push(getUserInformation(conversation.uid));
                     }
 
                     //ordino per timestamp
@@ -215,7 +223,7 @@ export default function ChatListComponent({navigation, route}){
 
                     setChatsSummary(chatsSummaryTmpOrdered);
 
-                    //avvio promises
+                    //avvio promises per i media
                     Promise.all(promisesMediaContatti)
                         .then((mediaContattiResult)=>{
                             console.log("Tutti i media dei contatti sono stati scaricati");
@@ -227,7 +235,6 @@ export default function ChatListComponent({navigation, route}){
                             }
                             setMediaContatti(mediaContattiTmp);
                             //indico termine del caricamente delle chat
-                            setIsChatLoading(false);
                             console.log("fine caricamento conversazioni");
                             //console.log(chatsSummaryTmp);
                             //console.log(mediaContattiTmp);
@@ -235,6 +242,17 @@ export default function ChatListComponent({navigation, route}){
                         }).catch((err)=>{
                             console.log("Si è verificato un errore durante il recupero dei media dei contatti: "+err);
                         })
+                    //avvio promises per le info dei profili
+                    Promise.all(promisesInfoProfileContatti)
+                        .then((infoProfiles)=>{
+                            for(let i=0; i<infoProfiles.length;i++)
+                                infoProfiloContatti.push(infoProfiles[i].data());
+                            setIsChatLoading(false);
+                        }).catch((err)=>{
+                                console.log("Si è verificato un errore durante il recupero delle informazioni profilo: "+err);
+                        })
+
+
                 }).catch((err)=>{
                     console.log("Si è verificato un errore durante il recupero delle informazioni sommarie sulle conversazioni: "+err);
                 })
@@ -316,8 +334,8 @@ export default function ChatListComponent({navigation, route}){
         setChatsSummary([...newChatList]);
     }
 
-    //console.log("chats summary");
-    //console.log(chatsSummary);
+    console.log("info profili scaricati");
+    console.log(infoProfiloContatti);
     
     if(isChatLoading==false){
         return (
@@ -326,7 +344,11 @@ export default function ChatListComponent({navigation, route}){
                 <FlatList
                     data={chatsSummary}
                     keyExtractor={item=>item.key}
-                    renderItem={({item, index})=>(
+                    renderItem={({item, index})=>{
+                        console.log("ITEM DA RIVEDERE");
+                        console.log(item);
+                        return(
+                        
                         <>
                         <ChatPreview
                                     navigation ={navigation}
@@ -338,10 +360,11 @@ export default function ChatListComponent({navigation, route}){
                                     route = {route}
                                     indicePosizioneChatInArray={index}
                                     ordinaListaChat={ordinaListaChat}
+                                    token = {infoProfiloContatti[parseInt(item.key)].push_notification_token}
                                     />
                         <Divider />
                         </>
-                    )}
+                    )}}
                 >
 
                 </FlatList>

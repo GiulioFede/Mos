@@ -19,10 +19,11 @@ import { getAgeFromTimestamp } from '../context/utilities/functions.utilities';
 import * as Notifications from 'expo-notifications'
 import registerForPushNotificationsAsync from '../context/push_notifications/registerForPushNotifications';
 import Constants from 'expo-constants';
+import { idChatCorrente } from './HomeScreen/chat/screen/chat detail/chat_detail';
 
 /*
   NB: Questa funzione decide solo come comportarsi quando si riceve una notifica MA l'app è in FOREGROUND.
-      Infatti io NON voglio che parta alcun suono (immagina di chattare, stai rregistrando e ti arriva una
+      Infatti io NON voglio che parta alcun suono (immagina di chattare, stai registrando e ti arriva una
       notifica con suono, brutta cosa ;)). Voglio comunque che la notifica mi spunti sopra. Per questo motivo
       setterò shouldShowAlert=true (voglio che mi spunti) ma shouldPlaySound=false (non voglio alcun suono).
 
@@ -183,8 +184,27 @@ export default function HomeNavigator({navigation}) {
                                   //2) mi registro affinchè sia avvertito ogni volta che una notifica arrivi quando l'app è in FOREGROUND
                                   notificationListener.current = Notifications.addNotificationReceivedListener(notif => {
                                     //se sono qui allora potrebbe essere arrivata (true o false) una notifica mentre ero in foreground
-                                    console.log("NOTIFICABBBBB");
-                                    //setNotification(notif);
+                                    console.log("notifica ricevuta dalla chat di id: "+notif.request.content.data.chatId);
+                                    console.log(notif);
+                                    console.log(idChatCorrente);
+                                    //se la notifica proviene da una chat su cui sono per adesso allora non la mostro (appena esco dalla chat, nel return del suo useEffect riattivo la notifica)
+                                    if(idChatCorrente==notif.request.content.data.chatId){
+                                      Notifications.setNotificationHandler({
+                                        handleNotification: async () => ({
+                                          shouldShowAlert: false,
+                                          shouldPlaySound: false,
+                                          shouldSetBadge: false
+                                        })
+                                      });
+                                    }else {
+                                      Notifications.setNotificationHandler({
+                                        handleNotification: async () => ({
+                                          shouldShowAlert: true,
+                                          shouldPlaySound: false,
+                                          shouldSetBadge: false
+                                        })
+                                      });
+                                    }
                                   })
 
                                   console.log("mi registro alla notifica tipo 2");

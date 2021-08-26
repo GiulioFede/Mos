@@ -657,18 +657,34 @@ export function _isProfiloCompletato(uid){
                                     ){
         console.log("invio messaggio...")
         var db = firebase.firestore();
-        
+        var batch = db.batch();
         //se il messaggio è un semplice testo
         if(type=="mex"){
             try{
-                return db.collection("chats") //nella sezione chats
+                let data = new Date().getTime();
+                var inserisciNelCanale = db.collection("chats") //nella sezione chats
                      .doc(chatId) //nella conversazione chatId
                      .collection(contactUid) //nel canale destinato al contatto col quale si sta messaggiando
-                     .add({
-                         timestamp: new Date().getTime(),
+                     .doc();
+                batch.set(inserisciNelCanale,{
+                         timestamp: data,
                          type: type,
                          value: value
                      });
+                var aggiornaUltimoMessaggio = db.collection("chats")
+                     .doc(chatId);
+                batch.update(aggiornaUltimoMessaggio,{
+                    lastMessage: {
+                        author: firebase.auth().currentUser.uid,
+                        timestamp: data,
+                        type: type,
+                        value: value
+                    },
+                    'statistics.number_of_messages': firebase.firestore.FieldValue.increment(1)
+                }, {merge:true})
+
+                return batch.commit();
+                     
             }catch(e){
                 throw e;
             }
@@ -698,14 +714,29 @@ export function _isProfiloCompletato(uid){
                 await destinationFolderRef.put(blob);
                 let downloadUrl = await destinationFolderRef.getDownloadURL();
                 //in caso di successo invio anche su firestore un riferimento
-                return db.collection("chats") //nella sezione chats
-                     .doc(chatId) //nella conversazione chatId
-                     .collection(contactUid) //nel canale destinato al contatto col quale si sta messaggiando
-                     .add({
-                         timestamp: name,
-                         type: type,
-                         value: downloadUrl
-                     });
+
+                var inserisciNelCanale = db.collection("chats") //nella sezione chats
+                                            .doc(chatId) //nella conversazione chatId
+                                            .collection(contactUid) //nel canale destinato al contatto col quale si sta messaggiando
+                                            .doc();
+                batch.set(inserisciNelCanale,{
+                            timestamp: name,
+                            type: type,
+                            value: downloadUrl
+                        });
+                var aggiornaUltimoMessaggio = db.collection("chats")
+                                                .doc(chatId);
+                batch.update(aggiornaUltimoMessaggio,{
+                        lastMessage: {
+                            author: firebase.auth().currentUser.uid,
+                            timestamp: name,
+                            type: type,
+                            value: "" 
+                        },
+                        'statistics.number_of_messages': firebase.firestore.FieldValue.increment(1)
+                    }, {merge:true})
+
+                return batch.commit();
             }catch(e){
                 console.log(e);
                 throw e;

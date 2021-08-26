@@ -6,6 +6,7 @@ import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaScher
 import { MosCeleste, coloreSchermataDiCaricamento, MosPurple, MosViola } from "../../../../../resources/colors";
 import MessageModel from "./components/messageModel";
 import * as FileSystem from 'expo-file-system';
+import { sendPushNotification } from '../../../../../context/push_notifications/functions';
 
 import * as firebase from 'firebase';
 import 'firebase/firestore';
@@ -21,7 +22,7 @@ import ListaMessaggi from "./components/listaMessaggi";
 import RecordingKeyboard from "./components/recordingKeyboard";
 import { RowsOfMessagesToUpdate } from "../context/chatContext";
 import DecisionScreen from "./components/decisionScreen";
-
+import * as Notifications from 'expo-notifications'
 //contiene le row da passare alla flat list per indicargli di aggiornare lo stato in "succeed"
 //const [arrayOfRowsToUpdateState, setarrayOfRowsToUpdateState] = useState({});
 
@@ -40,13 +41,16 @@ var idChatAlreadyOpened = [];
 let ascoltatoreNuoviMessaggi = null;
 let ascoltatoreStatistics = null;
 let THRESHOLD = 3;
+
+export var idChatCorrente = null;
+
 export default function ChatDetail({ navigation,route}){
 
     const [messaggio, setMessaggio] = useState("");
     //conterrà l'intera chat
     const [chat, setChat] = useState([]);
     //contesto autenticazione
-    const {getUtenteCorrente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi, ottieniAscoltatoreStatistics, makeDecision, upgradeConversation,removeGroupOfAudiosBeforeTimestamp, removeMessages} = useContext(AutenticazioneUtente);
+    const {getUtenteCorrente,informazioniProfiloUtente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi, ottieniAscoltatoreStatistics, makeDecision, upgradeConversation,removeGroupOfAudiosBeforeTimestamp, removeMessages} = useContext(AutenticazioneUtente);
     
     const {addNewUpdate} = useContext(RowsOfMessagesToUpdate);
 
@@ -54,7 +58,7 @@ export default function ChatDetail({ navigation,route}){
     const lastMessage = useRef(null);
 
     //uid utente
-    const {chatId, contactUid, name} = route.params;
+    const {chatId, contactUid, name, token} = route.params;
     console.log(" MYID CHAT");
     console.log(route.params);
     //reference alla flat list
@@ -108,6 +112,9 @@ export default function ChatDetail({ navigation,route}){
                                 try{
                                     //await local_storage.storeNewMessage(getUtenteCorrente()+contactUid+"",getUtenteCorrente(),"29/07/2021","mex",messaggio, "succeed");
                                     await local_storage.updateMessageState(getUtenteCorrente()+contactUid+"",nuovaChiave,"succeed");
+                                    //invio push notification
+                                    console.log("invio push notification a "+name+" con token "+token);
+                                    await sendPushNotification(token,informazioniProfiloUtente.name+" ti ha inviato un messaggio", messaggio, chatId);
                                     console.log("Messaggio salvato in locale");
                                     console.log("Salvo nella chat "+contactUid+" di chiave "+nuovaChiave+" lo stato succeed"); 
                                     addNewUpdate(contactUid,nuovaChiave,"succeed");
@@ -287,6 +294,8 @@ export default function ChatDetail({ navigation,route}){
     useEffect(()=>{
         isMounted.current = true;
         const bh = BackHandler.addEventListener('hardwareBackPress',tornaIndietro);
+        //setto l'id della chat come corrente cosi da non mostrarmi notifiche su questa chat
+        idChatCorrente = chatId;
 
         console.log("Sto prelevando tutti i messaggi scambiati con l'utente corrente...");
         
@@ -356,6 +365,14 @@ export default function ChatDetail({ navigation,route}){
             isMounted.current = false;
             console.log("rimuovo ascoltatore nuovi messaggi");
             if(ascoltatoreNuoviMessaggi) ascoltatoreNuoviMessaggi(); //rimuovo listener
+            //riattivo le notifiche
+            Notifications.setNotificationHandler({
+                handleNotification: async () => ({
+                  shouldShowAlert: true,
+                  shouldPlaySound: false,
+                  shouldSetBadge: false
+                })
+              });
         }
         
     },[])

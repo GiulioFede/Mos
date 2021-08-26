@@ -26,6 +26,11 @@ import { fontSizeCampi } from '../../../../../../context/variabili_globali/varia
 
 // Declare component 
 function MessageBubble({messaggio, type, author, currentUser}) {
+    console.log("MESSAGE BUBBLE");
+    console.log(messaggio);
+    console.log(type);
+    console.log(author);
+    console.log(currentUser);
     return (
         <View>
         <View style={[styles.item, styles.itemIn]}>
@@ -35,7 +40,7 @@ function MessageBubble({messaggio, type, author, currentUser}) {
                             <View style={{ paddingRight:5, justifyContent:"center"}}>
                                 <Entypo name="megaphone" size={fontSizeCampi} color="white"/>
                             </View> } 
-          {messaggio!=null && <Text style={{paddingTop: 5, color: 'white', fontSize:fontSizeCampi, fontStyle:type=="text"?"normal":"italic"}}>{type=="text"?messaggio:"messaggio vocale"}</Text>} 
+          {messaggio!=null && <Text style={{paddingTop: 5, color: 'white', fontSize:fontSizeCampi, fontStyle:type=="text"?"normal":"italic"}}>{type=="mex"?messaggio:"messaggio vocale"}</Text>} 
           {messaggio==null && <Text style={{paddingTop: 5, color: messaggio==null?MosPurple:"white", fontSize:fontSizeCampi, fontStyle:"italic"}}>fai il primo passo!</Text>} 
           <View
           style={[

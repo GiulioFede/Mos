@@ -26,12 +26,12 @@ import { fromDateToHHMM } from "../../../../../../context/utilities/functions.ut
 
 */
 
-const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,indicePosizioneChatInArray, ordinaListaChat}) => {
+const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,indicePosizioneChatInArray, ordinaListaChat, token}) => {
 
     //console.log("Chat ID di "+nome+" -->");
     //console.log(chatId);
-    //console.log("Chat CONTENT-->");
-    //console.log(content);
+    console.log("Chat CONTENT-->");
+    console.log(token);
 
     const [lastContent, setLastContent] = useState(content);
     const ascoltatoreUltimoMessaggio = useRef(null);
@@ -41,7 +41,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,i
 
     function apriDettagliChat(){
         console.log("apro dettagli chat con utente "+contactUid);
-        navigation.navigate("Chat detail",{chatId: chatId, contactUid: contactUid, name: nome});
+        navigation.navigate("Chat detail",{chatId: chatId, contactUid: contactUid, name: nome, token: token});
     }
 
     function apriDettagliProfilo(){
@@ -110,7 +110,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,i
             }
         }
 
-        //ascoltaUltimoMessaggio();
+        ascoltaUltimoMessaggio();
 
         return () =>{
             console.log("rimuovo ascoltatore ultimo messaggio");
@@ -177,7 +177,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,i
                {/* data ultimo messaggio */}
                {lastContent.lastMessage.timestamp!=null  && lastContent.lastMessage.timestamp!=undefined &&
                 <View style={styles.contenitoreDataUltimoMessaggio}>
-                    <Text style={[styles.dataUltimoMessaggio,{color:lastContent.lastMessage.value==null?"white":"#52575D", textAlign:"right"}]}>{fromDateToHHMM(lastContent.lastMessage.timestamp.seconds)}</Text>
+                    <Text style={[styles.dataUltimoMessaggio,{color:lastContent.lastMessage.value==null?"white":"#52575D", textAlign:"right"}]}>{fromDateToHHMM(lastContent.lastMessage.timestamp)}</Text>
                 </View>
                 }
                 {/* NEW se la chat è inviolata */}

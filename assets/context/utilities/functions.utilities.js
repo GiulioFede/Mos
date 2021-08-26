@@ -63,11 +63,11 @@ export function fromDateToGGMMYYYYHHMM(seconds){
 
 function pad2(n) { return n < 10 ? '0' + n : n }
 
-export function fromDateToHHMM(seconds){
+export function fromDateToHHMM(milliseconds){
 
   //data di oggi
   const today = new Date();
-  const date = new Date(seconds*1000);
+  const date = new Date(milliseconds);
 
   //se le due date sono dello stesso giorno, ritorno solo l'ora e il minuto
   if(datesAreOnSameDay(today,date))
