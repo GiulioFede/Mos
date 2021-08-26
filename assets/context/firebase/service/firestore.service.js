@@ -849,8 +849,6 @@ export function _isProfiloCompletato(uid){
             let db = firebase.firestore();
             return db.collection("chats")
                 .doc(chatID)
-                .collection("events")
-                .doc("statistics");
         }catch(e){
             throw e;
         }

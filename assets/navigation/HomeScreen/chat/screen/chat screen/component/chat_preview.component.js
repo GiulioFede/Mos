@@ -41,7 +41,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,i
 
     function apriDettagliChat(){
         console.log("apro dettagli chat con utente "+contactUid);
-        navigation.navigate("Chat detail",{chatId: chatId, contactUid: contactUid, name: nome, token: token});
+        navigation.navigate("Chat detail",{chatId: chatId, contactUid: contactUid, name: nome, token: token, urlProfileImageContactUser:media.value.profileImageUrl});
     }
 
     function apriDettagliProfilo(){

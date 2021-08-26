@@ -4,6 +4,7 @@ import { Dialog, Portal, Button } from "react-native-paper";
 import { altezzaDevice, fontSizeTitolo, larghezzaDevice } from "../../../../../../context/variabili_globali/variabiliGlobali";
 import {useFonts, Lobster_400Regular} from '@expo-google-fonts/lobster';
 import { MosCeleste, MosPurple } from "../../../../../../resources/colors";
+import local_storage from "../../../../../../context/local_storage/localStorage";
 
 const loadPhrase = "Attendi"; //cambiarla a seconda della lingua
 const questionPhrase = "Vuoi renderti più visibile?";
@@ -15,9 +16,10 @@ const DecisionScreen = forwardRef((props, ref) => {
      const [uri2error, setUri2Error] = useState(false);
      const [question, setQuestion ] = useState("Vuoi renderti più visibile?");
      const [refresh, setRefresh] = useState(false);
+     const [urlProfileImage, setUrlProfileImage] = useState(null);
      const current_statistics = useRef(null);
-
-     const {makeDecision,upgradeConversation, chatID, uidCurrentUser, contactUid} = props;
+     const isMounted = useRef(false);
+     const {makeDecision,upgradeConversation, chatID, uidCurrentUser, contactUid, contactName,urlProfileImageContactUser,current_level_of_visibility,informazioniProfiloUtenteCorrente} = props;
 
      useImperativeHandle(ref, () => ({
         show(statistics){
@@ -105,10 +107,41 @@ const DecisionScreen = forwardRef((props, ref) => {
 
     console.log("STATISTICHE ATTUALI");
     console.log(current_statistics.current);
+
+    
     useEffect(()=>{
         opacityTransition();
         motionTransition();
 
+        async function inizializzaImmagineProfiloUtenteCorrente(){
+            isMounted.current = true;
+            //carico l'immagine del profilo (tento di salvarla, ma se esiste già, mi viene ritornato l'uri locale)
+            console.log("il livello corrente di visibilità è: "+current_level_of_visibility);
+            let actual_remote_uri = "";
+            if(current_level_of_visibility==null || current_level_of_visibility==undefined || current_level_of_visibility==0)
+                actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_100"];
+            else if(current_level_of_visibility==1) actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_50"];
+                //else if(visibility=="75") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_75"];
+            else if(current_level_of_visibility==2) actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_0"];
+
+            try{
+                let local_uri = await local_storage.saveImageLocally(uidCurrentUser,actual_remote_uri);
+                console.log("Local uri:"+local_uri);
+                if(isMounted.current==true){
+                    setUrlProfileImage(local_uri);
+                }
+            }catch(e){
+                if(isMounted.current==true)
+                    setUrlProfileImage(actual_remote_uri);
+                console.log("eccezione galleria: "+e);
+                //se sopra ci sono degli errori stai tranquillo, comunqe actual_remote_uri è un uri valido per scaricare l'immagine 
+            }
+        }
+
+        inizializzaImmagineProfiloUtenteCorrente();
+
+        return () => isMounted.current = false;
+        
     },[refresh])
 
     //questa funzione viene chiamata quando si preme Si o No alla domanda "Vuoi renderti più visibile?"
@@ -168,17 +201,17 @@ const DecisionScreen = forwardRef((props, ref) => {
                         </View>
                         <View style={{height:"40%", justifyContent:"center", alignItems:"center", flexDirection:"row"}}>
                             <Animated.View style={[styles.contenitoreImmagineProfilo,{top: topTransitionAnimation,opacity:topOpacityAnimation, left:10, borderColor:"white", borderWidth:2}]}>
-                                {uri1error== false && <Image source={{uri: "https://data.whicdn.com/images/339581930/original.jpg"}} resizeMode="cover"  style={styles.immagineProfilo} onError={()=>{setUri1Error(true)}} onLoadEnd={()=>{fromTopToBottomTransition(); fromTopToBottomOpacity()}} />}
-                                {uri1error== true && <Image  source={require('../../../../../../resources/images/img-profile-not-found.png')} resizeMode="cover"  style={styles.immagineProfilo} onLoadEnd={()=>{fromTopToBottomTransition(); fromTopToBottomOpacity()}} />}
+                                {uri1error== false && urlProfileImage!=null && <Image source={{uri: urlProfileImage}} resizeMode="cover"  style={styles.immagineProfilo} onError={()=>{setUri1Error(true)}} onLoadEnd={()=>{fromTopToBottomTransition(); fromTopToBottomOpacity()}} />}
+                                {uri1error== true && urlProfileImage!=null && <Image  source={require('../../../../../../resources/images/img-profile-not-found.png')} resizeMode="cover"  style={styles.immagineProfilo} onLoadEnd={()=>{fromTopToBottomTransition(); fromTopToBottomOpacity()}} />}
                             </Animated.View>
                             <Animated.View style={[styles.contenitoreImmagineProfilo,{top:bottomTransitionAnimation,opacity:bottomOpacityAnimation, right:10,borderColor:"white", borderWidth:2}]}>
-                                {uri2error==false && <Image source={{uri: "https://www.stockvault.net/data/2019/09/02/269196/preview16.jpg"}} resizeMode="cover"  style={styles.immagineProfilo} onError={()=>{setUri2Error(true)}} onLoadEnd={()=>{fromBottomToTopTransition(); fromBottomToTopOpacity()}}/>}
+                                {uri2error==false && <Image source={{uri: urlProfileImageContactUser}} resizeMode="cover"  style={styles.immagineProfilo} onError={()=>{setUri2Error(true)}} onLoadEnd={()=>{fromBottomToTopTransition(); fromBottomToTopOpacity()}}/>}
                                 {uri2error==true && <Image  source={require('../../../../../../resources/images/img-profile-not-found.png')} resizeMode="cover"  style={styles.immagineProfilo} onLoadEnd={()=>{fromBottomToTopTransition(); fromBottomToTopOpacity()}} />}
                             </Animated.View>
                         </View>
                         <View style={{flexGrow:1, justifyContent:"center", padding:1, margin:5}}>
                             <Text style={styles.question}>{question} {question==loadPhrase?"Lucy...":""}</Text>
-                            {question!=loadPhrase && <Text style={styles.subquestion}>Sia tu che Lucy dovrete essere daccordo, altrimenti continuerete per un altro pò prima che vi venga richiesto ancora</Text>}
+                            {question!=loadPhrase && <Text style={styles.subquestion}>Sia tu che {contactName} dovrete essere daccordo, altrimenti continuerete per un altro pò prima che vi venga richiesto ancora.</Text>}
                         </View>
 
                         {question!=loadPhrase &&

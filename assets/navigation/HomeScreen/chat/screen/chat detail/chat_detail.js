@@ -58,7 +58,7 @@ export default function ChatDetail({ navigation,route}){
     const lastMessage = useRef(null);
 
     //uid utente
-    const {chatId, contactUid, name, token} = route.params;
+    const {chatId, contactUid, name, token, urlProfileImageContactUser} = route.params;
     console.log(" MYID CHAT");
     console.log(route.params);
     //reference alla flat list
@@ -215,11 +215,12 @@ export default function ChatDetail({ navigation,route}){
                                 if(doc.metadata.hasPendingWrites==false){
 
                                     let stat = doc.data();
+                                    console.log("nuove statistiche ricevute");
                                     console.log(stat);
                                     statistics.current = JSON.parse(JSON.stringify(stat));
 
                                     //se il numero di messaggi è un multiplo di THRESHOLD MA la visibilità è minore di 2 (dove 2 sta per massima visibilità)
-                                    if( stat.number_of_messages!=0 && (stat.number_of_messages % THRESHOLD) == 0 ){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
+                                    if( stat.statistics.number_of_messages!=0 && (stat.statistics.number_of_messages % THRESHOLD) == 0 ){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
                                         /*
                                             mostro la finestra in cui chiedo di prendere una decisione se svelarsi o meno.
                                             La finestra mostrerà i seguenti messaggi (letti da statistics.current):
@@ -232,17 +233,17 @@ export default function ChatDetail({ navigation,route}){
 
 
                                         console.log("Dettagli");
-                                        console.log(stat[contactUid+"_response"]);
-                                        console.log(stat[getUtenteCorrente()+"_response"]);
+                                        console.log(stat.statistics[contactUid+"_response"]);
+                                        console.log(stat.statistics[getUtenteCorrente()+"_response"]);
 
                                         //se non sono amministartore dovrò attendere fino a che il % numero messaggi è != da THRESHOLD
                                         //se invece sono amministratore devo fare ogni volta i seguenti controlli
                                         //in particolare tali controlli dovrò farli solo se ho già dato la mia risposta in quanto le stesse azioni verranno fatte in DecisionScreen.js quando invece non ho preso decisioni
-                                        if(stat[getUtenteCorrente()+"_response"]!=null && getUtenteCorrente()==stat.administrator) {
+                                        if(stat.statistics[getUtenteCorrente()+"_response"]!=null && getUtenteCorrente()==stat.statistics.administrator) {
                                             //se l'utente corrente ha risposto
-                                            if(stat[contactUid+"_response"]!=null){
+                                            if(stat.statistics[contactUid+"_response"]!=null){
                                                     //se la risposta dell'utente è true e la mia è true faccio l'upgrade
-                                                    if(stat[contactUid+"_response"]==true && stat[getUtenteCorrente()+"_response"]==true){
+                                                    if(stat.statistics[contactUid+"_response"]==true && stat.statistics[getUtenteCorrente()+"_response"]==true){
                                                         //faccio upgrade
                                                         await upgradeConversation(chatId,true,contactUid);
                                                         console.log("upgrade riuscito con successo");
@@ -281,7 +282,7 @@ export default function ChatDetail({ navigation,route}){
         }
     }
 
-    //ascoltaStatistics();
+    ascoltaStatistics();
     
 
     return () => {
@@ -373,6 +374,8 @@ export default function ChatDetail({ navigation,route}){
                   shouldSetBadge: false
                 })
               });
+              //resetto id chat corrente
+              idChatCorrente = null;
         }
         
     },[])
@@ -688,6 +691,9 @@ export default function ChatDetail({ navigation,route}){
         setOpenRecordingKeyboard(true);
     }
 
+    console.log("STATISTICHEEEE");
+    console.log(statistics.current);
+
     useEffect(()=>{
         //se la voglio aprire...
         if(openRecordingKeyboard==true)
@@ -801,7 +807,12 @@ export default function ChatDetail({ navigation,route}){
                       upgradeConversation = {upgradeConversation} 
                       chatID={chatId}
                       uidCurrentUser={getUtenteCorrente()}
-                      contactUid = {contactUid}/>
+                      contactUid = {contactUid}
+                      contactName = {name}
+                      urlProfileImageContactUser={urlProfileImageContactUser}
+                      current_level_of_visibility = {statistics.current!=undefined?statistics.current.level_of_visibility:0}
+                      informazioniProfiloUtenteCorrente = {informazioniProfiloUtente}
+                      />
 
       <Snackbar
             visible={snackBarMessage?true:false}
