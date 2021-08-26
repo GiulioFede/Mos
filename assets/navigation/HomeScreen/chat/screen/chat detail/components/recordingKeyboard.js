@@ -221,7 +221,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                    //aggiugo alla chat
                    let local_uri = await local_storage.saveAudioIntoFolder(getUtenteCorrente(),contactUid,nuovaChiave, getUtenteCorrente(),new Date(), uri);
                    //creo nuovo messaggio    
-                   let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:new Date()+"", type:"audio",content:local_uri, state:"in-progress"}
+                   let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:new Date().getTime(), type:"audio",content:local_uri, state:"in-progress"}
                    let chatTmp = [newMex,...chat];
                    setChat(chatTmp);
                    //scrollo in basso
@@ -230,7 +230,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                    console.log("(in-progress)--> invio audio "+nuovaChiave+" in remoto...");
                    setOpenRecordingKeyboard(false);
                    //salvo audio in remoto, ma uso approccio asincrono per liberare la UI. Se avviene qualche errore tolgo quello appena inserito
-                   inviaNuovoMessaggio("jWeGrG0ewsMicCGSeATI",contactUid,"audio", uri,
+                   inviaNuovoMessaggio(chatId,contactUid,"audio", uri,
                        async(ris) =>{
                         try{
                            //l'audio è stato salvato con successo, lo lascio cosi com'è

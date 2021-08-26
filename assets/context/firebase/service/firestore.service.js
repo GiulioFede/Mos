@@ -597,6 +597,7 @@ export function _isProfiloCompletato(uid){
                                                 callbackSuccess,
                                                 callbackFailure){
 
+            console.log("_invia nuovo messaggio "+type);
             //se manca la connessione chiamo subito la callback di failure
             let connection_state = await NetInfo.fetch();
             if(connection_state.isConnected==false) callbackFailure();
@@ -604,18 +605,16 @@ export function _isProfiloCompletato(uid){
             if(array_of_requests.length==0){
                 array_of_requests.push([chatId,contactUid,type,value,{'onSuccess': function()  {callbackSuccess();}},{'onSuccess': function()  {callbackFailure();}}]);
                     try{
-                        let served = 0;
                         while(1){
                             console.log("eseguo richieste di invio messaggi");
                             await array_of_requests.reduce( async(oldPromise,request_params) =>{
                                 try{
-                                    served++;
                                     await oldPromise;
                                     console.log("SUCCESSO: ESEGUO RICHIESTA ARRAY_REQUESTS");
                                     console.log(request_params[0]+","+request_params[1]+","+request_params[2]+","+request_params[3]);
                                     console.log(request_params[4]);
                                     //invio messaggio
-                                    await _inviaMessaggio(request_params[0],request_params[1],request_params[2],request_params[3], served);
+                                    await _inviaMessaggio(request_params[0],request_params[1],request_params[2],request_params[3]);
                                     console.log("messaggio inviato");
                                     //se è andato tutto bene eseguo la callback di successo
                                     await request_params[4]['onSuccess']();
@@ -654,8 +653,8 @@ export function _isProfiloCompletato(uid){
     export async function _inviaMessaggio(chatId, 
                                     contactUid, 
                                     type, 
-                                    value,
-                                    served){
+                                    value
+                                    ){
         console.log("invio messaggio...")
         var db = firebase.firestore();
         
@@ -666,10 +665,9 @@ export function _isProfiloCompletato(uid){
                      .doc(chatId) //nella conversazione chatId
                      .collection(contactUid) //nel canale destinato al contatto col quale si sta messaggiando
                      .add({
-                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                         timestamp: new Date().getTime(),
                          type: type,
-                         value: value,
-                         served: served
+                         value: value
                      });
             }catch(e){
                 throw e;
@@ -683,10 +681,19 @@ export function _isProfiloCompletato(uid){
                 let file = await fetch(value);
                 let blob = await file.blob();
                 let storage = firebase.storage();
-                let name = getRandomString(10);
+                /*
+                    Come nome del file utilizzo il timestamp in millisecondi. In questo modo quando l'utente si collegherà,
+                    aprirà la chat e ci saranno per esempio 5 nuovi messaggi lui li preleverà tutti e 5 e solo dopo avvierà 
+                    una eliminazione dei 5 file con questo ordine:
+                        1) lista tutti i file
+                        2) per ogni file presente, se il suo nome è minore o uguale dell'ultimo nome/timestamp ricevuto allora lo elimina
+                        3) se la 2) per un file non risulta vera è il caso in cui, mentre scarico i 5 file se ne aggiunge un 6 che però non ho ancora salvato in locale
+                           quindi grazie alla logica della 2) non lo elimino ma sarà l'ultimo file (il 6°) a far ciò
+                */
+                let name = new Date().getTime(); //NB: crealo adesso e utilizzalo come nome e come timestamp per la chat perchè altrimenti se utilizzi new Date due volte saranno diversi
                 let token = getRandomString(10);
                 console.log("token:"+token);
-                let destinationFolderRef = storage.ref("chats/"+chatId+"/"+name+".m4a");
+                let destinationFolderRef = storage.ref("chats/"+chatId+"/"+name.toString()+".m4a");
                 //aggiungo il file 
                 await destinationFolderRef.put(blob);
                 let downloadUrl = await destinationFolderRef.getDownloadURL();
@@ -695,10 +702,9 @@ export function _isProfiloCompletato(uid){
                      .doc(chatId) //nella conversazione chatId
                      .collection(contactUid) //nel canale destinato al contatto col quale si sta messaggiando
                      .add({
-                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                         timestamp: name,
                          type: type,
-                         value: downloadUrl,
-                         served: served
+                         value: downloadUrl
                      });
             }catch(e){
                 console.log(e);
@@ -708,6 +714,50 @@ export function _isProfiloCompletato(uid){
         }
     }
 
+    export async function _removeMessages(chatId, seconds){ //per messaggi si intende sia testuale che audio, ma se audio rimuove solo il messaggio su firestore. Ci penserà la _removeGroupOfAudiosBeforeTimestamp a fare il resto
+        try {
+            let db = firebase.firestore();
+            console.log("elimino messaggi con timestamp minore di "+new Date(seconds*1000).toString());
+            return await db.collection("chats")
+                     .doc(chatId)
+                     .collection(firebase.auth().currentUser.uid)
+                     .where("timestamp","<=",seconds)
+                     .get().then(function(querySnapshot){
+                        querySnapshot.forEach(function(doc){
+                            console.log("elimino doc:"+doc.id);
+                            doc.ref.delete();
+                        })
+                     })
+        }catch(e){
+            throw e;
+        }
+    }
+
+    export async function _removeGroupOfAudiosBeforeTimestamp(chatId,seconds){
+        try {
+            var storage = firebase.storage();
+            // ottengo un riferimento dello storage
+            var storageRef = storage.ref();
+            //accedo alla cartella chats/chatId
+            var chatFolder = storageRef.child('chats/'+chatId);
+            console.log("elimino tutti gli audio con timestamp/nome minore di "+seconds);
+            return chatFolder.listAll().then((listResults)=>{
+                console.log("listo tutti i files");
+                listResults.items.forEach(async(itemRef)=>{
+                    //se il nome di tale elemento (che è un timestamp ) è minore o uguale all'ultimo, allora lo elimino
+                    let name = parseInt(itemRef.name.split('.')[0]);
+                    if(name <= seconds){
+                        console.log("l'emento "+name+" è minore o uguale a quello di riferimento "+ seconds)
+                        await itemRef.delete();
+                        console.log("elemento "+name+" eliminato");
+                    }
+                })
+            })
+            
+        }catch(e){
+            throw e;
+        }
+    }
 
 
     function getRandomString(length) {
@@ -719,21 +769,22 @@ export function _isProfiloCompletato(uid){
         return result;
     }
 
-    export function _ottieniAscoltatoreNuoviMessaggi(chatID,channelID, lastTimestampStored){
+    export function _ottieniAscoltatoreNuoviMessaggi(chatID,channelID, lastMillisecondsStored){
         //ascolto documenti in una raccolta
         let db = firebase.firestore();
-        //se lastTimestampStored == "-1" significa che la chat è appena iniziata
-        if(lastTimestampStored=="-1")
+        console.log("ottenimento ascoltatore per messaggi con timestamp maggiore di "+lastMillisecondsStored);
+        //se lastTimestampStored == -1 significa che la chat è appena iniziata
+        if(lastMillisecondsStored==-1)
             return db.collection("chats")
             .doc(chatID)
             .collection(channelID)
-            .orderBy("timestamp");
+            .orderBy("timestamp", "asc");
         else
             return db.collection("chats")
                     .doc(chatID)
                     .collection(channelID)
-                    .where("timestamp",">",new Date(lastTimestampStored))
-                    .orderBy("timestamp");
+                    .where("timestamp",">",lastMillisecondsStored)
+                    .orderBy("timestamp", "asc");
     }
 
     export function _ottieniAscoltatoreNuoveNotifiche(ultimoTimestamp){ //NB: ultimoTimestamp deve essere un numero (i secondi)
@@ -800,10 +851,20 @@ export function _isProfiloCompletato(uid){
         }
     }
 
-    export async function _removeNotification(id){
+    export async function _removeNotification(seconds){
         try {
             let db = firebase.firestore();
-            return db.collection("users").doc(firebase.auth().currentUser.uid).collection("notifications").doc(id).delete();
+            console.log("elimino notifiche con timestamp minore di "+new Date(seconds*1000).toString());
+            return await db.collection("users")
+                     .doc(firebase.auth().currentUser.uid)
+                     .collection("notifications")
+                     .where("timestamp","<=",new Date(seconds*1000))
+                     .get().then(function(querySnapshot){
+                        querySnapshot.forEach(function(doc){
+                            console.log("elimino doc:"+doc.id);
+                            doc.ref.delete();
+                        })
+                     })
         }catch(e){
             throw e;
         }

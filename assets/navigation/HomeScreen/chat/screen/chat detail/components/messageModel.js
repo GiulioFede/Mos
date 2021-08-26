@@ -28,8 +28,7 @@ const ref = function MessageModel({messaggio, utenteCorrente, mostraNuovaData}){
 
     function getData(){
         if(mostraNuovaData==true){
-            console.log("ritorno data");
-            let data_str = data.getFullYear()+"/"+data.getMonth()+"/"+data.getDate();
+            let data_str = data.getFullYear()+"/"+(data.getMonth()+1)+"/"+data.getDate();
             return( 
                 <Text style={styles.dataCentrale}>{data_str}</Text>
             )
@@ -38,13 +37,11 @@ const ref = function MessageModel({messaggio, utenteCorrente, mostraNuovaData}){
 
     function getTimestamp(){
         if(messaggio.author==utenteCorrente){
-            console.log("ritorno timestamp");
             let time_str = data.getHours()+":"+data.getMinutes();
             return( 
                 <Text style={styles.timestampOrarioUtenteCorrente}>{time_str}</Text>
             )
         }else {
-            console.log("ritorno timestamp");
             let time_str = data.getHours()+":"+data.getMinutes();
             return( 
                 <Text style={styles.timestampOra}>{time_str}</Text>

@@ -1,5 +1,5 @@
 import React,{useEffect, useState, useContext, useRef} from "react"
-import {View, Text, StyleSheet, TouchableOpacity, Dimensions, Keyboard,KeyboardAvoidingView, TextInput, FlatList, BackHandler} from "react-native"
+import {View, Text, StyleSheet, TouchableOpacity,Image, Dimensions, Keyboard,KeyboardAvoidingView, TextInput, FlatList, BackHandler} from "react-native"
 import {ActivityIndicator, Divider, FAB, ProgressBar, Snackbar} from "react-native-paper"
 import {Octicons, Ionicons, MaterialIcons, FontAwesome} from "@expo/vector-icons";
 import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaSchermoInterno, fontSizeCampi, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../context/variabili_globali/variabiliGlobali"
@@ -46,7 +46,7 @@ export default function ChatDetail({ navigation,route}){
     //conterrà l'intera chat
     const [chat, setChat] = useState([]);
     //contesto autenticazione
-    const {getUtenteCorrente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi, ottieniAscoltatoreStatistics, makeDecision, upgradeConversation} = useContext(AutenticazioneUtente);
+    const {getUtenteCorrente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi, ottieniAscoltatoreStatistics, makeDecision, upgradeConversation,removeGroupOfAudiosBeforeTimestamp, removeMessages} = useContext(AutenticazioneUtente);
     
     const {addNewUpdate} = useContext(RowsOfMessagesToUpdate);
 
@@ -97,11 +97,12 @@ export default function ChatDetail({ navigation,route}){
                         setMessaggio("");
                         ultimaRow.current = ultimaRow.current + 1;
                         const nuovaChiave = ultimaRow.current;
-                        await local_storage.storeNewMessage(getUtenteCorrente()+contactUid+"",nuovaChiave, getUtenteCorrente(),new Date()+"","mex",messaggio, "in-progress");
+                        await local_storage.storeNewMessage(getUtenteCorrente()+contactUid+"",nuovaChiave, getUtenteCorrente(),new Date().getTime(),"mex",messaggio, "in-progress");
                         let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:new Date()+"", type:"mex",content:messaggio,state:"in-progress"}
                         let chatTmp = [newMex,...chat];
                         setChat(chatTmp);
                         //invio messaggio a firebase
+                        console.log("inizio procedura di salvataggio audio in remoto...");
                         inviaNuovoMessaggio(chatId,contactUid,"mex", messaggio,
                             async ()=>{
                                 try{
@@ -273,7 +274,7 @@ export default function ChatDetail({ navigation,route}){
         }
     }
 
-    ascoltaStatistics();
+    //ascoltaStatistics();
     
 
     return () => {
@@ -298,7 +299,7 @@ export default function ChatDetail({ navigation,route}){
                 await local_storage.createNewIndexForTableForConversation(getUtenteCorrente()+contactUid+"");
                 
                 //in ogni caso dopo ottieni la lista dei messaggi
-                console.log("ottengo lista..");
+                console.log("ottengo lista primi 10 messaggi..");
                 if(!idChatAlreadyOpened.includes(contactUid)){
                     console.log("pulizia chat....");
                     //pulisco la chat da vecchi in-progress o failed messages
@@ -322,6 +323,8 @@ export default function ChatDetail({ navigation,route}){
                                 ultimaRow.current = 0;
 
                             listTmp.current = lista_iniziale;
+                            console.log("Lista iniziale di messaggi caricata dallo storage:");
+                            console.log(lista_iniziale);
 
                             await inizializzaAscoltatoreNuoviMessaggi();
 
@@ -345,7 +348,7 @@ export default function ChatDetail({ navigation,route}){
     }
 
     //dato che la funzione è async e non uso .then() allora verrà eseguita in maniera asincrona
-    //ottieniPrimi10Messaggi();
+    ottieniPrimi10Messaggi();
 
 
         return () => {
@@ -361,13 +364,16 @@ export default function ChatDetail({ navigation,route}){
         console.log("LISTA TMP ATTUALE. Ultima chiave attuale: "+ultimaRow.current);
             console.log(listTmp.current);
             //prelevo ultimo timestamp memorizzato
-            let ultimoTimestampMemorizzato = "-1";
+            let ultimoTimestampMemorizzato = -1;
             if(listTmp.current[0])
-                ultimoTimestampMemorizzato = listTmp.current[0].date;
+                ultimoTimestampMemorizzato = listTmp.current[0].date; //milliseconds (è un numero), per firstore ho bisogno di secondi, per questo divido per 1000
             console.log("ultimo timestamp memorizzato:"+ultimoTimestampMemorizzato);
             ascoltatoreNuoviMessaggi = ottieniAscoltatoreNuoviMessaggi(chatId, getUtenteCorrente(),ultimoTimestampMemorizzato )
-                                    .onSnapshot((snapshot) => {
+                                    .onSnapshot(async(snapshot) => {
                                         const promises = [];
+                                        //mantengo l'ultimo timestamp (o nome) dell'audio ricevuto cosi che procedo a eliminare tutti gli audio con nome minore dell'ultimo
+                                        var lastAudioTimestamp = null;
+                                        var lastMessageTimestamp = null; //questo è per tutti, ossia tiene in memoria l'ultimo timestamp ricevuto, che il type sia mex o audio
                                         snapshot.docChanges().forEach(async(change) => {
                                                     console.log("ascolto nuovo doc");
                                                     if (change.type != "added") {
@@ -376,22 +382,42 @@ export default function ChatDetail({ navigation,route}){
                                                     let doc = change.doc;
                                                     ultimaRow.current = ultimaRow.current+1;
                                                     console.log("E' un nuovo "+doc.data().type+". Lo memorizzo con chiave:"+ultimaRow.current);
-                                                    //console.log(doc.data());
+                                                    console.log(doc.data());
+                                                    //se il messaggio è un audio, indico qual'è l'ultimo timestamp o nome del file
+                                                    if(doc.data().type=="audio")
+                                                        lastAudioTimestamp = doc.data().timestamp;
+                                                    lastMessageTimestamp = doc.data().timestamp;
                                                     promises.push(addNewReceivedMessage(doc, ultimaRow.current));
                                                     console.log("procedo al successivo di "+ultimaRow.current);
                                                     
                                     });
                                     console.log("fine ultima");
-                                    Promise.all(promises)
-                                        .then((lastMessages)=>{
-                                            console.log("tutti i nuovi doc sono stati caricati");
-                                            console.log(lastMessages);
-                                            let newChat = [...lastMessages.reverse(),...listTmp.current];
-                                            setChat(newChat);
-                                            setIsChatLoaded(true);
-                                        }).catch((err)=>{
-                                            console.log("Si è verificato un problema sulla promise.all dell'ascoltatore:"+err);
-                                        })
+                                    try{
+                                        let lastMessages = [];
+                                        for(let i=0; i<promises.length; i++)
+                                            lastMessages.push(await promises[i]);
+                                        //solo quando tutti i messaggi sono stati salvati in locale verranno mostrati cosi da evitare di 
+                                        //scaricarli solo quando si preme il bottone play
+                                        
+                                        //elimino messaggi testuali
+                                        if(lastMessages.length>0){
+                                            //prendo l'ultimo timestamp e lo do alla funzione che elimina tutti i messaggi precedenti sul mio canale
+                                            await removeMessages(chatId,lastMessageTimestamp);
+                                        }
+                                        //se tra i messaggi ci sono stati audio, allora avrò che lastAudioTimestamp != null, quindi se avrò
+                                        //5 audio scaricati, lastAudioTimestamp è il nome dell'ultimo audio. Posso procedere a eliminare tutti i precedenti
+                                        if(lastAudioTimestamp!=null)
+                                            await removeGroupOfAudiosBeforeTimestamp(chatId,lastAudioTimestamp);
+                                        
+                                        
+                                        console.log("tutti i nuovi doc sono stati caricati");
+                                        console.log(lastMessages);
+                                        let newChat = [...lastMessages.reverse(),...listTmp.current];
+                                        setChat(newChat);
+                                        setIsChatLoaded(true);
+                                    }catch(err){
+                                        console.log("Si è verificato un problema sulla promise.all dell'ascoltatore:"+err);
+                                    }
                                         
                                 });
     }
@@ -402,26 +428,34 @@ export default function ChatDetail({ navigation,route}){
         //console.log(listTmp);
         //memorizzo nello storage
         //se è un audio lo scarico e lo salvo
+
+        //devo però convertire il timestamp globale (dal 1970..) in una data che è corretta nel mio timezone
+        /*console.log("timestamp ricevuto: "+doc.data().timestamp+" che equivale alla data: "+ new Date(doc.data().timestamp));
+        const localOffset = new Date().getTimezoneOffset()*60*1000;
+        console.log("dato che l'offset qui è "+new Date().getTimezoneOffset()+" allora il local offset in millisecondi sarà: "+localOffset)
+        const utcTime = doc.data().timestamp + localOffset;
+        console.log("aggiungo ai ms del timestamp ricevuto ottenendo:"+utcTime+" per una equivalente data di: "+new Date(utcTime));*/
         
         if(doc.data().type == "audio"){
             await local_storage.saveAudioIntoFolder(getUtenteCorrente(),
                                                     contactUid,
                                                     row,
                                                     contactUid,
-                                                    doc.data().timestamp.toDate(),
+                                                    new Date(doc.data().timestamp),
                                                     doc.data().value
                                                     )
         }else
             await local_storage.storeNewMessage(getUtenteCorrente()+contactUid+"",
                                                 row, 
                                                 contactUid,
-                                                doc.data().timestamp.toDate()+"",
+                                                new Date(doc.data().timestamp).getTime(),
                                                 doc.data().type,
                                                 doc.data().value,
                                                 "succeed");
         console.log("fine memorizzazione doc "+row);
-        
-        let newMex = {row: row ,author:contactUid, date:doc.data().timestamp.toDate()+"", type:doc.data().type+"",content:doc.data().value+"",state:"succeed"};
+        //posso procedere ad eliminare l'audio in remoto. Se fallisco, comunque non blocco l'utente in quanto tanto l'eliminazione è per timestamp<ultimoTimestamp (ogni volta), quindi al primo corretto si eliminano TUTTI i precedenti
+
+        let newMex = {row: row ,author:contactUid, date:new Date(doc.data().timestamp).getTime(), type:doc.data().type+"",content:doc.data().value+"",state:"succeed"};
         return newMex;
         /* chatTmp = [newMex,...listTmp.current];
         //if(isMounted.current==true)
@@ -541,16 +575,15 @@ export default function ChatDetail({ navigation,route}){
                     const nuovaChiave = ultimaRow.current;
                     //aggiugo alla chat
                     //creo nuovo messaggio    
-                    let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date: new Date()+"", type:"audio",content:uri, state:"in-progress"}
+                    let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date: new Date().getTime(), type:"audio",content:uri, state:"in-progress"}
                     let chatTmp = [newMex,...chat];
                     setChat(chatTmp);
                     //scrollo in basso
                     refFlatList.current.scrollToOffset({animated:true, offset: chat.length-1});
                     setIsRecording(false);
-                    TaskMa
                     console.log("(in-progress)--> invio audio "+nuovaChiave+" in remoto...");
                     //salvo audio in remoto, ma uso approccio asincrono per liberare la UI. Se avviene qualche errore tolgo quello appena inserito
-                    inviaNuovoMessaggio("jWeGrG0ewsMicCGSeATI",contactUid,"audio", uri,
+                    inviaNuovoMessaggio(chatId,contactUid,"audio", uri,
                         async(ris) =>{
                             //l'audio è stato salvato con successo, lo lascio cosi com'è
                             console.log("salvato in remoto. Salvo in locale...");
@@ -669,8 +702,11 @@ export default function ChatDetail({ navigation,route}){
       {chat.length==0 && 
         <View style={{flex:1}}>
             {isChatLoaded==true &&
-                <View>
-                    <Text>Ciao //TODO: SPIEGA COME FUNZIONA LA CHAT</Text> 
+                <View style={{width:larghezzaDevice, height:larghezzaDevice, justifyContent:"center"}}>
+                     <Image source={require('../../../../../resources/images/cloud-background.png')} style={{position:"absolute", width:larghezzaDevice,height:larghezzaDevice , alignSelf:"center"}}/>
+                    <Text style={[styles.helloTitle,{textAlign:"center", justifyContent:"center", textAlignVertical:"center"}]}>Saluta {name}! </Text>
+                    <Text style={[styles.helloContent]}>Su Mosaic esistono 3 livelli di mosaicizzazione del profilo degli utenti, da quello massimo a quello nullo. Tu e {name} partirete con quello massimo. Col tempo, a seconda della conversazione, vi chiederemo di passare al livello successivo e ciò avverrà solo se entrambi sarete daccordo.</Text>
+                    <Text style={[styles.helloContent]}>Dato l'anonimato, Mosaic invita a conversare con messaggi vocali limitando il numero di messaggi testuali a qualche carattere.</Text>
                 </View>
             }
         </View>
@@ -867,5 +903,25 @@ const styles = StyleSheet.create({
         height:larghezzaDevice*0.15,
  
     },
-
+    helloTitle: {
+        marginVertical:10,
+        fontFamily: 'Lobster_400Regular',
+        color: "#52575D",
+        textAlign:"center",
+        alignItems:"center",
+        fontSize:larghezzaDevice*0.09
+    },
+    helloContent: {
+        marginVertical:10,
+        fontFamily: "Raleway_400Regular",
+        color: "#52575D",
+        textAlign:"center",
+        alignItems:"center",
+        fontSize:larghezzaDevice*0.04,
+        textAlign:"center", 
+        justifyContent:"center", 
+        textAlignVertical:"center",
+        padding:10
+    }
+    
 })

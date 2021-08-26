@@ -202,9 +202,9 @@ const removeTable = async (nomeTabella) => {
                         update,
                         [],
                         //in caso di successo
-                        (_, result) => { resolve(result)},
+                        (_, result) => { console.log("tabella eliminata"); resolve(result)},
                         //in caso di errore
-                        (_, error) => { reject(error)}
+                        (_, error) => { console.log("tabella non eliminata.");  reject(error)}
                     )
                 },
                 (error) => reject(error),
@@ -229,7 +229,7 @@ const createNewTableForConversation = async(nomeTabella) => {
             try{
                 //creo tabella se non esiste
                 console.log("creo tabella se non esiste");
-                let query1 = 'CREATE TABLE IF NOT EXISTS '+ nomeTabella +'(row INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, date TEXT, type TEXT, content TEXT, state TEXT);';             
+                let query1 = 'CREATE TABLE IF NOT EXISTS '+ nomeTabella +'(row INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, date INTEGER, type TEXT, content TEXT, state TEXT);';             
                 db.transaction(
                         (tx)=>{
                             tx.executeSql(
@@ -595,7 +595,7 @@ const cleanChatFromFailedMessages = async (nomeTabella) => {
 
 //Lo stato "state" è valido solo per gli audio vocali
 
-const storeNewMessage = async(nomeTabella,key,author,date,type,value, state) => {
+const storeNewMessage = async(nomeTabella,key,author,date,type,value, state) => {//date è in millisecondi
     return new Promise((resolve, reject) => {
         try{
             //const db = SQLite.openDatabase("MosaicLocalDB."+utenteCorrente+".db");
@@ -638,27 +638,27 @@ const saveAudioIntoFolder = async(utenteCorrente, folder,key, author,date, uri_c
             console.log("salvo nel percorso: "+percorso);
             //se l'audio è stato inviato dall'utente corrente
             if(utenteCorrente==author){
-            //scrivo il file che si trova in un uri temporanea (cache) nel database
-            //quando lo scrivo utilizzo
-            const audio_string = await FileSystem.readAsStringAsync(uri_cache,{ encoding: FileSystem.EncodingType.Base64 }); //NB: SE NON SI CRIPTA USARE DOWNLOAD_ASINC PER SCRIVERE DIRETTAMENTE NELLA NUOVA LOCAZIONE INVECE DI FARE READ E POI WRITE
-            //ho ottenuto una stringa del contenuto audio
-            console.log("audio stringa letto");
-            //cripto audio stringa prima di salvare
-            console.log("audio stringa criptato");
-            //....(cripare stringa)
-            /*
-                salvo file criptato
-                NB: non salvo la stringa nel database altrimenti ad ogni apertura di chat deve leggere miliardi di bit, piuttosto salvo
-                    il file criptato e salvo nel database solo un riferimento uri per trovarlo. Sarà solo quando richiesto che lo leggerò
-            */
-           //prelevo formato di salvataggio
+                //scrivo il file che si trova in un uri temporanea (cache) nel database
+                //quando lo scrivo utilizzo
+                const audio_string = await FileSystem.readAsStringAsync(uri_cache,{ encoding: FileSystem.EncodingType.Base64 }); //NB: SE NON SI CRIPTA USARE DOWNLOAD_ASINC PER SCRIVERE DIRETTAMENTE NELLA NUOVA LOCAZIONE INVECE DI FARE READ E POI WRITE
+                //ho ottenuto una stringa del contenuto audio
+                console.log("audio stringa letto");
+                //cripto audio stringa prima di salvare
+                console.log("audio stringa criptato");
+                //....(cripare stringa)
+                /*
+                    salvo file criptato
+                    NB: non salvo la stringa nel database altrimenti ad ogni apertura di chat deve leggere miliardi di bit, piuttosto salvo
+                        il file criptato e salvo nel database solo un riferimento uri per trovarlo. Sarà solo quando richiesto che lo leggerò
+                */
+            //prelevo formato di salvataggio
 
-            //let indexOfFormat = uri_cache.lastIndexOf(".");
-            //let formato = uri_cache.substring(indexOfFormat); //es--> .mp4
-            await FileSystem.writeAsStringAsync((percorso), audio_string, {encoding: FileSystem.EncodingType.Base64 });
-            //salvo nel database
-            await storeNewMessage(utenteCorrente+folder+"",key,author,date+"","audio",percorso,"in-progress");
-            console.log("file salvato con successo nel file system in: "+percorso);
+                //let indexOfFormat = uri_cache.lastIndexOf(".");
+                //let formato = uri_cache.substring(indexOfFormat); //es--> .mp4
+                await FileSystem.writeAsStringAsync((percorso), audio_string, {encoding: FileSystem.EncodingType.Base64 });
+                //salvo nel database
+                await storeNewMessage(utenteCorrente+folder+"",key,author,date.getTime(),"audio",percorso,"in-progress");
+                console.log("file salvato con successo nel file system in: "+percorso);
             }
             else {
                 let uri = await FileSystem.downloadAsync(
@@ -666,7 +666,7 @@ const saveAudioIntoFolder = async(utenteCorrente, folder,key, author,date, uri_c
                     percorso
                 );
             //salvo nel database
-            await storeNewMessage(utenteCorrente+folder+"",key,author,date+"","audio",percorso,"succeed");
+            await storeNewMessage(utenteCorrente+folder+"",key,author,date.getTime(),"audio",percorso,"succeed");
             }
             console.log(FileSystem.documentDirectory);
             resolve(percorso);

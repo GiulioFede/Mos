@@ -110,7 +110,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,i
             }
         }
 
-        ascoltaUltimoMessaggio();
+        //ascoltaUltimoMessaggio();
 
         return () =>{
             console.log("rimuovo ascoltatore ultimo messaggio");

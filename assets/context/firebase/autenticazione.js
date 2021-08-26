@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche,_ottieniAscoltatoreStatistics,_ottieniAscoltatoreUltimoMessaggio,_ottieniAscoltatoreNuoveConversazioni, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken, _makeDecision, _upgradeConversation} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio,  _removeMessages,_removeGroupOfAudiosBeforeTimestamp, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche,_ottieniAscoltatoreStatistics,_ottieniAscoltatoreUltimoMessaggio,_ottieniAscoltatoreNuoveConversazioni, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken, _makeDecision, _upgradeConversation} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -106,6 +106,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     getChatSummaryInformation,
                     getMediaProfiloContatto,
                     inviaNuovoMessaggio,
+                    removeMessages,
+                    removeGroupOfAudiosBeforeTimestamp,
                     ottieniAscoltatoreNuoviMessaggi,
                     ottieniAscoltatoreStatistics,
                     ottieniAscoltatoreNuoveNotifiche,
@@ -450,6 +452,22 @@ export const AutenticazioneUtenteProvider = ({children}) => {
       }
   }
 
+  async function removeMessages(chatId, seconds){
+    try{
+        _removeMessages(chatId,seconds);
+    }catch(e){
+        throw e;
+    }
+  }
+
+  async function removeGroupOfAudiosBeforeTimestamp(chatId, seconds){
+    try{
+        _removeGroupOfAudiosBeforeTimestamp(chatId,seconds);
+    }catch(e){
+        throw e;
+    }
+  }
+
   function ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored){
       return _ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored);
   }
@@ -486,9 +504,9 @@ function ottieniAscoltatoreNuoveConversazioni(){
       }
     }
 
-    async function removeNotification(documentID){
+    async function removeNotification(seconds){
         try{
-            return await _removeNotification(documentID);
+            return await _removeNotification(seconds);
         }catch(e){
             throw e;
         }

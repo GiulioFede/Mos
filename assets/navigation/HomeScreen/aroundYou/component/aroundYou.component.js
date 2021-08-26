@@ -173,7 +173,7 @@ function getCityRegionCountryView(city, region, country){
     }
 
     return (
-        <View style={{marginBottom:10, paddingLeft:10, flexDirection:"row"}}>
+        <View style={{marginBottom:10, paddingLeft:10, flexDirection:"row", flexWrap:"wrap"}}>
             {(cityTmp!=null || countryTmp!=null || regionTmp!=null) && <Entypo name="location-pin" size={IMAGE_HEIGHT*0.2/5} color="white" />}
             {cityTmp!=null && <Text style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff"}}>{cityTmp}</Text>}
             {regionTmp!=null && <Text style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff"}}>{regionTmp}</Text>}

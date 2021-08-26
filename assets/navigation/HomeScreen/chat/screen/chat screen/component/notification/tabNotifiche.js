@@ -173,8 +173,8 @@ const TabNotifiche = forwardRef((props, ref) => {
                                         //incremento anche le notifiche in preferenza
                                         await incrementaNumeroNotifiche();
                                     }
-                                    //la elimino da remoto
-                                    await removeNotification(change.doc.id);
+                                    //la elimino da remoto. Elimino tutte le notifiche con data inferiore o uguale al documento corrente
+                                    await removeNotification(doc.timestamp);
                                     
                                 }catch(e){
                                     console.log(e);
