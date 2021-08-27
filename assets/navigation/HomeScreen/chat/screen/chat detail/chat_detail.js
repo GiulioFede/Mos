@@ -114,7 +114,7 @@ export default function ChatDetail({ navigation,route}){
                                     await local_storage.updateMessageState(getUtenteCorrente()+contactUid+"",nuovaChiave,"succeed");
                                     //invio push notification
                                     console.log("invio push notification a "+name+" con token "+token);
-                                    await sendPushNotification(token,informazioniProfiloUtente.name+" ti ha inviato un messaggio", messaggio, chatId);
+                                    await sendPushNotification(token,informazioniProfiloUtente.name+" ti ha inviato un messaggio", messaggio, {chatId: chatId});
                                     console.log("Messaggio salvato in locale");
                                     console.log("Salvo nella chat "+contactUid+" di chiave "+nuovaChiave+" lo stato succeed"); 
                                     addNewUpdate(contactUid,nuovaChiave,"succeed");
@@ -220,7 +220,7 @@ export default function ChatDetail({ navigation,route}){
                                     statistics.current = JSON.parse(JSON.stringify(stat));
 
                                     //se il numero di messaggi è un multiplo di THRESHOLD MA la visibilità è minore di 2 (dove 2 sta per massima visibilità)
-                                    if( stat.statistics.number_of_messages!=0 && (stat.statistics.number_of_messages % THRESHOLD) == 0 ){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
+                                    if( stat.statistics.number_of_messages!=0 && (stat.statistics.number_of_messages % THRESHOLD) == 0 && stat.level_of_visibility<2){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
                                         /*
                                             mostro la finestra in cui chiedo di prendere una decisione se svelarsi o meno.
                                             La finestra mostrerà i seguenti messaggi (letti da statistics.current):
@@ -245,14 +245,18 @@ export default function ChatDetail({ navigation,route}){
                                                     //se la risposta dell'utente è true e la mia è true faccio l'upgrade
                                                     if(stat.statistics[contactUid+"_response"]==true && stat.statistics[getUtenteCorrente()+"_response"]==true){
                                                         //faccio upgrade
-                                                        await upgradeConversation(chatId,true,contactUid);
+                                                        await upgradeConversation(chatId,true,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, stat.level_of_visibility);
+                                                        decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
                                                         console.log("upgrade riuscito con successo");
+                                                        return;
                                                     }
                                                     //altrimenti in qualsiasi altro caso resetto
                                                     else {
                                                         //resetto solo
-                                                        await upgradeConversation(chatId,false,contactUid);
+                                                        await upgradeConversation(chatId,false,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, stat.level_of_visibility);
                                                         console.log("'continua con lo stesso livello di visibilità' riuscito con successo");
+                                                        decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
+                                                        return;
                                                     }
                                                 }
                                             }
@@ -809,9 +813,12 @@ export default function ChatDetail({ navigation,route}){
                       uidCurrentUser={getUtenteCorrente()}
                       contactUid = {contactUid}
                       contactName = {name}
+                      currentUserName = {informazioniProfiloUtente.name}
                       urlProfileImageContactUser={urlProfileImageContactUser}
                       current_level_of_visibility = {statistics.current!=undefined?statistics.current.level_of_visibility:0}
                       informazioniProfiloUtenteCorrente = {informazioniProfiloUtente}
+                      myToken = {informazioniProfiloUtente.push_notification_token}
+                      contactToken = {token}
                       />
 
       <Snackbar

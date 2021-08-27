@@ -118,7 +118,7 @@ const TabNotifiche = forwardRef((props, ref) => {
                     mettitiInAscoltoNuoveNotifiche(-1);
             }catch(e){
                 console.log(e);
-                snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un problema.");
+               // snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un problema.");
             }
         }
 
@@ -159,6 +159,8 @@ const TabNotifiche = forwardRef((props, ref) => {
                                     console.log(doc);
                                     doc.state = "unseen";
                                     
+                                    //la elimino da remoto. Elimino tutte le notifiche con data inferiore o uguale al documento corrente
+                                    await removeNotification(doc.timestamp);
                                     //la memorizzo
                                     console.log("Memorizzo"+doc.timestamp.seconds);
                                     //se lo schermo è visibile allora metto stato "seen", altrimenti "unseeen";
@@ -173,12 +175,10 @@ const TabNotifiche = forwardRef((props, ref) => {
                                         //incremento anche le notifiche in preferenza
                                         await incrementaNumeroNotifiche();
                                     }
-                                    //la elimino da remoto. Elimino tutte le notifiche con data inferiore o uguale al documento corrente
-                                    await removeNotification(doc.timestamp);
                                     
                                 }catch(e){
                                     console.log(e);
-                                    snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un errore.");
+                                    //snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un errore.");
                                 }
                                 
                             }
@@ -196,8 +196,8 @@ const TabNotifiche = forwardRef((props, ref) => {
             }
 
 
-     console.log("LISTA NOTIFICHE");
-     console.log(list);
+     //console.log("LISTA NOTIFICHE");
+     //console.log(list);
 
     return (
         <>

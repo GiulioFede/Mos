@@ -74,7 +74,8 @@ export default function ChatScreen({navigation, route}){
     }
 
     function incrementaNumeroNotifiche(){
-        iconaNotificheRef.current.increment_notification_number();
+        //if(iconaNotificheRef.current!=null)
+          iconaNotificheRef.current.increment_notification_number();
     }
 
     function resettaNumeroNotifiche(){

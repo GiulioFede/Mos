@@ -25,7 +25,7 @@ const ListaMessaggi = ({lista_messaggi, refFlatList, caricaSuccessivi10Messaggi,
             showsVerticalScrollIndicator={false}
             keyExtractor={item => item.row.toString()}
             renderItem={({ item, index }) => {   
-                console.log("rendering messaggio:"+index); 
+                //console.log("rendering messaggio:"+index); 
                 if(index==0) ultimaData = null;
                 //se esiste un aggiornamento per quella chat di id contactUid...
                 if(updates[contactUid]!=undefined){
@@ -44,13 +44,15 @@ const ListaMessaggi = ({lista_messaggi, refFlatList, caricaSuccessivi10Messaggi,
                 let dataPrecedente = null;
                 //se esiste un successivo
                 if(lista_messaggi[index+1]) dataPrecedente = new Date(lista_messaggi[index+1].date).setHours(0,0,0,0);
-                console.log("data attuale"+item.date);
-                if(dataPrecedente!=null)
-                    console.log("data precedente"+lista_messaggi[index+1].date);
-                else
-                    console.log("data precedente null");
+                //console.log("data attuale"+item.date);
+                if(dataPrecedente!=null){
+                    //console.log("data precedente"+lista_messaggi[index+1].date);
+                }
+                else{
+                    //console.log("data precedente null");
+                }
                 if(dataPrecedente==null || dataPrecedente<dataAttuale){
-                        console.log("dentro");
+                        //console.log("dentro");
                         if(item.type=="mex")
                             return (
                                     <MessageModel messaggio = {item} utenteCorrente={getUtenteCorrente()} mostraNuovaData={true}/>
@@ -61,7 +63,7 @@ const ListaMessaggi = ({lista_messaggi, refFlatList, caricaSuccessivi10Messaggi,
                             )
                     }
                     else {
-                    console.log("fuori");
+                    //console.log("fuori");
                         if(item.type=="mex")
                             return (
                                     <MessageModel messaggio = {item} utenteCorrente={getUtenteCorrente()} mostraNuovaData={false}/>

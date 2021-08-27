@@ -30,7 +30,16 @@ function getNotificationStringFromJSON(item){
     if(item.type=="JOIN"){
         return " ha avviato una nuova conversazione con te.";
     }
+    else if(item.type=="UPGRADE_VISIBILITY"){
+        return " siete entrambi daccordo per passare al livello successivo!.";
     }
+    else if(item.type=="NO_UPGRADE_VISIBILITY"){
+        return " .Continuate a conoscervi un altro pò."
+    }
+    else if(item.type=="TOTAL_DISCLOSURE"){
+        return "  avete raggiunto il massimo della visibilità!"
+    }
+}
 
 export default function NotificationMessageModel({user, item, decrementaNumeroNotifiche, forceToHideRedBallon}){
 
@@ -67,7 +76,10 @@ export default function NotificationMessageModel({user, item, decrementaNumeroNo
                     <Text style={styles.timestamp}>{fromDateToGGMMYYYYHHMM(item.timestamp)}</Text>
                 </View>
                 <View style={{borderLeftColor:MosViola, borderLeftWidth:3, margin:1, padding:5}} >
-                    <Text style={styles.author}>{item.author}<Text style={styles.type}>{getNotificationStringFromJSON(item)}</Text></Text>
+                    {item.type=="JOIN" && <Text style={styles.author}>{item.author}<Text style={styles.type}>{getNotificationStringFromJSON(item)}</Text></Text> }
+                    {item.type=="UPGRADE_VISIBILITY" && <Text style={styles.type}>Congratulazioni! Tu e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
+                    {item.type=="NO_UPGRADE_VISIBILITY" && <Text style={styles.type}>Forse è troppo presto per mostrarsi per te e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
+                    {item.type=="TOTAL_DISCLOSURE" && <Text style={styles.type}>Congratulazioni! Tu e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
                 </View>
             </View>
         )

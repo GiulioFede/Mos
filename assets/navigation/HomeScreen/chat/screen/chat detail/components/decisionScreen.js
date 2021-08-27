@@ -5,9 +5,11 @@ import { altezzaDevice, fontSizeTitolo, larghezzaDevice } from "../../../../../.
 import {useFonts, Lobster_400Regular} from '@expo-google-fonts/lobster';
 import { MosCeleste, MosPurple } from "../../../../../../resources/colors";
 import local_storage from "../../../../../../context/local_storage/localStorage";
+import { sendPushNotification } from "../../../../../../context/push_notifications/functions";
 
-const loadPhrase = "Attendi"; //cambiarla a seconda della lingua
-const questionPhrase = "Vuoi renderti più visibile?";
+const loadPhrase = "Attendi "; //cambiarla a seconda della lingua
+const questionPhrase1 = "Vuoi renderti più visibile?";
+const questionPhrase2 = "Vuoi renderti completamente visibile?"
 const DecisionScreen = forwardRef((props, ref) => {
 
 
@@ -19,7 +21,8 @@ const DecisionScreen = forwardRef((props, ref) => {
      const [urlProfileImage, setUrlProfileImage] = useState(null);
      const current_statistics = useRef(null);
      const isMounted = useRef(false);
-     const {makeDecision,upgradeConversation, chatID, uidCurrentUser, contactUid, contactName,urlProfileImageContactUser,current_level_of_visibility,informazioniProfiloUtenteCorrente} = props;
+
+     const {makeDecision,upgradeConversation, chatID, uidCurrentUser, contactUid, contactName,currentUserName, urlProfileImageContactUser,current_level_of_visibility,informazioniProfiloUtenteCorrente, myToken, contactToken} = props;
 
      useImperativeHandle(ref, () => ({
         show(statistics){
@@ -37,10 +40,14 @@ const DecisionScreen = forwardRef((props, ref) => {
         console.log(statistics[nomeCampoDiInteresse]);
         //se l'utente corrente ha già risposto allora lo metto in attesa
         current_statistics.current = statistics;
-        if(statistics[nomeCampoDiInteresse]!=null)
+        if(statistics["statistics"][nomeCampoDiInteresse]!=null)
             setQuestion(loadPhrase);
-        else    
-            setQuestion(questionPhrase);
+        else {
+            if(current_level_of_visibility==0)    
+                setQuestion(questionPhrase1);
+            else
+                setQuestion(questionPhrase2);
+        }
 
          setShowDecisionScreen(true);
          setRefresh(!refresh);
@@ -114,17 +121,26 @@ const DecisionScreen = forwardRef((props, ref) => {
         motionTransition();
 
         async function inizializzaImmagineProfiloUtenteCorrente(){
-            isMounted.current = true;
-            //carico l'immagine del profilo (tento di salvarla, ma se esiste già, mi viene ritornato l'uri locale)
-            console.log("il livello corrente di visibilità è: "+current_level_of_visibility);
-            let actual_remote_uri = "";
-            if(current_level_of_visibility==null || current_level_of_visibility==undefined || current_level_of_visibility==0)
-                actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_100"];
-            else if(current_level_of_visibility==1) actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_50"];
-                //else if(visibility=="75") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_75"];
-            else if(current_level_of_visibility==2) actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_0"];
-
             try{
+                isMounted.current = true;
+                //carico l'immagine del profilo (tento di salvarla, ma se esiste già, mi viene ritornato l'uri locale)
+                console.log("il livello corrente di visibilità è: "+current_level_of_visibility);
+                console.log("token: "+contactToken+", "+myToken)
+                //console.log(informazioniProfiloUtenteCorrente);
+                let actual_remote_uri = "";
+                if(current_level_of_visibility==null || current_level_of_visibility==undefined || current_level_of_visibility==0)
+                    actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_100"];
+                else if(current_level_of_visibility==1) actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_50"];
+                    //else if(visibility=="75") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_75"];
+                else if(current_level_of_visibility>=2) actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_0"];
+                
+                //console.log("actual_remote_uri:"+actual_remote_uri);
+                if(actual_remote_uri==""){
+                    if(isMounted.current==true){
+                        setUri1Error(true);
+                        return;
+                    }
+                }
                 let local_uri = await local_storage.saveImageLocally(uidCurrentUser,actual_remote_uri);
                 console.log("Local uri:"+local_uri);
                 if(isMounted.current==true){
@@ -138,7 +154,11 @@ const DecisionScreen = forwardRef((props, ref) => {
             }
         }
 
-        inizializzaImmagineProfiloUtenteCorrente();
+        inizializzaImmagineProfiloUtenteCorrente().then((ris)=>{
+            console.log("...");
+        }).catch((err)=>{
+            console.log(err);
+        })
 
         return () => isMounted.current = false;
         
@@ -146,45 +166,67 @@ const DecisionScreen = forwardRef((props, ref) => {
 
     //questa funzione viene chiamata quando si preme Si o No alla domanda "Vuoi renderti più visibile?"
     async function makeLocalDecision(response){
-
-        try{
-            //se non sono l'amministratore, una volta data la mia risposta dovrò attendere che l'amministratore riceva il documento con la mia response=true/false e la sua a true/false/null
-            if(current_statistics.current!=null){
-                //quindi se non sono l'amministratore mi limito a dare la mia risposta
-                if(current_statistics.current.administrator != uidCurrentUser)
-                    await makeDecision(response,chatID);
-                //se invece sono l'amministratore...
-                else {
-                    //se la risposta del contatto è null
-                    let nomeCampoDiInteresse = contactUid+"_response";
-                    if(current_statistics.current[nomeCampoDiInteresse]==null){
-                        //mi limito a dare la mia e mi metto in attesa
+        //per sicurezza controllo che la visibilità non è stata già raggiunta
+        if(current_level_of_visibility<2){
+            try{
+                //se non sono l'amministratore, una volta data la mia risposta dovrò attendere che l'amministratore riceva il documento con la mia response=true/false e la sua a true/false/null
+                if(current_statistics.current!=null){
+                    console.log("Sono amministratore?");
+                    console.log(current_statistics.current["statistics"]["administrator"]);
+                    //quindi se non sono l'amministratore mi limito a dare la mia risposta
+                    if(current_statistics.current["statistics"]["administrator"] != uidCurrentUser){
+                        console.log("non sono amministratore?");
                         await makeDecision(response,chatID);
-                        setQuestion(loadPhrase);
                     }
-                    //se invece la risposta del contatto è true o false devo fare l'upgrade (o no) e resettare 
+                    //se invece sono l'amministratore...
                     else {
-                        //se la risposta dell'utente è true e la mia è true faccio l'upgrade
-                        if(current_statistics.current[nomeCampoDiInteresse]==true && response==true){
-                            //faccio upgrade
-                            await upgradeConversation(chatID,true,contactUid);
-                            console.log("upgrade riuscito con successo");
+                        console.log("sono amministratore");
+                        //se la risposta del contatto è null
+                        let nomeCampoDiInteresse = contactUid+"_response";
+                        if(current_statistics.current["statistics"][nomeCampoDiInteresse]==null){
+                            console.log("la risposta del contatto non è data");
+                            //mi limito a dare la mia e mi metto in attesa
+                            await makeDecision(response,chatID);
+                            setQuestion(loadPhrase);
                         }
-                        //altrimenti in qualsiasi altro caso resetto
+                        //se invece la risposta del contatto è true o false devo fare l'upgrade (o no) e resettare 
                         else {
-                            //resetto solo
-                            await upgradeConversation(chatID,false,contactUid);
-                            console.log("'continua con lo stesso livello di visibilità' riuscito con successo");
-                        }
-                    }
+                            console.log("la risposta del contatto è già stata data ed è: "+current_statistics.current["statistics"][nomeCampoDiInteresse]);
+                            //se la risposta dell'utente è true e la mia è true faccio l'upgrade
+                            if(current_statistics.current["statistics"][nomeCampoDiInteresse]==true && response==true){
+                                //faccio upgrade
+                                console.log("essendo la riposta true, cosi come la mia, faccio l'upgrade");
+                                upgradeConversation(chatID,true,contactUid, contactName, currentUserName, contactToken, myToken, current_level_of_visibility)
+                                    .then((ris)=>{
+                                        console.log("upgrade riuscito con successo");
+                                        //invio due push notification
+                                        //console.log("invio push notification a "+contactName+" con token "+contactToken+" e a me,"+currentUserName+", con token "+myToken);
+                                        //sendPushNotification(contactToken, "Tu e "+currentUserName+" siete passati al livello successivo!","Congratulazioni, siete al livello "+current_level_of_visibility,{});
+                                        //sendPushNotification(myToken, "Tu e "+contactName+" siete passati al livello successivo!","Congratulazioni, siete al livello "+current_level_of_visibility,{});
+                                        console.log("push notification inviate");
+                                    }).catch((e)=>{
+                                        console.log("si è verificato un problema durante l'upgrade:"+e);
+                                    })
+                                
 
+                            }
+                            //altrimenti in qualsiasi altro caso resetto
+                            else {
+                                console.log("eseguo reset");
+                                //resetto solo
+                                await upgradeConversation(chatID,false,contactUid,contactName, currentUserName, contactToken, myToken, current_level_of_visibility);
+                                console.log("'continua con lo stesso livello di visibilità' riuscito con successo");
+                            }
+                        }
+
+                    }
+                    console.log("Decisione presa:"+response);
+                //disabilita bottoni (dovrei chiudere la schermata ma tanto la riaprirà subito il listener del documento modificato. Per evitare di lasciare la chat libera aspetto che sia lui a farlo, disabilitando intato i bottoni)
                 }
-                console.log("Decisione presa:"+response);
-            //disabilita bottoni (dovrei chiudere la schermata ma tanto la riaprirà subito il listener del documento modificato. Per evitare di lasciare la chat libera aspetto che sia lui a farlo, disabilitando intato i bottoni)
+                setQuestion(loadPhrase);
+            }catch(e){
+                console.log("Errore nel prendere la decisione:"+e);
             }
-            setQuestion(loadPhrase);
-        }catch(e){
-            console.log("Errore nel prendere la decisione:"+e);
         }
     }
 
@@ -210,7 +252,7 @@ const DecisionScreen = forwardRef((props, ref) => {
                             </Animated.View>
                         </View>
                         <View style={{flexGrow:1, justifyContent:"center", padding:1, margin:5}}>
-                            <Text style={styles.question}>{question} {question==loadPhrase?"Lucy...":""}</Text>
+                            <Text style={styles.question}>{question} {question==loadPhrase?contactName+"...":""}</Text>
                             {question!=loadPhrase && <Text style={styles.subquestion}>Sia tu che {contactName} dovrete essere daccordo, altrimenti continuerete per un altro pò prima che vi venga richiesto ancora.</Text>}
                         </View>
 

@@ -184,11 +184,11 @@ export default function HomeNavigator({navigation}) {
                                   //2) mi registro affinchè sia avvertito ogni volta che una notifica arrivi quando l'app è in FOREGROUND
                                   notificationListener.current = Notifications.addNotificationReceivedListener(notif => {
                                     //se sono qui allora potrebbe essere arrivata (true o false) una notifica mentre ero in foreground
-                                    console.log("notifica ricevuta dalla chat di id: "+notif.request.content.data.chatId);
-                                    console.log(notif);
-                                    console.log(idChatCorrente);
+                                    console.log("notifica ricevuta in chat corrente:"+idChatCorrente);
+                                    console.log(notif.request.content);
+                                    /*console.log(idChatCorrente);*/
                                     //se la notifica proviene da una chat su cui sono per adesso allora non la mostro (appena esco dalla chat, nel return del suo useEffect riattivo la notifica)
-                                    if(idChatCorrente==notif.request.content.data.chatId){
+                                   if(notif.request.content.data.hasOwnProperty("chatId") && idChatCorrente==notif.request.content.data.chatId){
                                       Notifications.setNotificationHandler({
                                         handleNotification: async () => ({
                                           shouldShowAlert: false,

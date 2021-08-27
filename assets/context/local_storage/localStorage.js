@@ -364,7 +364,8 @@ const saveImageLocally = async(userUid, url) => {
                 resolve(info.uri);
             }
         }catch(e){
-            throw e;
+            //throw e;
+            reject(e);
         }
     })
 }

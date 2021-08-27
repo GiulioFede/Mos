@@ -238,7 +238,7 @@ export default function ChatListComponent({navigation, route}){
                             console.log("fine caricamento conversazioni");
                             //console.log(chatsSummaryTmp);
                             //console.log(mediaContattiTmp);
-                            console.log(listOfConversations);
+                            //console.log(listOfConversations);
                         }).catch((err)=>{
                             console.log("Si è verificato un errore durante il recupero dei media dei contatti: "+err);
                         })
@@ -291,9 +291,9 @@ export default function ChatListComponent({navigation, route}){
                                     }
                                     */
                                     let newConversations = doc.data();
-                                    console.log(newConversations);
+                                    //console.log(newConversations);
                                     console.log("precedenti conversazioni");
-                                    console.log(listOfConversations);
+                                    //console.log(listOfConversations);
                                     setListOfConversations(newConversations);
                                 }
                             }catch(e){
@@ -314,7 +314,7 @@ export default function ChatListComponent({navigation, route}){
         }
     },[])
 
-    //INIZIO: carica tutte le chat. TODO: aggiungere dipendenza (ricarica quando cambia...)
+    //INIZIO: 
     useEffect(()=>{
         console.log("chiamo use effect in chat.screen");
         caricaChat();
@@ -335,7 +335,7 @@ export default function ChatListComponent({navigation, route}){
     }
 
     console.log("info profili scaricati");
-    console.log(infoProfiloContatti);
+    //console.log(infoProfiloContatti);
     
     if(isChatLoading==false){
         return (
@@ -346,7 +346,7 @@ export default function ChatListComponent({navigation, route}){
                     keyExtractor={item=>item.key}
                     renderItem={({item, index})=>{
                         console.log("ITEM DA RIVEDERE");
-                        console.log(item);
+                        //console.log(item);
                         return(
                         
                         <>

@@ -520,9 +520,9 @@ function ottieniAscoltatoreNuoveConversazioni(){
         }
     }
 
-    async function upgradeConversation(chatID, isUpgrade, contactUid){
+    async function upgradeConversation(chatID, isUpgrade, contactUid, nameContactUid, myName, contactToken, myToken, lastLevelOfVisibility){
         try{
-            return await _upgradeConversation(chatID, isUpgrade, contactUid);
+            return await _upgradeConversation(chatID, isUpgrade, contactUid, nameContactUid, myName, contactToken, myToken,lastLevelOfVisibility);
         }catch(e){
             throw e;
         }

@@ -4,6 +4,7 @@ import 'firebase/firestore';
 import 'firebase/functions'
 const bucketName = "mos-test-db748.appspot.com"; // NB: CAMBIA 'mos-test-db748' QUANDO CAMBI NOME DATABASE
 import NetInfo from '@react-native-community/netinfo';
+import { sendPushNotification } from "../../push_notifications/functions";
 
 export function _creaNuovoUtente(userId, nome, dataDiNascita, posizione, sesso, preferenzaSesso){
    console.log("servizio: crea nuovo utente................................................................................");
@@ -1052,13 +1053,11 @@ export function _isProfiloCompletato(uid){
 
     export function _makeDecision(response, chatID){ //response deve essere true o false
         try{
-            let nomeCampo = firebase.auth().currentUser.uid+"_response";
+            let nomeCampo = "statistics."+firebase.auth().currentUser.uid+"_response";
             let db = firebase.firestore();
             return db.collection("chats")
                      .doc(chatID)
-                     .collection("events")
-                     .doc("statistics")
-                     .set({
+                     .update({
                         [`${nomeCampo}`]: response
                      },{merge:true})
         }catch(e){
@@ -1066,32 +1065,75 @@ export function _isProfiloCompletato(uid){
         }
     }
 
-    export function _upgradeConversation(chatID, isUpgrade, contactUid){
+    export function _upgradeConversation(chatID, isUpgrade, contactUid, nameContactUid, myName, contactToken, myToken,lastLevelOfVisibility){
         try{
             let db = firebase.firestore();
             var batch = firebase.firestore().batch();
             //path documento riassuntivo
             const pathDocumentoRiassuntivo = db.collection("chats").doc(chatID);
-            //path documento statistiche
-            const pathDocumentoStatistiche = db.collection("chats").doc(chatID).collection("events").doc("statistics");
 
+            //path documento notifiche utente corrente
+            const pathCurrentUserNotification = db.collection("users").doc(firebase.auth().currentUser.uid).collection("notifications").doc();
+            //path documento notifiche contatto
+            const pathCurrentContactNotification = db.collection("users").doc(contactUid).collection("notifications").doc();
+            
+            
             //se c'è un upgrade modifico livello di visibilità
             if(isUpgrade==true){
-                batch.set(pathDocumentoRiassuntivo,{
+                batch.update(pathDocumentoRiassuntivo,{
                     level_of_visibility: firebase.firestore.FieldValue.increment(1)
                 },{merge:true});
+
+                //inoltre invio una notifica a entrambi sul successo!
+                batch.set(pathCurrentUserNotification,{
+                    author: nameContactUid,
+                    type: lastLevelOfVisibility==0?"UPGRADE_VISIBILITY":"TOTAL_DISCLOSURE",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                batch.set(pathCurrentContactNotification,{
+                    author: myName,
+                    type: lastLevelOfVisibility==0?"UPGRADE_VISIBILITY":"TOTAL_DISCLOSURE",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                })
+            }else {
+                //inoltre invio una notifica a entrambi sul mancato successo
+                batch.set(pathCurrentUserNotification,{
+                    author: nameContactUid,
+                    type: "NO_UPGRADE_VISIBILITY",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                batch.set(pathCurrentContactNotification,{
+                    author: myName,
+                    type: "NO_UPGRADE_VISIBILITY",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                })
             }
+            
             //in ogni caso resetto il documento statistiche  (e incremento di 1 number_of_messages per sbloccare la chat)
-            let nomeCampoContatto = contactUid+"_response";
-            let nomeCampoUtenteCorrente = firebase.auth().currentUser.uid+"_response";
-            batch.update(pathDocumentoStatistiche,
+            let nomeCampoContatto = "statistics."+contactUid+"_response";
+            let nomeCampoUtenteCorrente = "statistics."+firebase.auth().currentUser.uid+"_response";
+            batch.update(pathDocumentoRiassuntivo,
                 {
-                    number_of_messages: firebase.firestore.FieldValue.increment(1),
+                    'statistics.number_of_messages': firebase.firestore.FieldValue.increment(1),
                     [`${nomeCampoContatto}`]: null,
                     [`${nomeCampoUtenteCorrente}`]: null
-                })
+                },{merge:true})
 
-            return batch.commit();
+            return batch.commit().then(async(ris)=>{
+                //invio push notification solo se c'è stato l'upgrade
+                if(isUpgrade==true){
+                    if(lastLevelOfVisibility==0){
+                        console.log("invio push notification a "+nameContactUid+" con token "+contactToken+" e a me,"+myName+", con token "+myToken);
+                        await sendPushNotification(contactToken, "Tu e "+myName+" siete passati al livello successivo!","Tu e "+myName+" siete entrambi daccordo per passare al livello successivo",{});
+                        await sendPushNotification(myToken, "Tu e "+nameContactUid+" siete passati al livello successivo!","Tu e "+nameContactUid+" siete entrambi daccordo per passare al livello successivo",{});
+                    }else {
+                        console.log("invio push notification a "+nameContactUid+" con token "+contactToken+" e a me,"+myName+", con token "+myToken);
+                        await sendPushNotification(contactToken, "Congratulazioni! Tu e "+myName+" siete visibili al 100%!","",{});
+                        await sendPushNotification(myToken, "Congratulazioni! Tu e "+nameContactUid+" siete visibili al 100%!","",{});
+                    }
+                }               
+                return;
+            })
         }catch(e){
 
         }
