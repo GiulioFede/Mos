@@ -261,7 +261,7 @@ export function _isProfiloCompletato(uid){
 
     export function _aggiornaDettagliProfiloUtente(idUser, doc){
         var db = firebase.firestore();
-        console.log("aggiorno dettali utente...............................................................................:");
+        console.log("aggiorno dettali utente "+idUser+"...............................................................................:");
 
         return db.collection("users").doc(idUser).update(doc);
     }
@@ -401,7 +401,7 @@ export function _isProfiloCompletato(uid){
         }
     */
     export function _getChatSummaryInformation(idChat){
-        console.log("ottengo informazioni chat riassuntive "+idChat+" ................................................................................:");
+        //console.log("ottengo informazioni chat riassuntive "+idChat+" ................................................................................:");
 
         var db = firebase.firestore();
 
@@ -440,9 +440,9 @@ export function _isProfiloCompletato(uid){
                                         media["gallery"] = {};
                                         let gallery = [];
                                         for(let key in ris[0].data().gallery){
-                                            console.log("chiave:"+key);
-                                            console.log("media attuali:");
-                                            console.log(media);
+                                            //console.log("chiave:"+key);
+                                            //console.log("media attuali:");
+                                            //console.log(media);
                                             //gallery.push({name: key, url_0: ris[0].data().gallery[key], url_25: ris[1].data().gallery[key], url_50: ris[2].data().gallery[key], url_75: ris[3].data().gallery[key], url_100: ris[4].data().gallery[key] });
                                             gallery.push({name: key, url_0: ris[0].data().gallery[key], url_50: ris[1].data().gallery[key], url_100: ris[2].data().gallery[key] });
                                         
@@ -453,8 +453,8 @@ export function _isProfiloCompletato(uid){
                                         
                                         media["gallery"] = newMedia;*/
                                         media["gallery"] = gallery;
-                                        console.log("media fiinali:");
-                                        console.log(media["gallery"]);
+                                        //console.log("media fiinali:");
+                                        //console.log(media["gallery"]);
                                         return media;
                                     })
 
@@ -503,42 +503,54 @@ export function _isProfiloCompletato(uid){
                let contact_conversations_info = await transaction.get(contactConversations);
                //se il contatto possiede già una conversazione in cui come uid possiede noi allora fermo tutto
                if(!contact_conversations_info.exists){
+                   console.log("errore transazione creazione conversazione: non è stato possibile trovare le informazioni dell'utente");
                    throw "General error";
                }
                else {
                    //return contact_conversations_info.data();
                    for(let i=0; i<contact_conversations_info.data().conversations.length; i++){
                        //se esistiamo già mando errore
-                       if(contact_conversations_info.data().conversations[i].uid==firebase.auth().currentUser.uid)
+                       if(contact_conversations_info.data().conversations[i].uid==firebase.auth().currentUser.uid){
+                        console.log("errore transazione creazione conversazione: la chat esiste già");
                             throw "A conversation already exists";
+                       }
                    }
                }
 
                //se tutto va bene allora creo conversazione
                //creo nuova chat nella collezione chats
-               await transaction.set(nuovaConversazionePath, {lastMessage:
-                                                                {author:null,
-                                                                timestamp:null,
-                                                                type:null,
-                                                                value:null},
-                                                               level_of_visibility:0});
-                
-                //creo canale events e documento statistics cosi da sentire gli update utili per l'upgrade della conversazione
-                var eventsChannel = db.collection("chats").doc(nuovaConversazionePath.id).collection("events").doc("statistics");
-                let nomeCampoContatto = uidNewContact+"_response";
-                let nomeCampoUtenteCorrente = firebase.auth().currentUser.uid+"_response";
-                transaction.set(eventsChannel,{[`${nomeCampoContatto}`]:null, administrator: firebase.auth().currentUser.uid, lastAuthor: null, number_of_messages:0, [`${nomeCampoUtenteCorrente}`]:null});
-                //creo nel mio profilo la coppia {chatId: nuovoId, uid: contatto, creation_data: data di oggi}
-                transaction.update(myConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:uidNewContact, contactName: nameNewContact, creation_data: new Date()})});
+               let nomeCampoContatto = uidNewContact+"_response";
+               let nomeCampoUtenteCorrente = firebase.auth().currentUser.uid+"_response";
+               await transaction.set(nuovaConversazionePath, {
+                                                              lastMessage:{
+                                                                  author:null,
+                                                                  timestamp:null,
+                                                                  type:null,
+                                                                  value:null
+                                                                },
+                                                               level_of_visibility:0,
+                                                               statistics:{
+                                                                    [`${nomeCampoContatto}`]:null, 
+                                                                    administrator: firebase.auth().currentUser.uid, 
+                                                                    lastAuthor: null, 
+                                                                    number_of_messages:0, 
+                                                                    [`${nomeCampoUtenteCorrente}`]:null
+                                                               }
+                                                            });
+                //siccome per eliminare la conversazione ci sarà bisogno di un campo data uguale, lo creo prima
+                let now = new Date().getTime();
+                 //creo nel mio profilo la coppia {chatId: nuovoId, uid: contatto, creation_data: data di oggi}
+                transaction.update(myConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:uidNewContact, contactName: nameNewContact, creation_data: now})});
                 //creo nel profilo del contatto la coppia {chatId: nuovoId, uid: mioUid, creation_data: data di oggi}
-                transaction.update(contactConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:firebase.auth().currentUser.uid,contactName: myName, creation_data: new Date()})});   
+                transaction.update(contactConversations,{conversations: firebase.firestore.FieldValue.arrayUnion({chatId:nuovaConversazionePath.id, uid:firebase.auth().currentUser.uid,contactName: myName, creation_data: now})});   
                 //creo nel profilo del contatto una notifica
-                transaction.set(contactNotificationChannel,{author: myName, type: "JOIN", timestamp: new Date()}); 
+                transaction.set(contactNotificationChannel,{author: myName, type: "JOIN", timestamp: now}); 
 
-                return nuovaConversazionePath.id;
+                return [nuovaConversazionePath.id, now];
             });
 
         }catch(e){
+            console.log("errore transazione creazione chat:"+e);
             throw e;
         }
     }
@@ -805,6 +817,7 @@ export function _isProfiloCompletato(uid){
         //ascolto documenti in una raccolta
         let db = firebase.firestore();
         console.log("ottenimento ascoltatore per messaggi con timestamp maggiore di "+lastMillisecondsStored);
+        console.log("argomenti:"+chatID+","+channelID+","+lastMillisecondsStored);
         //se lastTimestampStored == -1 significa che la chat è appena iniziata
         if(lastMillisecondsStored==-1)
             return db.collection("chats")
@@ -925,6 +938,7 @@ export function _isProfiloCompletato(uid){
             console.log("query tipo startAt");
             nearest_users_snapshot = await db.collection('users') //questa query richiede un indice
                     .where("gender_identity","==",gender_preference)
+                    .where("show_me","==",true)
                     .where("age","in",ageRange) //in supporta al massimo 10 elementi nell'array
                     .orderBy('location.geohash')
                     .startAt(startAt)
@@ -936,6 +950,7 @@ export function _isProfiloCompletato(uid){
                 nearest_users_snapshot = await db.collection('users') //questa query richiede un indice
                     .where("gender_identity","==",gender_preference)
                     .where("age","in",ageRange) //in supporta al massimo 10 elementi nell'array
+                    .where("show_me","==",true)
                     .orderBy('location.geohash')
                     .startAfter(startAt)
                     .endAt(endAt)
@@ -1137,4 +1152,93 @@ export function _isProfiloCompletato(uid){
         }catch(e){
 
         }
+    }
+
+
+    export async function _removeConversation(chatID, contactUid, contactName, myName, chatCreationData){
+
+        console.log("rimozione chat "+chatID+" con utente "+contactName+" di id "+contactUid+" da parte di "+myName+" con data di creazione sotto:");
+        console.log(chatCreationData);
+
+        var db = firebase.firestore();
+        const idUser = firebase.auth().currentUser.uid;
+        //path channel utente corrente
+        const pathChannelCurrentUser = db.collection("chats").doc(chatID).collection(idUser);
+        //path channel contatto
+        const pathChannelContact= db.collection("chats").doc(chatID).collection(contactUid);
+        //path chat
+        const pathChat = db.collection("chats").doc(chatID);
+        //oggetto chat da rimuovere nella mia collezione 
+        const myChatObj = {
+            chatId: chatID,
+            contactName: contactName,
+            creation_data: chatCreationData,
+            uid: contactUid
+        }
+        //oggetto chat da rimuovere nella sua collezione
+        const contactChatObj = {
+            chatId: chatID,
+            contactName: myName,
+            creation_data: chatCreationData,
+            uid: idUser
+        }
+        //path conversations utente corrente
+        const pathConversationsCurrentUser = db.collection("users").doc(idUser).collection("chats").doc("Conversations");
+        //path conversations contatto
+        const pathConversationsContatto = db.collection("users").doc(contactUid).collection("chats").doc("Conversations");
+        //path documento notifiche utente corrente
+        const pathCurrentUserNotification = db.collection("users").doc(idUser).collection("notifications").doc();
+        //path documento notifiche contatto
+        const pathCurrentContactNotification = db.collection("users").doc(contactUid).collection("notifications").doc();
+
+        var batch = db.batch();
+
+        console.log("eliminazione documenti sulla mia collezione");
+        //elimino tutti i messaggi sul mio canale
+        pathChannelCurrentUser.get().then(snapshot =>{
+            snapshot.docs.forEach(doc=>{
+                batch.delete(doc.ref);
+            })
+        })
+
+        console.log("eliminazione documenti sulla sua collezione");
+        //elimino tutti i messaggi sul canale del contatto
+        pathChannelContact.get().then(snapshot =>{
+            snapshot.docs.forEach(doc=>{
+                batch.delete(doc.ref);
+            })
+        })
+
+        console.log("elimino chat");
+        //elimino chat
+        batch.delete(pathChat);
+
+        console.log("elimino la chat dalle mie conversazioni");
+        //elimino chat dentro le mie conversazioni
+        batch.update(pathConversationsCurrentUser,{
+            "conversations": firebase.firestore.FieldValue.arrayRemove(myChatObj)
+           //conversations: conversations.filter(chat => chat.chatId != chatID)
+        });
+
+        console.log("elimino la chat dalle sue conversazioni")
+        //elimino chat dentro le sue conversazioni
+        batch.update(pathConversationsContatto,{
+            "conversations": firebase.firestore.FieldValue.arrayRemove(contactChatObj)
+            //conversations: conversations.filter(chat => chat.chatId != chatID)
+        })
+
+        //inoltre invio una notifica a entrambi sulla rimozione della chat
+        batch.set(pathCurrentUserNotification,{
+            author: contactName,
+            type: "YOUR_CHAT_REMOVAL",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        batch.set(pathCurrentContactNotification,{
+            author: myName,
+            type: "CHAT_REMOVAL",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        return batch.commit();
+
     }

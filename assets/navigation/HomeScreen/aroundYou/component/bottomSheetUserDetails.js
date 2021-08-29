@@ -54,7 +54,7 @@ const BottomSheetUserDetails = forwardRef((props, ref) => {
                             
                             ref = {bottomSheetRef}
                             snapPoints={[0,10000]}
-                            
+                            style={{marginTop:altezzaBarraScreen}}
                             onAnimate={(n,i)=>{
                                 //se n==1 significa che il menu viene chiuso
                                 if(n==1) console.log(n);
@@ -64,7 +64,7 @@ const BottomSheetUserDetails = forwardRef((props, ref) => {
                             
                         >
                             <BottomSheetScrollView>
-                                 <View >
+                                 <View style={{marginBottom:altezzaBarraScreen}}>
                                      <UserInformationView ref={userInformationViewRef}/>
                                  </View>
                                 

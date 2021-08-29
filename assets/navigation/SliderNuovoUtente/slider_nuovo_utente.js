@@ -16,7 +16,7 @@ import { getAgeFromDate } from "../../context/utilities/functions.utilities";
 export default function SliderNuovoUtente({route, navigation}){ //NB: route.params.uid contiene l'uid col quale salvare l'utente (e' uguale all'uid di autenticazione)
     console.log("Slider nuovo utente");
     //contesto autenticazione
-    var {creaNuovoProfiloUtente, logOut, caricaNuovaImmagine} = useContext(AutenticazioneUtente);
+    var {creaNuovoProfiloUtente, logOut, setIsUserProfileCompleted} = useContext(AutenticazioneUtente);
     //estraggo argomenti dalla funzione
     var {uid} = route.params;
 
@@ -178,6 +178,7 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                                     );
                                     console.log("CREAZIONE PROFILO RIUSCITA!!!");
                                     setIsCreazioneUtenteIsLoading(false);
+                                    setIsUserProfileCompleted(true);
                                     navigation.navigate("Home");    
                                 }catch(e){
                                     console.log("errore durante la creazione del profilo:"+e);

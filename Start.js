@@ -12,6 +12,7 @@ import PhoneAuthScreen from "./assets/navigation/PhoneAuthScreen/phoneAuth_scree
 import PhoneAuthVerificationCodeScreen from "./assets/navigation/PhoneAuthScreen/phoneAuthVerificationCode_screen";
 import {ColoreBarraDiStato, ColoreBarraDiStato as ColoreStatusBar} from "./assets/context/variabili_globali/variabiliGlobali";
 import SliderNuovoUtente from "./assets/navigation/SliderNuovoUtente/slider_nuovo_utente";
+import Loading from "./assets/navigation/HomeScreen/aroundYou/component/loading";
 
 const Stack = createStackNavigator();
 
@@ -19,18 +20,15 @@ const Stack = createStackNavigator();
 export default function Start(){
 
     
-    const {isInizializzazione,user, getUtenteCorrente, isUserProfileCompleted} = useContext(AutenticazioneUtente);
+    const {isInizializzazione, isUserProfileCompleted} = useContext(AutenticazioneUtente);
 
     var coloreBarra = useContext(ColoreBarraDiStato);
-
-    console.log("l'utente è loggato?:");
-    console.log(user, isUserProfileCompleted);
 
     //se l'accesso a firebase è ancora in fase di inizializzazione...
     if(isInizializzazione || isUserProfileCompleted==null ){
         return (
             <View style={{justifyContent:"center", alignItems:"center", flex:1, backgroundColor:"white"}}>
-                <ActivityIndicator animating={true} color={MosCeleste} />
+                <Loading />
                 <StatusBar backgroundColor={coloreBarra.colore} barStyle="dark-content" />
             </View>
         )

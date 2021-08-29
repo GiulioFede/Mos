@@ -13,8 +13,9 @@ import { RFPercentage} from "react-native-responsive-fontsize";
 
 
 
-
 const indici = [{id:"1"},{id:"2"},{id:"3"}];
+
+var lastUid = null;
 
 export default function LoginScreen({navigation}){
 
@@ -24,7 +25,7 @@ export default function LoginScreen({navigation}){
     //EMAIL E PASSWORD::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
     //contesto autenticazione
-    const {accediConEmailPassword, inviaEmailRecuperoPassword, inviaEmailDiVerifica, getUtenteCorrente, isProfiloCompletato,messaggioAuth,setMessaggioAuth, isUserProfileCompleted} = useContext(AutenticazioneUtente);
+    const {user,userAuth, accediConEmailPassword,isControlDone, inviaEmailRecuperoPassword, inviaEmailDiVerifica, getUtenteCorrente, isProfiloCompletato,messaggioAuth,setMessaggioAuth,setIsControlDone, isUserProfileCompleted} = useContext(AutenticazioneUtente);
     //label button email e password
     const [labelEmailPasswordButton, setLabelEmailPasswordButton] = useState("ACCEDI CON EMAIL/PASSWORD");
     //email
@@ -54,9 +55,29 @@ export default function LoginScreen({navigation}){
     const [mostraSchermataTelefono, setMostraSchermataTelefono] = useState(false);
 
     
+    
     const refFlatList = useRef();
 
-    
+    useEffect(()=>{
+        console.log("use effect home:"+userAuth);
+
+            console.log("stampo dettagli");
+            console.log("vado alla home con "+(userAuth!=null?userAuth.uid:null)+","+isUserProfileCompleted+","+isControlDone+",");
+        if(userAuth){
+            console.log(userAuth.email!=null);
+            console.log(userAuth.emailVerified==true);
+        }
+        if(userAuth && userAuth.uid!=null && userAuth.uid!=undefined && isUserProfileCompleted==true && isControlDone==true){
+            navigation.reset({routes: [{name: "Home"}]});
+            navigation.navigate("Home");
+        }
+        if(userAuth && userAuth.uid!=null && userAuth.uid!=undefined && isUserProfileCompleted==false && isControlDone==true && (userAuth.email!=null && userAuth.emailVerified==true)){
+            setSnackmessageEmailVerified(true);
+            setIsLoading(false);
+        }
+
+        
+    },[userAuth,isUserProfileCompleted, isControlDone ])
 
     //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
@@ -207,33 +228,40 @@ export default function LoginScreen({navigation}){
         else {
             setIsLoading(true);
             if(errore.length>0) setErrore("");
-            console.log("accedi a firebase...");
+            console.log("accedi a firebase...ultimo utente:"+user);
+            let lastUser = user;
             try{
                 accediConEmailPassword(email,password)
                 .then((userCredential) => {
+                    
                     // Signed in
-                    console.log("autenticato:"+userCredential.user);
-                    var user = userCredential.user;
-
+                    console.log("autenticato:");
+                    console.log(userCredential.user);
+                    var local_user = userCredential.user;
+                    console.log("utente di prima:"+lastUser+", utente di ora:"+local_user.uid);
                     //controllo se ha verificato l'email
-                    var isEmailVerified = user.emailVerified;
+                    var isEmailVerified = local_user.emailVerified;
                     console.log("is email verified? --> "+isEmailVerified);
                     if(!isEmailVerified){
+                        lastUid=local_user;
                         setSnackmessageEmailVerified(true);
                         setIsLoading(false);
                     }
-                    else {
-                        console.log("UID:"+user.uid);
+                    else if(lastUser==local_user.uid) {
+                        console.log("utente diverso dall'ultimo salvato");
+                        console.log("UID:"+local_user.uid);
                         //controllo se ha già completato gli step per la creazione del profilo
-                        isProfiloCompletato(user.uid)
+                        isProfiloCompletato(local_user.uid)
                             .then((doc)=>{
                                 setIsLoading(false);
                                 //se è stato completato portalo direttamente alla home
                                 if (doc.exists) {
+                                    console.log("documento esistente, setto lo user con "+local_user.uid);
+                                    setUser(local_user.uid);
                                     navigation.navigate("Home");
                                 } else {
                                     // se non è stato completato inviarlo allo Slider 
-                                    navigation.navigate("SliderNuovoUtente", {uid: user.uid});
+                                    navigation.navigate("SliderNuovoUtente", {uid: local_user.uid});
                                 }
                             }).catch((e)=>{
                                 setIsLoading(false);
@@ -267,7 +295,7 @@ export default function LoginScreen({navigation}){
                         errorMessage="*errore imprevisto. Riprovare piu tardi.";
                     
                     setErrore(errorMessage);
-                    
+                    console.log(error);
                     //se il numero di tentativi supera 3 richiedi email per il recupero della password
                     console.log("numero tentativi effettuati:"+numeroDiTentativiEmailPassword.current);
                     if(numeroDiTentativiEmailPassword.current>=3)

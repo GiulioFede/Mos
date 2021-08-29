@@ -20,6 +20,7 @@ import * as Notifications from 'expo-notifications'
 import registerForPushNotificationsAsync from '../context/push_notifications/registerForPushNotifications';
 import Constants from 'expo-constants';
 import { idChatCorrente } from './HomeScreen/chat/screen/chat detail/chat_detail';
+import Loading from './HomeScreen/aroundYou/component/loading';
 
 /*
   NB: Questa funzione decide solo come comportarsi quando si riceve una notifica MA l'app è in FOREGROUND.
@@ -49,7 +50,7 @@ const Drawer = createDrawerNavigator();
 export default function HomeNavigator({navigation}) {
 
     //contesto
-    const {getUserInformation, getUtenteCorrente,user, logOut,scaricaUrlImmagine, setInformazioniProfiloUtente, updateAge, getListOfConversations, setListOfConversations, getAllMediaOfCurrentUser, saveNewPushNotificationToken} = useContext(AutenticazioneUtente);
+    const {getUserInformation, getUtenteCorrente,user,isUserProfileCompleted, logOut,scaricaUrlImmagine, setInformazioniProfiloUtente, updateAge, getListOfConversations, setListOfConversations, getAllMediaOfCurrentUser, saveNewPushNotificationToken} = useContext(AutenticazioneUtente);
 
     //se true indica che il profilo non è stato ancora caricato
     const [isProfileLoading, setIsProfileLoading] = useState(true);
@@ -86,169 +87,178 @@ export default function HomeNavigator({navigation}) {
            {/*inserisco prima gli Screen definiti nel Drawer.Navigator*/}
           <DrawerItemList {...props} /> 
           {/*aggiungo il bottone di logOut*/}
-          <DrawerItem label="Logout" onPress={() => {logOut().then((ok)=>navigation.navigate("LoginScreen")).catch((e)=>{console.log("errore al logout"); navigation.navigate("LoginScreen")});navigation.dispatch(DrawerActions.closeDrawer());}} /> 
+          <DrawerItem label="Logout" onPress={() => {logOut().then((ok)=>{ navigation.reset({routes: [{name: "Home"}]}); navigation.navigate("LoginScreen")}).catch((e)=>{console.log("errore al logout"); navigation.navigate("LoginScreen")});navigation.dispatch(DrawerActions.closeDrawer());}} /> 
         </DrawerContentScrollView>
       );
     }
 
  //all'avvio carico il profilo utente
  useEffect(()=>{
-  try{
-    //ottengo utente
-    console.log("carico profilo utente");
-    let uid = getUtenteCorrente();
-    //ottengo informazioni profilo
-    if(uid){
-          /*
-          ottiene i dati dell'utente nel formato (dentro .data):
-              - dateOfBirth
-              - name
-              - position
-              - sex
-              - sexPreference
-         */
-      getUserInformation(uid)
-        .then((info)=>{
-            console.log("info ottenute");
-            if (info.exists) {
-              console.log("Home: informazioni utente recuperate");
-              console.log(info.data());
-              //creo variabile info_utente in cui inserirò tutto come unico documento (informazioni base profilo + url media)
-              const info_utente = info.data();
-              
-              getAllMediaOfCurrentUser().then((media)=>{
-             // getMediaProfiloUtente()
-               // .then((media)=>{
-                  console.log("media ottenuti");
-                  info_utente.urlGalleryImages = media.gallery;
-                  info_utente.urlProfileImage = media.profileImageUrl;
-                  console.log("info complete utente:");
-                  console.log(info_utente);
+  
+    function init(){
+        try{
+          //ottengo utente
+          console.log("carico profilo utente");
+          let uid = getUtenteCorrente();
+          //ottengo informazioni profilo
+          if(uid){
+                /*
+                ottiene i dati dell'utente nel formato (dentro .data):
+                    - dateOfBirth
+                    - name
+                    - position
+                    - sex
+                    - sexPreference
+              */
+            getUserInformation(uid)
+              .then((info)=>{
+                  console.log("info ottenute");
+                  if (info.exists) {
+                    console.log("Home: informazioni utente recuperate");
+                    console.log(info.data());
+                    //creo variabile info_utente in cui inserirò tutto come unico documento (informazioni base profilo + url media)
+                    const info_utente = info.data();
+                    
+                    getAllMediaOfCurrentUser().then((media)=>{
+                  // getMediaProfiloUtente()
+                    // .then((media)=>{
+                        //console.log("media ottenuti");
+                        info_utente.urlGalleryImages = media.gallery;
+                        info_utente.urlProfileImage = media.profileImageUrl;
+                        //console.log("info complete utente:");
+                        //console.log(info_utente);
 
-                                      /*
-                ottengo il documento delle informazioni sulle conversazioni nel formato:
-                        {
-                          conversations: [
-                              0: {
-                                  chatId: "AHNCDJ..."
-                                  uid: "YSTRN..."
-                              },
-                              1: {
-                                  chatId: "BHNCDJ..."
-                                  uid: "ZSTRN..."
-                              }
-                          ]
-                      }
-               */
-                  getListOfConversations()
-                  .then(async (chats)=>{
-                    try{
-                      console.log("Prelevo informazioni chat utente:");
-                      if(chats.exists)
-                        setListOfConversations(chats.data())
-
-                      console.log(chats.data())
-
-                      //controllo che l'età attuale sia uguale a quella memorizzata. Se diversa la aggiorno e se 
-                      //dovessi fallire carico comunque il profilo. E' una inconsistenza comunque non grave
-                      if(getAgeFromTimestamp(info_utente.date_of_birth) == info_utente.age){
-                        console.log("età consistente");
-                      }
-                      else {
-                        console.log("età inconsistente. Necessita di aggiornamento");
-                        await updateAge(getAgeFromTimestamp(info_utente.date_of_birth)).
-                        console.log("età aggiornata con successo.");
-                        info_utente.age = getAgeFromTimestamp(info_utente.date_of_birth);
-                      }
-
-                            /*
-                              REGISTRAZIONE PUSH NOTIFICATION
-                            */
-                              //1) registriamoci a expo push notification ed otteniamo il token
-                              console.log("registrazione push notifications...")
-                              //se non sono nell'emulatore..
-                              if (Constants.isDevice){
-                                let token = await registerForPushNotificationsAsync();
-                                console.log("token ricevuto:");
-                                console.log(token);
-                                //NB: spesso il token sarà sempre uguale a quello già ricevuto, quindi non andremo a salvare nulla di nuovo su firestore
-                                if(!info_utente.hasOwnProperty('push_notification_token') || (info_utente.hasOwnProperty('push_notification_token') && info_utente['push_notification_token']==null)|| (info_utente.hasOwnProperty('push_notification_token') && info_utente['push_notification_token']!=token)){
-                                    console.log("token non esistente o diverso da prima. Lo salvo:"+token)
-                                    await saveNewPushNotificationToken(token);
-                                }
-                                info_utente["push_notification_token"] = token;
-                                //}else
-                                //    console.log("token esiste già");
-
-                                  console.log("mi registro alla notifica tipo 1");
-                                  //2) mi registro affinchè sia avvertito ogni volta che una notifica arrivi quando l'app è in FOREGROUND
-                                  notificationListener.current = Notifications.addNotificationReceivedListener(notif => {
-                                    //se sono qui allora potrebbe essere arrivata (true o false) una notifica mentre ero in foreground
-                                    console.log("notifica ricevuta in chat corrente:"+idChatCorrente);
-                                    console.log(notif.request.content);
-                                    /*console.log(idChatCorrente);*/
-                                    //se la notifica proviene da una chat su cui sono per adesso allora non la mostro (appena esco dalla chat, nel return del suo useEffect riattivo la notifica)
-                                   if(notif.request.content.data.hasOwnProperty("chatId") && idChatCorrente==notif.request.content.data.chatId){
-                                      Notifications.setNotificationHandler({
-                                        handleNotification: async () => ({
-                                          shouldShowAlert: false,
-                                          shouldPlaySound: false,
-                                          shouldSetBadge: false
-                                        })
-                                      });
-                                    }else {
-                                      Notifications.setNotificationHandler({
-                                        handleNotification: async () => ({
-                                          shouldShowAlert: true,
-                                          shouldPlaySound: false,
-                                          shouldSetBadge: false
-                                        })
-                                      });
+                                            /*
+                      ottengo il documento delle informazioni sulle conversazioni nel formato:
+                              {
+                                conversations: [
+                                    0: {
+                                        chatId: "AHNCDJ..."
+                                        uid: "YSTRN..."
+                                    },
+                                    1: {
+                                        chatId: "BHNCDJ..."
+                                        uid: "ZSTRN..."
                                     }
-                                  })
+                                ]
+                            }
+                    */
+                        getListOfConversations()
+                        .then(async (chats)=>{
+                          try{
+                            console.log("Prelevo informazioni chat utente:");
+                            if(chats.exists)
+                              setListOfConversations(chats.data())
 
-                                  console.log("mi registro alla notifica tipo 2");
-                                  //3) mi registro affinchè possa far partire un azione personalizzata quando l'utente riceve una notifica e vi clicca. Funziona quando l'app è sia in foreground, che background che killata!
-                                  notificationReceiverListener.current = Notifications.addNotificationResponseReceivedListener( response => {
-                                    console.log("NOTIFICAAAAAAAAA");
-                                    console.log(response);
-                                  });
-                              }
-                                //faccio partire tutto
-                                setInformazioniProfiloUtente(info_utente); //info contiene le info dell'utente
-                                setIsProfileLoading(false);
+                            //console.log(chats.data())
 
-                  }catch(e){
-                    console.log("E' avvenuto un errore. Carico comunque il profilo:"+e);
-                    setIsProfileLoading(false);
+                            //controllo che l'età attuale sia uguale a quella memorizzata. Se diversa la aggiorno e se 
+                            //dovessi fallire carico comunque il profilo. E' una inconsistenza comunque non grave
+                            if(getAgeFromTimestamp(info_utente.date_of_birth) == info_utente.age){
+                              console.log("età consistente");
+                            }
+                            else {
+                              console.log("età inconsistente. Necessita di aggiornamento");
+                              await updateAge(getAgeFromTimestamp(info_utente.date_of_birth)).
+                              console.log("età aggiornata con successo.");
+                              info_utente.age = getAgeFromTimestamp(info_utente.date_of_birth);
+                            }
+
+                                  /*
+                                    REGISTRAZIONE PUSH NOTIFICATION
+                                  */
+                                    //1) registriamoci a expo push notification ed otteniamo il token
+                                    console.log("registrazione push notifications...")
+                                    //se non sono nell'emulatore..
+                                    if (Constants.isDevice){
+                                      let token = await registerForPushNotificationsAsync();
+                                      console.log("token ricevuto:");
+                                      console.log(token);
+                                      //NB: spesso il token sarà sempre uguale a quello già ricevuto, quindi non andremo a salvare nulla di nuovo su firestore
+                                      if(!info_utente.hasOwnProperty('push_notification_token') || (info_utente.hasOwnProperty('push_notification_token') && info_utente['push_notification_token']==null)|| (info_utente.hasOwnProperty('push_notification_token') && info_utente['push_notification_token']!=token)){
+                                          console.log("token non esistente o diverso da prima. Lo salvo:"+token)
+                                          await saveNewPushNotificationToken(token);
+                                      }
+                                      info_utente["push_notification_token"] = token;
+                                      //}else
+                                      //    console.log("token esiste già");
+
+                                        console.log("mi registro alla notifica tipo 1");
+                                        //2) mi registro affinchè sia avvertito ogni volta che una notifica arrivi quando l'app è in FOREGROUND
+                                        notificationListener.current = Notifications.addNotificationReceivedListener(notif => {
+                                          //se sono qui allora potrebbe essere arrivata (true o false) una notifica mentre ero in foreground
+                                          console.log("notifica ricevuta in chat corrente:"+idChatCorrente);
+                                          console.log(notif.request.content);
+                                          /*console.log(idChatCorrente);*/
+                                          //se la notifica proviene da una chat su cui sono per adesso allora non la mostro (appena esco dalla chat, nel return del suo useEffect riattivo la notifica)
+                                        if(notif.request.content.data.hasOwnProperty("chatId") && idChatCorrente==notif.request.content.data.chatId){
+                                            Notifications.setNotificationHandler({
+                                              handleNotification: async () => ({
+                                                shouldShowAlert: false,
+                                                shouldPlaySound: false,
+                                                shouldSetBadge: false
+                                              })
+                                            });
+                                          }else {
+                                            Notifications.setNotificationHandler({
+                                              handleNotification: async () => ({
+                                                shouldShowAlert: true,
+                                                shouldPlaySound: false,
+                                                shouldSetBadge: false
+                                              })
+                                            });
+                                          }
+                                        })
+
+                                        console.log("mi registro alla notifica tipo 2");
+                                        //3) mi registro affinchè possa far partire un azione personalizzata quando l'utente riceve una notifica e vi clicca. Funziona quando l'app è sia in foreground, che background che killata!
+                                        notificationReceiverListener.current = Notifications.addNotificationResponseReceivedListener( response => {
+                                          console.log("NOTIFICAAAAAAAAA");
+                                          console.log(response);
+                                        });
+                                    }
+                                      //faccio partire tutto
+                                      setInformazioniProfiloUtente(info_utente); //info contiene le info dell'utente
+                                      setIsProfileLoading(false);
+
+                        }catch(e){
+                          console.log("E' avvenuto un errore. Carico comunque il profilo:"+e);
+                          setIsProfileLoading(false);
+                        }
+
+                        }).catch((err)=>{
+                          console.log("Errore durante il recupero delle informazioni sulla chat dell'utente:"+err);
+                        })
+                      }).catch((err)=>{
+                        console.log("Navigation.home.js: Si è verificato un problema durante il download dei media dell'utente:"+err)
+                      }) 
+                  } else {
+                    // doc.data() will be undefined in this case
+                    console.log("No such document!");
                   }
+                  
+              }).catch((e)=>{
+                console.log("Navigation.home.js: Si è verificato un problema durante il recupero delle info dell'utente")
+                console.log(e);
+              })
+          }
+        }catch(e){
+          console.log("si è verificato un errore:"+e);
+        }
+      }
 
-                  }).catch((err)=>{
-                    console.log("Errore durante il recupero delle informazioni sulla chat dell'utente:"+err);
-                  })
-                }).catch((err)=>{
-                  console.log("Navigation.home.js: Si è verificato un problema durante il download dei media dell'utente:"+err)
-                }) 
-            } else {
-              // doc.data() will be undefined in this case
-              console.log("No such document!");
-            }
-            
-        }).catch((e)=>{
-          console.log("Navigation.home.js: Si è verificato un problema durante il recupero delle info dell'utente")
-          console.log(e);
-        })
-    }
-  }catch(e){
-    console.log("si è verificato un errore:"+e);
-  }
+      console.log("Home: chiamo funzione init per utente "+user);
+      if(user!=null && isUserProfileCompleted==true)
+        init();
 
   return () => {
-    Notifications.removeNotificationSubscription(notificationListener.current);
-    Notifications.removeNotificationSubscription(notificationReceiverListener.current);
+    if(notificationListener.current && notificationReceiverListener){
+      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(notificationReceiverListener.current);
+    }
   }
 
-},[user])
+},[user,isUserProfileCompleted])
 
     //se il profilo sta ancora caricando...
     if(isProfileLoading){
@@ -260,11 +270,13 @@ export default function HomeNavigator({navigation}) {
     }
     //altrimenti se il caricamento è completato...
   else return (
+    <>
       <Drawer.Navigator initialRouteName="Home" drawerContent={props => <AltriPulsanti {...props} />} >
         <Drawer.Screen name="Home" component={HomeScreen} />
         <Drawer.Screen name="Informazioni Personali" component={InformazioniPersonali} />
        
       </Drawer.Navigator>
+      </>
   );
 }
 

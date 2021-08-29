@@ -26,7 +26,7 @@ import { fontSizeCampi } from '../../../../../../context/variabili_globali/varia
 
 // Declare component 
 function MessageBubble({messaggio, type, author, currentUser}) {
-    console.log("MESSAGE BUBBLE");
+    //console.log("MESSAGE BUBBLE");
     //console.log(messaggio);
     //console.log(type);
     //console.log(author);

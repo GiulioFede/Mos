@@ -48,9 +48,9 @@ function orderChatByTimestamp(chat){
         //console.log("CONFRONTO");
         //console.log(a);
         //console.log(b);
-        let tempo1 = (a.value.lastMessage.timestamp==null)?(a.creation_data.seconds)*1000:a.value.lastMessage.timestamp;
-        let tempo2 = (b.value.lastMessage.timestamp==null)?(b.creation_data.seconds)*1000:b.value.lastMessage.timestamp;
-        console.log("confronto "+a.contactName+" con "+b.contactName+" con timestamp rispettivamente di: "+tempo1+" e "+tempo2+" , ossia in date "+new Date(tempo1).toString()+" e "+new Date(tempo2).toString());
+        let tempo1 = (a.value.lastMessage.timestamp==null)?(a.creation_data)*1000:a.value.lastMessage.timestamp;
+        let tempo2 = (b.value.lastMessage.timestamp==null)?(b.creation_data)*1000:b.value.lastMessage.timestamp;
+        //console.log("confronto "+a.contactName+" con "+b.contactName+" con timestamp rispettivamente di: "+tempo1+" e "+tempo2+" , ossia in date "+new Date(tempo1).toString()+" e "+new Date(tempo2).toString());
         return tempo2 - tempo1
     });
 
@@ -69,7 +69,7 @@ export default function ChatListComponent({navigation, route}){
     //lista delle conversazioni con relative informazioni
     const [chatsSummary, setChatsSummary] = useState([]);
     //lista delle informazioni sui media di ogni itente delle conversazioni sopra
-    const [mediaContatti, setMediaContatti] = useState([]);
+    //const [mediaContatti, setMediaContatti] = useState([]);
     //lista delle informazioni base dei contatti
     const [infoProfiloContatti, setInfoProfiloContatti] = useState([]);
 
@@ -179,7 +179,7 @@ export default function ChatListComponent({navigation, route}){
         //se non possiede delle conversazioni devo comunque settare [] cosi da fare il refresh di chatsSummary e mediaContatti per aggiornare la grafica
         if(listOfConversations.conversations.length==0){
             setChatsSummary([]);
-            setMediaContatti([]);
+            //setMediaContatti([]);
         }
 
         //se possiede delle conversazioni...
@@ -194,9 +194,9 @@ export default function ChatListComponent({navigation, route}){
                 .then((summaries)=>{
                     console.log("Tutte le informazioni sommarie delle conversazioni sono state scaricate");
                     //qui tutte le informazioni sommarie sono state caricate. Li inserisco nell'array che userò ovunque (sfrutto ciclo for sotto)
-                    console.log(summaries[0].data());
+                    //console.log(summaries[0].data());
                     //Prelevo media utente
-                    const promisesMediaContatti = []; //qui inserisco tutte le promise per le immagini
+                    //const promisesMediaContatti = []; //qui inserisco tutte le promise per le immagini
                     const chatsSummaryTmp = []; //qui avrò tutte le informazioni sulla conversazione
                     const promisesInfoProfileContatti = []; //qui avrò tutte le informazioni sul profilo dei contatti
                     for(var i = 0; i < listOfConversations["conversations"].length; i++) {
@@ -209,11 +209,12 @@ export default function ChatListComponent({navigation, route}){
                             il chats summary, ogni suoi elemento, possiede un campo 'level_of_visibility' 
                             che se è a zero allora la sgranatura è massima, se 1 è di 50%, se è 2 la visibilità è massima
                         */
-                       const livelloDiSgranatura= "100";
+                       /*const livelloDiSgranatura= "100";
+                       console.log("livello attuale di visibilità con: "+conversation.contactName+" è "+conversation.level_of_visibility);
                        if(conversation.level_of_visibility==1) livelloDiSgranatura = "50";
-                       else if(conversation.level_of_visibility==2) livelloDiSgranatura = "100";
+                       else if(conversation.level_of_visibility==2) livelloDiSgranatura = "0";
                         promisesMediaContatti.push(getMediaProfiloContatto(conversation.uid, livelloDiSgranatura));
-
+*/
                         //prelevo informazioni base utente
                         promisesInfoProfileContatti.push(getUserInformation(conversation.uid));
                     }
@@ -222,7 +223,7 @@ export default function ChatListComponent({navigation, route}){
                     let chatsSummaryTmpOrdered = orderChatByTimestamp(chatsSummaryTmp);
 
                     setChatsSummary(chatsSummaryTmpOrdered);
-
+/*
                     //avvio promises per i media
                     Promise.all(promisesMediaContatti)
                         .then((mediaContattiResult)=>{
@@ -242,6 +243,7 @@ export default function ChatListComponent({navigation, route}){
                         }).catch((err)=>{
                             console.log("Si è verificato un errore durante il recupero dei media dei contatti: "+err);
                         })
+*/
                     //avvio promises per le info dei profili
                     Promise.all(promisesInfoProfileContatti)
                         .then((infoProfiles)=>{
@@ -321,8 +323,8 @@ export default function ChatListComponent({navigation, route}){
     },[listOfConversations])
 
     function ordinaListaChat(indiceChat, newChatUpdated){
-        console.log("richiesta di aggiornare la chat all'indice:"+indiceChat);
-        console.log(newChatUpdated);
+        //console.log("richiesta di aggiornare la chat all'indice:"+indiceChat);
+        //console.log(newChatUpdated);
         //modifica nell'attuale array la chat all'indice 'indiceChat'
         let listUpdated = [...chatsSummary];
         listUpdated[indiceChat].value.lastMessage = newChatUpdated.lastMessage;
@@ -344,9 +346,10 @@ export default function ChatListComponent({navigation, route}){
                 <FlatList
                     data={chatsSummary}
                     keyExtractor={item=>item.key}
+                    style={{zIndex:2}}
                     renderItem={({item, index})=>{
                         console.log("ITEM DA RIVEDERE");
-                        //console.log(item);
+                        console.log(item);
                         return(
                         
                         <>
@@ -356,7 +359,7 @@ export default function ChatListComponent({navigation, route}){
                                     nome = {item.contactName}
                                     contactUid = {item.contactUid}
                                     content = {item.value}
-                                    media = {mediaContatti[parseInt(item.key)]} 
+                                    creationData = {item.creation_data} 
                                     route = {route}
                                     indicePosizioneChatInArray={index}
                                     ordinaListaChat={ordinaListaChat}

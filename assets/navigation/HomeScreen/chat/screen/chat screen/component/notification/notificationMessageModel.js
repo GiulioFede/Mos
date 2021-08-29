@@ -37,7 +37,13 @@ function getNotificationStringFromJSON(item){
         return " .Continuate a conoscervi un altro pò."
     }
     else if(item.type=="TOTAL_DISCLOSURE"){
-        return "  avete raggiunto il massimo della visibilità!"
+        return " avete raggiunto il massimo della visibilità!."
+    }
+    else if(item.type=="YOUR_CHAT_REMOVAL"){
+        return "Hai rimosso la conversazione con "
+    }
+    else if(item.type=="CHAT_REMOVAL"){
+        return " ha rimosso la conversazione."
     }
 }
 
@@ -80,6 +86,8 @@ export default function NotificationMessageModel({user, item, decrementaNumeroNo
                     {item.type=="UPGRADE_VISIBILITY" && <Text style={styles.type}>Congratulazioni! Tu e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
                     {item.type=="NO_UPGRADE_VISIBILITY" && <Text style={styles.type}>Forse è troppo presto per mostrarsi per te e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
                     {item.type=="TOTAL_DISCLOSURE" && <Text style={styles.type}>Congratulazioni! Tu e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
+                    {item.type=="YOUR_CHAT_REMOVAL" && <Text style={styles.type}>{getNotificationStringFromJSON(item)}<Text style={styles.author}>{item.author}</Text></Text>}
+                    {item.type=="CHAT_REMOVAL" && <Text style={styles.author}>{item.author}<Text style={styles.type}>{getNotificationStringFromJSON(item)}</Text></Text> }
                 </View>
             </View>
         )

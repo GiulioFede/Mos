@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio,  _removeMessages,_removeGroupOfAudiosBeforeTimestamp, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche,_ottieniAscoltatoreStatistics,_ottieniAscoltatoreUltimoMessaggio,_ottieniAscoltatoreNuoveConversazioni, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken, _makeDecision, _upgradeConversation} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio,  _removeMessages,_removeGroupOfAudiosBeforeTimestamp, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche,_ottieniAscoltatoreStatistics,_ottieniAscoltatoreUltimoMessaggio,_ottieniAscoltatoreNuoveConversazioni, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken, _makeDecision, _upgradeConversation,_removeConversation} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -22,8 +22,10 @@ export const AutenticazioneUtente = createContext(); //all'inizio è falso
 export const AutenticazioneUtenteProvider = ({children}) => {
     //se è true significa che siamo in fase di inizializzazione
     const [isInizializzazione, setIsInizializzazione] = useState(true);
+    const [isControlDone, setIsControlDone] = useState(false);
     //contiene solo lo uid dell'utente
     const [user, setUser] = useState(null);
+    const [userAuth, setUserAuth] = useState(null);
     //se true indica che ha completato gli step necessari a configurare il profilo
     const [isUserProfileCompleted, setIsUserProfileCompleted] = useState(null);
     //parte importantissima. Contiene le informazioni dell'utente (settata dalla Home quando recupera le informazioni)
@@ -65,6 +67,10 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     return <AutenticazioneUtente.Provider
                 value = {{
                     user, //uid
+                    userAuth, //tutto lo user (comprende anche uid)
+                    setUser,
+                    setIsUserProfileCompleted,
+                    isControlDone,
                     isUserProfileCompleted,
                     isInizializzazione,
                     informazioniProfiloUtente,
@@ -118,7 +124,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     findNextTenClosestUsers,
                     createNewConversation,
                     makeDecision,
-                    upgradeConversation
+                    upgradeConversation,
+                    removeConversation
                 }}
                 >
                 {children}
@@ -129,12 +136,12 @@ export const AutenticazioneUtenteProvider = ({children}) => {
             console.log("inizializzo ascoltatore login");
 
             return firebase.auth().onAuthStateChanged(function(user) {
-                console.log("stato cambiato..........................................................................................");
-                if (user) {
+                console.log("stato cambiato :"+user+" ..........................................................................................");
+                if (user && user.uid!=null && user.uid!=undefined) {
                     // User is signed in.
-                    console.log("utente loggato");
-                    console.log(user);
+                    console.log("utente loggato con uid:"+user.uid);
                     setUser(user.uid);
+                    setUserAuth(user);
                     //controllo se il profilo è stato completato
                     isProfiloCompletato(user.uid)
                         .then((doc)=>{
@@ -144,8 +151,11 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                                 const metodo = [user.email,user.phoneNumber];
                                 setInformazioniAutenticazioneUtente(metodo);
                                 setIsUserProfileCompleted(true);
+                                setIsControlDone(true);
                             }else {
+                                console.log("L'utente non ha completato il profilo.");
                                 setIsUserProfileCompleted(false);
+                                setIsControlDone(true);
                             }
                         }).catch((e)=>{
                             console.log("Si è verificato un errore.");
@@ -153,14 +163,16 @@ export const AutenticazioneUtenteProvider = ({children}) => {
 
                         //se l'utente non ha verificato l'email (se ha scelto questo come metodo di login allora esegui il logout)
                         if(user.email!=null && user.emailVerified==false){
-                            logOut();
+                            //logOut();
                             console.log("l'utente non ha ancora verificato l'email");
                         }
                 } else {
                     // No user is signed in.
+                    setIsControlDone(null);
                     setIsUserProfileCompleted(false);
                     console.log("utente non loggato");
                     setUser(null);
+                    setUserAuth(null);
                 }
                 
                 //se l'app era in fase di inizializzazione la sblocco (succede solo la prima volta che la funzione viene chiamata)
@@ -170,10 +182,14 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     }
 
     function getUtenteCorrente(){
+        console.log("ritorno utente corrente:"+user);
         return user;
     }
 
     function logOut(){
+        setUser(null);
+        setIsControlDone(false);
+        setIsUserProfileCompleted(false);
         return _logOut();
     }
 
@@ -182,6 +198,7 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     //EMAIL E PASSWORD
     function accediConEmailPassword(email, password){
         console.log("accedi con email e password");
+        setIsControlDone(false);
         return _accediConEmailPassword(email,password)         
     }
 
@@ -209,6 +226,7 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     //REGISTRA NUOVO UTENTE CON EMAIL E PASSWORD
     function registraNuovoUtente(email, password){
         console.log("registra nuovo utente");
+        setIsControlDone(false);
         return _registraNuovoUtente(email,password);
     }
 
@@ -523,6 +541,14 @@ function ottieniAscoltatoreNuoveConversazioni(){
     async function upgradeConversation(chatID, isUpgrade, contactUid, nameContactUid, myName, contactToken, myToken, lastLevelOfVisibility){
         try{
             return await _upgradeConversation(chatID, isUpgrade, contactUid, nameContactUid, myName, contactToken, myToken,lastLevelOfVisibility);
+        }catch(e){
+            throw e;
+        }
+    }
+
+    async function removeConversation(chatID, contactUid, contactName,myName, chatCreationData){
+        try{
+            return _removeConversation(chatID, contactUid, contactName,myName, chatCreationData);
         }catch(e){
             throw e;
         }

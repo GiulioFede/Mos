@@ -111,11 +111,12 @@ export default function ChatScreen({navigation, route}){
                 <ChatListComponent navigation={navigation} route={route} />
 
                 {/* RIQUADRO A COMPARSA PER LE NOTIFICHE */}
-                <View style={{position:"absolute", width:larghezzaDevice, height:altezzaDevice, top:altezzaBarraScreen}}>
+                <View style={{position:"absolute", zIndex:(isNotificationTabOpened==true?3:0), width:larghezzaDevice, height:altezzaDevice, top:altezzaBarraScreen}}>
                     <TabNotifiche ref={tabNotificheRef} snackMessageRef = {snackMessageRef} 
                                   incrementaNumeroNotifiche={incrementaNumeroNotifiche}
                                   resettaNumeroNotifiche={resettaNumeroNotifiche}
-                                  decrementaNumeroNotifiche={decrementaNumeroNotifiche}/>
+                                  decrementaNumeroNotifiche={decrementaNumeroNotifiche}
+                                  />
                 </View>
 
                 {/* ERRORE */}

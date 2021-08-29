@@ -2,7 +2,7 @@ import React,{ useImperativeHandle, forwardRef, useState,useEffect, useRef} from
 import { ActivityIndicator,TouchableOpacity, Dimensions,Animated, Text, View, StyleSheet, Platform, Image} from "react-native";
 import { Dialog, Portal, Button } from "react-native-paper";
 import { altezzaDevice, fontSizeTitolo, larghezzaDevice } from "../../../../../../context/variabili_globali/variabiliGlobali";
-import {useFonts, Lobster_400Regular} from '@expo-google-fonts/lobster';
+
 import { MosCeleste, MosPurple } from "../../../../../../resources/colors";
 import local_storage from "../../../../../../context/local_storage/localStorage";
 import { sendPushNotification } from "../../../../../../context/push_notifications/functions";
@@ -230,9 +230,6 @@ const DecisionScreen = forwardRef((props, ref) => {
         }
     }
 
-    let [LobsterFont] = useFonts({Lobster_400Regular});
-    if(!LobsterFont)
-        return <View></View>
 
     if(showDecisionScreen==true){
         return (

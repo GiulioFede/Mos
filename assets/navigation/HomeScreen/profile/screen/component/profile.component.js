@@ -16,6 +16,7 @@ import VisibilityFAB from './visibilityFab';
 import DialogEliminaImmagineDiGalleria from './dialogEliminaImmagineDiGalleria';
 import SnackMessage from './snackMessage';
 import { LinearGradient } from "expo-linear-gradient";
+import Loading from '../../../aroundYou/component/loading';
 
 /*
     MISURE
@@ -85,8 +86,8 @@ const dimensioneFotoGalleria = (larghezzaSchermo/2>altezzaSezioneGalleria) ? (al
 */
 
 export default function ProfileComponent(props){
-    //DA ELIMINARE
-    const [base64DaEliminare, setBase64DaEliminare] = useState("");
+    //DA ELIMINARE (insieme alle vieew che lo utilizzano)
+    const [isUserProfileLoading, setIsUserProfileLoading] = useState(true);
 
     //contesto autenticazione
     const {caricaNuovaImmagineDiGalleria,messaggioAuth, user,eliminaImmagineDiGalleria,cambiaImmagineDiProfilo,scaricaUrlImmagine, informazioniProfiloUtente, setInformazioniProfiloUtente, getNomeImmagineDaUrl, getUtenteCorrente} = useContext(AutenticazioneUtente);
@@ -153,6 +154,7 @@ export default function ProfileComponent(props){
                     i++;
             }
         } */  
+
         console.log("Nuove immagini di galleria:");
         console.log(informazioniProfiloUtente.urlGalleryImages);
         let tmp = [...informazioniProfiloUtente.urlGalleryImages];   
@@ -211,14 +213,15 @@ export default function ProfileComponent(props){
             }
 
         }
+            setUrlProfileImage("null");
+            getLocalUri();
 
-        setUrlProfileImage("null");
-        getLocalUri();
-
-        inizializzaGalleria();
+            inizializzaGalleria();
+            setIsUserProfileLoading(false);
 
         return () => isMounted.current = false;
-    },[informazioniProfiloUtente.urlGalleryImages, informazioniProfiloUtente.age, informazioniProfiloUtente.self_description, user, visibility])
+    },[informazioniProfiloUtente.urlGalleryImages, informazioniProfiloUtente.age, informazioniProfiloUtente.self_description, visibility])
+
 
     //viene usato da uploadImageLoaderScreen per lasciare un messaggio a questo attuale schermo su come è andato l'upload
     useEffect(()=>{
@@ -288,7 +291,7 @@ export default function ProfileComponent(props){
                                                 console.log(infoUrlGalleryImages);
                                                 //faccio questo if else perchè "delete" si comporta male quando l'array ha un solo elemento
                                                 if(infoUrlGalleryImages.length>1)
-                                                    delete infoUrlGalleryImages[index];
+                                                    infoUrlGalleryImages.splice(index,1);
                                                 else
                                                     infoUrlGalleryImages = [];
                                                 console.log("elemento eliminato. Nuovo stato:");
@@ -408,7 +411,22 @@ export default function ProfileComponent(props){
 
     return (
         <>
+        {isUserProfileLoading==true &&
+        <>
+        <View style={styles.barraSuperiore}>
+                <Text style={styles.titolo}>Profile</Text>
+                <TouchableOpacity onPress={apriUserSettings} style={{position:"absolute", right:Dimensions.get("window").width*0.03}}>
+                        <MaterialIcons name="menu" size={fontSizeTitoloBarra} color="#52575D" />
+                </TouchableOpacity>
+                
+        </View>
+        <Loading />
+        </>
+        }
+
             {/* BARRA SUPERIORE */}
+        {isUserProfileLoading==false &&
+            <>
             <View style={styles.barraSuperiore}>
                 <Text style={styles.titolo}>Profile</Text>
                 <TouchableOpacity onPress={apriUserSettings} style={{position:"absolute", right:Dimensions.get("window").width*0.03}}>
@@ -483,10 +501,9 @@ export default function ProfileComponent(props){
                 <SnackMessage ref = {snackMessageRef} />
 
                 <DialogEliminaImmagineDiGalleria ref = {dialogEliminaImmagineDiGalleriaRef} eliminaImmagineDallaGalleria={eliminaImmagineDallaGalleria}  />
-
-
-                        
-</>
+            </>
+        }
+        </>
     )
 }
 

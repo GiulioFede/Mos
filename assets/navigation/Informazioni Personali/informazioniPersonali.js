@@ -16,6 +16,7 @@ import localStorage from "../../context/local_storage/localStorage";
 import AgeRange from "./components/ageRange";
 import { getAgeFromTimestamp } from "../../context/utilities/functions.utilities";
 import { LocationAccuracy } from "expo-location";
+import ShowMe from "./components/showMeCheckBox";
 
 
 let tmpKeywordArray = [];
@@ -31,8 +32,8 @@ export default function InformazioniPersonali({ navigation }) {
 
     const scrollView = useRef();
 
-    //indica dove è stata fatta la modifica (dataDiNascita, descrizione, posizione, identità di genere, occupazione, keywords, slider km, range età) NB: gli ultimi due vengono trattati diversamente dagli altri dato che vengono salvati in locale
-    var indiciModifiche = useRef([false,false,false,false,false, false, false, false, false]);
+    //indica dove è stata fatta la modifica (dataDiNascita, descrizione, posizione, identità di genere, occupazione, keywords, slider km, range età, show me) NB: slider km e range età vengono trattati diversamente dagli altri dato che vengono salvati in locale
+    var indiciModifiche = useRef([false,false,false,false,false, false, false, false, false, false, false]);
 
     const [auth, setAuth] = useState(informazioniAutenticazioneUtente!=null?((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]):null);
     const [erroreAuth, setErroreAuth] = useState(null);
@@ -53,6 +54,8 @@ export default function InformazioniPersonali({ navigation }) {
     const sliderKMRef = useRef();
 
     const rangeEtaRef = useRef();
+
+    const showMeRef = useRef();
 
     const [provaAlternativaGeocode, setProvaAlternativaGeocode] = useState(false);
     const [geocodeResponse, setGeocodeResponse] = useState(null); //3 stati: nullo, false (almeno una tra città, regione o paese non è stata calcolata), <valore> (contiene la stringa città,regione e paese)
@@ -406,6 +409,17 @@ function aggiornaPhoneNumber(){
 
     }
 
+    function modificaShowMe(val){
+        console.log("show me:"+val);
+
+        if(val==informazioniProfiloUtente.show_me)
+            indiciModifiche.current[9]=false;
+        else
+            indiciModifiche.current[9]=true;
+
+        notificaModifiche();
+    }
+
 
     async function salvaDettagliUtente(){
 
@@ -438,7 +452,7 @@ function aggiornaPhoneNumber(){
         }
 
         var doc = {};
-        for(var i=0; i<9; i++){
+        for(var i=0; i<10; i++){
             if(indiciModifiche.current[i]==true){
                 if(i==0) doc["date_of_birth"] = new Date(dataDiNascita.seconds*1000);
                 if(i==0) doc["age"] = getAgeFromTimestamp(dataDiNascita);
@@ -458,6 +472,7 @@ function aggiornaPhoneNumber(){
                 else if(i==6) doc["hobbies_interests_and_passions"] = Object.keys(keywordArray).map(function(k,i){
                                                                             return keywordArray[i].keyword;
                                                                         })
+                else if(i==9) doc["show_me"] = showMeRef.current.get_checkValue();
                 
             }
         }
@@ -470,7 +485,7 @@ function aggiornaPhoneNumber(){
                 aggiornaDettagliProfiloUtente(user,doc)
                     .then(async(ris)=>{
                         //aggiorno autenticazione
-                        for(var i=0; i<7; i++){
+                        for(var i=0; i<10; i++){
                             if(indiciModifiche.current[i]==true){
                                 if(i==0) informazioniProfiloUtente.date_of_birth = {nanoseconds: 0, seconds: dataDiNascita.seconds};
                                 if(i==0) informazioniProfiloUtente.age = getAgeFromTimestamp(dataDiNascita);
@@ -482,6 +497,7 @@ function aggiornaPhoneNumber(){
                                 else if(i==6) informazioniProfiloUtente.hobbies_interests_and_passions = Object.keys(keywordArray).map(function(k,i){
                                                                                                             return keywordArray[i].keyword;
                                                                                                         })
+                                else if(i==9) informazioniProfiloUtente.show_me = showMeRef.current.get_checkValue();
                             }
                         }
 
@@ -562,6 +578,7 @@ function aggiornaPhoneNumber(){
 
         await sliderKMRef.current.resetta();
         await rangeEtaRef.current.resetta();
+        showMeRef.current.set_check(informazioniProfiloUtente.show_me);
 
         setGeocodeResponse(null);
         setUltimoIndirizzo("");
@@ -950,8 +967,18 @@ function aggiornaPhoneNumber(){
                         </View>
                         <Text style={[styles.sottoCampo,{marginVertical:5}]}>Nella sezione "Attorno a te" ti mostreremo il genere che qui hai scelto come quello da cui maggiormente sei attratto.</Text>
 
+                        {/*MOSTRAMI SU MOSAIC*/}
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Mostrami su Mosaic</Text>
+                        <View style={{ padding:Dimensions.get("window").height*0.01,flexDirection:"row", alignItems:"center"}}>
+                            <Text style={[styles.campo,{color:MosViola}]}>Mostrami:</Text>
+                            <ShowMe ref={showMeRef} modificaShowMe={modificaShowMe} initialValue={informazioniProfiloUtente.show_me} />
+                        </View>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Se decidi di non essere mostrato su Mosaic allora la tua scheda non sarà visibile a nessuno nella sezione "Attorno a te". Anche tu non potrai vedere le schede di nessun altro utente.</Text>
+
+
+
                     {/*BOTTONE PER SALVARE*/}
-                    <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10, textAlign:"center"}]} onPress={salvaDettagliUtente}><Text style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>SALVA DETTAGLI</Text></TouchableOpacity>
+                    <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10,marginTop:20, textAlign:"center"}]} onPress={salvaDettagliUtente}><Text style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>SALVA DETTAGLI</Text></TouchableOpacity>
 
                     </ScrollView>
                     
@@ -1004,7 +1031,7 @@ function aggiornaPhoneNumber(){
         fontFamily: "Raleway_200ExtraLight",
         color: MosCeleste,
         fontSize:fontSizeSottoTitolo,
-        paddingLeft:Dimensions.get("window").width*0.03
+        paddingHorizontal:Dimensions.get("window").width*0.03
     },
     campo:{
         fontFamily: "Raleway_200ExtraLight",
@@ -1016,7 +1043,7 @@ function aggiornaPhoneNumber(){
         fontFamily: "Raleway_200ExtraLight",
         color: "#52575D",
         fontSize:fontSizeCampi,
-        paddingLeft:Dimensions.get("window").width*0.03
+        paddingHorizontal:Dimensions.get("window").width*0.03
     },
     saveButton:{
         fontFamily: "Raleway_200ExtraLight",

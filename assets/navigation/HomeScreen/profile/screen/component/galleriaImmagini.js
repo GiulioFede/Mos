@@ -17,8 +17,8 @@ function GalleriaImmagini({galleria, openDialog, getUtenteCorrente, visibility})
         //contesto autenticazione
         const {scaricaUrlImmagine} = useContext(AutenticazioneUtente);
 
-    //console.log("GALLERIA COMPONENTE");
-    //console.log(galleria);
+    console.log("GALLERIA COMPONENTE");
+    console.log(galleria);
 
         //Questa funzione renderizza ogni singola immagine della flatlist (galleria)
        function ImmagineGalleria({item, index}){

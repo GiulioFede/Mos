@@ -26,7 +26,7 @@ const VisibilityFAB = (props) => {
             { icon: 'eye',label: 'Scopri come gli altri vedono il tuo profilo', onPress: () => console.log('Pressed add') },
               {
                 icon: 'circle-outline',
-                label: '0% di visibilità',
+                label: '33% di visibilità',
                 color: props.visibility=="100"?MosViola:"grey",
                 onPress: () => props.setVisibility("100"),
               },
@@ -39,7 +39,7 @@ const VisibilityFAB = (props) => {
 */
               {
                 icon: 'circle-slice-4',
-                label: '50% di visibilità',
+                label: '66% di visibilità',
                 color: props.visibility=="50"?MosViola:"grey",
                 onPress: () => props.setVisibility("50"),
               },

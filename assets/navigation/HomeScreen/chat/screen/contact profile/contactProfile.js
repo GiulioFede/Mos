@@ -36,7 +36,7 @@ export default function ContactProfile({navigation, route}){
     console.log(mediaProfilo);
     console.log(name);
 
-    const [uriProfileImage, setUriProfileImage] = useState(mediaProfilo.value.profileImageUrl=="" ? null : mediaProfilo.value.profileImageUrl);
+    const [uriProfileImage, setUriProfileImage] = useState(mediaProfilo.profileImageUrl=="" ? null : mediaProfilo.profileImageUrl);
 
     //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
@@ -85,7 +85,7 @@ export default function ContactProfile({navigation, route}){
                                     - galleria: array contenente i nomi delle immagini di galleria
                                 */}
         
-                                {<GalleriaImmagini galleryUrls={mediaProfilo.value.gallery} />}
+                                {<GalleriaImmagini galleryUrls={mediaProfilo.gallery} />}
                                 
                             </View>
         

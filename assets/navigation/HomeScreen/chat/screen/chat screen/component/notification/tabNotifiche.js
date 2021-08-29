@@ -47,7 +47,7 @@ const TabNotifiche = forwardRef((props, ref) => {
         setForceToHideRedBallon(true);
         setVisible(false);
     }
-    const containerStyle = {backgroundColor: 'white',height:"100%", width:"100%",borderRadius:altezzaDevice*0.01};
+    const containerStyle = { backgroundColor: 'white',height:"100%", width:"100%",borderRadius:altezzaDevice*0.01};
 
      useImperativeHandle(ref, () => ({
         openCloseNotificationTab(){
@@ -203,8 +203,8 @@ const TabNotifiche = forwardRef((props, ref) => {
         <>
             
             <Provider>
-                <Portal>
-                    <Modal visible={visible} onDismiss={chiudiNotificaTab} contentContainerStyle={containerStyle} style={{height:altezzaDevice*0.7, margin:10, flex:1, alignItems:"flex-start",}} >
+                <Portal >
+                    <Modal visible={visible} onDismiss={chiudiNotificaTab} contentContainerStyle={containerStyle} style={{height:altezzaDevice*0.7, margin:10, flex:1, alignItems:"flex-start"}} >
                         <View style={{flex:1, height:"100%"}}>
 
                             {/* TITOLO NOTIFICA */}

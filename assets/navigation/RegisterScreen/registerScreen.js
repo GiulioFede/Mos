@@ -15,7 +15,7 @@ export default function RegisterScreen({navigation}){
     var coloreBarra = useContext(ColoreBarraDiStato);
 
     //contesto autenticazione
-    var {registraNuovoUtente, inviaEmailDiVerifica} = useContext(AutenticazioneUtente);
+    var {registraNuovoUtente, inviaEmailDiVerifica,setIsUserProfileCompleted} = useContext(AutenticazioneUtente);
 
 
     //email
@@ -50,6 +50,7 @@ export default function RegisterScreen({navigation}){
         setIsLoading(true);
         setErrore("");
         try{
+
         registraNuovoUtente(email,password)
             .then((userCredential) => {
                 // Signed in 
@@ -62,7 +63,8 @@ export default function RegisterScreen({navigation}){
                         setIsLoading(false);
                         // Verification email sent.
                         console.log("email di verifica inviata");
-                        setSnackBarMessage("Abbiamo inviato un email di verifica. Autorizza il tuo account prima di procedere al login.")
+                        setSnackBarMessage("Abbiamo inviato un email di verifica. Autorizza il tuo account prima di procedere al login.");
+
                     })
                     .catch(function(error) {
                         setIsLoading(false);

@@ -294,13 +294,14 @@ exports.createNewUserProfile = functions.https.onCall( async(data, context) =>{
       functions.logger.log("file originale scritto in"+tempFilePath);
       
       //converto immagine
-      //scrivo il file modificato del 50%
-      const tempFilePath_50 = path.join(os.tmpdir(),folder,fileName+"_50.jpg");
-      spawnSync('convert', [tempFilePath, '-scale', '6%','-scale','1666.66%>', tempFilePath_50]);
-   
-      //scrivo il file modificato del 100%
-      const tempFilePath_100 = path.join(os.tmpdir(),folder,  fileName+"_100.jpg");
-      spawnSync('convert', [tempFilePath, '-scale', '3.5%','-scale','2857.14%>', tempFilePath_100]);
+      //formula x=((100-p)/p)*100+100 --> dove p è la prima percentuale di scala (scegliamo noi) e x e la seconda che dobbiamo trovare. 
+         //scrivo il file modificato del 50%
+         const tempFilePath_50 = path.join(os.tmpdir(),folder,fileName+"_50.jpg");
+         spawnSync('convert', [tempFilePath, '-scale', '6.8%','-scale','1470.58%>', tempFilePath_50]);
+
+         //scrivo il file modificato del 100%
+         const tempFilePath_100 = path.join(os.tmpdir(),folder,  fileName+"_100.jpg");
+         spawnSync('convert', [tempFilePath, '-scale', '4%','-scale','2500%>', tempFilePath_100]);
       
          //genero i 4 token. Mi saranno utili cosi da sapere già l'url di download di ciascuna senza richiedere getDownloadUrl()
          const tokenImmagineOriginale = uuid();
@@ -378,6 +379,7 @@ exports.createNewUserProfile = functions.https.onCall( async(data, context) =>{
                            current_occupation: data.occupation,
                            hobbies_interests_and_passions: data.keywords,
                            push_notification_token: null,
+                           show_me: true,
                            location: {
                               geohash: data.hash,
                               lat: data.lat,
@@ -719,14 +721,14 @@ fs.writeFileSync(tempFilePath,base64EncodedImageString,'base64',function(err){
 functions.logger.log("file originale scritto in"+tempFilePath);
 
 //converto immagine
-
+   //formula x=((100-p)/p)*100+100 --> dove p è la prima percentuale di scala (scegliamo noi) e x e la seconda che dobbiamo trovare. 
    //scrivo il file modificato del 50%
    const tempFilePath_50 = path.join(os.tmpdir(),folder,fileName+"_50.jpg");
-   spawnSync('convert', [tempFilePath, '-scale', '6%','-scale','1666.66%>', tempFilePath_50]);
+   spawnSync('convert', [tempFilePath, '-scale', '6.8%','-scale','1470.58%>', tempFilePath_50]);
 
    //scrivo il file modificato del 100%
    const tempFilePath_100 = path.join(os.tmpdir(),folder,  fileName+"_100.jpg");
-   spawnSync('convert', [tempFilePath, '-scale', '3.5%','-scale','2857.14%>', tempFilePath_100]);
+   spawnSync('convert', [tempFilePath, '-scale', '4%','-scale','2500%>', tempFilePath_100]);
 
    //genero i 4 token. Mi saranno utili cosi da sapere già l'url di download di ciascuna senza richiedere getDownloadUrl()
    const tokenImmagineOriginale = uuid();

@@ -1,10 +1,10 @@
 import React, {useState, useContext, useCallback, useEffect, useRef} from 'react';
 import {View, Text, StyleSheet, ScrollView,TouchableOpacity as TouchableOpacityNative, Image, Dimensions, Animated,FlatList,  SafeAreaView, StatusBar, Platform} from 'react-native';
-import {Feather,Ionicons, Entypo, AntDesign, MaterialIcons, SimpleLineIcons} from "@expo/vector-icons";
+import {Octicons,Ionicons, Entypo, AntDesign, MaterialIcons, SimpleLineIcons} from "@expo/vector-icons";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button, Divider } from 'react-native-paper';
-import { altezzaBarraScreen, fontSizeCampi, fontSizeTitoloBarra, iconSize, larghezzaDevice } from '../../../../context/variabili_globali/variabiliGlobali';
+import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaSchermoInterno, fontSizeCampi, fontSizeTitoloBarra, iconSize, larghezzaDevice } from '../../../../context/variabili_globali/variabiliGlobali';
 import { MosCeleste, MosPurple, MosViola } from '../../../../resources/colors';
 import SnackMessage from '../../profile/screen/component/snackMessage';
 import { LinearGradient } from "expo-linear-gradient";
@@ -212,6 +212,8 @@ export default function AroundYouComponent(props){
     const dialogCreaNuovaConversazioneRef = useRef();
     const [isLoading, setIsLoading] = useState(true);
     const [isChatCreating, setIsChatCreating] = useState(false);
+    //se false nasconderà la scheda
+    const [showMe, setShowMe] = useState(true);
     const refFlatList = useRef();
     const startFrom = useRef(0);
 
@@ -241,16 +243,16 @@ export default function AroundYouComponent(props){
         setIsChatCreating(true);
         dialogCreaNuovaConversazioneRef.current.close_dialog();
         createNewConversation(uidOfCard, nameOfCard, informazioniProfiloUtente.name)
-            .then(async(newChatId)=>{
+            .then(async(arrayOfResults)=>{ //contiene nel primo la nuova chatId e nel secondo la data di creazione
                 console.log("chat creata");
                 //aggiungo la coppia {chatId: newChatId, uid: uidOfCard} alle mie informazioni personali cosi da aggiornare lo screen chat
                 let listOfConversationsTMP = {conversations: []};
                 if(listOfConversations==null){
-                    listOfConversationsTMP["conversations"]=[{chatId: newChatId, uid: uidOfCard, contactName: nameOfCard, creation_data: {nanoseconds: 0, seconds: Math.round(new Date().getTime() / 1000)}}];
+                    listOfConversationsTMP["conversations"]=[{chatId: arrayOfResults[0], uid: uidOfCard, contactName: nameOfCard, creation_data: arrayOfResults[1]}];
                 } 
                 else {
                     listOfConversationsTMP = JSON.parse(JSON.stringify(listOfConversations));
-                    listOfConversationsTMP["conversations"].push({chatId: newChatId, uid: uidOfCard, contactName: nameOfCard, creation_data: {nanoseconds: 0, seconds: Math.round(new Date().getTime() / 1000)}});
+                    listOfConversationsTMP["conversations"].push({chatId: arrayOfResults[0], uid: uidOfCard, contactName: nameOfCard, creation_data: arrayOfResults[1]});
                 }
                 console.log("invio una push notification a "+nameOfCard+" al token "+token);
                 try{
@@ -329,9 +331,12 @@ export default function AroundYouComponent(props){
                 findNext10ClosestUsers(false,null,true);
             }
     
-       init();
+       if(informazioniProfiloUtente.show_me==true)
+            init();
+       else
+            setShowMe(false);
 
-    },[refresh,informazioniProfiloUtente.action_range_preference, informazioniProfiloUtente.gender_preference,informazioniProfiloUtente.age_range]);
+    },[refresh,informazioniProfiloUtente.action_range_preference, informazioniProfiloUtente.gender_preference,informazioniProfiloUtente.age_range, informazioniProfiloUtente.show_me]);
 
 
     //resetta dati di ricerca cosi da ricominciare da capo in caso non trova nessuno una volta giunto alla fine
@@ -339,6 +344,7 @@ export default function AroundYouComponent(props){
 
         try{
             setNoOne(false);
+            setShowMe(true);
 
             //posizione di partenza: la mia posizione    
             const center = [parseFloat(informazioniProfiloUtente.location.lat), parseFloat(informazioniProfiloUtente.location.lng)];
@@ -522,6 +528,27 @@ export default function AroundYouComponent(props){
     if(!Raleway || !Raleway2)
         return <View></View>
 
+    if(showMe==false)
+        return (
+            <>
+                {/* BARRA SUPERIORE */}
+                <View style={styles.barraSuperiore}>
+                <Text style={styles.titolo}>Attorno a te</Text>
+                <View style={{position:"absolute", right:Dimensions.get("window").width*0.03}}>
+                    <TouchableOpacity onPress={apriUserSettings}>
+                            <MaterialIcons name="menu" size={fontSizeTitoloBarra} color="#52575D" />
+                    </TouchableOpacity> 
+                </View>
+            </View>
+            <View style={{width:width, height:height, position:"absolute", justifyContent:"center", alignItems:"center"}}>
+                <Octicons name="eye-closed" size={height*0.2} color="rgba(68, 68, 68,0.3)" />
+                <Text style={{fontSize:fontSizeCampi,fontFamily: "Raleway_200ExtraLight", textAlign:"center", marginTop:10}}>
+                    La tua scheda è nascosta. Non potrai vedere le schede degli altri fino a quando non decidi di mostrarti.
+                </Text>
+            </View>
+            </>
+        )
+
     return (
         <>
             {/* BARRA SUPERIORE */}
@@ -578,12 +605,12 @@ export default function AroundYouComponent(props){
                         justifyContent: 'center'
                     }}
                     CellRendererComponent={({index,item,children,style,...props})=>{
-                        
+                        console.log( item.name+","+index);
                         const newStyle = [
                             style,
                             {
                                 elevation: info_profiles.length - index,
-                                zIndex: info_profiles.length - index,
+                                zIndex: (activeIndex==index)?5:0,
                                 left: -IMAGE_WIDTH / 2,
                                 top: -IMAGE_HEIGHT / 2
                             }
@@ -616,9 +643,9 @@ export default function AroundYouComponent(props){
                        // if(item.key!="empty"){
                         return (
                             <>
-                            <Animated.View style={{position:'absolute', width:width, height:height, opacity, transform: [{translateY}, {scale} ] }}>
+                            <Animated.View style={{position:'absolute',top:IMAGE_HEIGHT*0.08, width:IMAGE_WIDTH, height:IMAGE_HEIGHT, opacity, transform: [{translateY}, {scale} ] }}>
                             {item.key!="empty" &&
-                            <TouchableOpacity onPress={()=>{apriChiudiBottomSheetMenu(item)}}>
+                            <TouchableOpacity onPress={()=>{console.log("apri menu di "+item.name); apriChiudiBottomSheetMenu(item)}}>
                                     <Image source = {{ uri: item.profileImageUrl}} style={styles.image} />
                                 <LinearGradient
                                     // Background Linear Gradient sopra chat
@@ -639,16 +666,16 @@ export default function AroundYouComponent(props){
                             &&
                             isSwipeAnimationFinished.current == false
                             &&
-                            <Animated.View style={{position:'absolute', width:width, height:height, opacity, transform: [{translateY}, {scale} ] }}>
-                                <LottieView ref={animation => {lottieAnimationRef.current = animation}} autoPlay loop={false} onAnimationFinish={()=>{isSwipeAnimationFinished.current = true}} source={require('../../../../resources/lottie/swipe.json')} style={{width:IMAGE_WIDTH, height:IMAGE_HEIGHT}} />
+                            <Animated.View style={{position:'absolute', width:IMAGE_WIDTH, height:IMAGE_HEIGHT, opacity, transform: [{translateY}, {scale} ] }}>
+                                <LottieView ref={animation => {lottieAnimationRef.current = animation}} autoPlay loop={false} onAnimationFinish={()=>{isSwipeAnimationFinished.current = true}} source={require('../../../../resources/lottie/swipe.json')} resizeMode="cover"/>
                             </Animated.View>
                         }
                             </TouchableOpacity>
                         }
                         </Animated.View>
-                        <Animated.View style={{position:'absolute', width:width, height:height,  opacity, transform: [{translateY}, {scale} ] }}>
+                        <Animated.View style={{position:'absolute', opacity, transform: [{translateY}, {scale} ] }}>
                         {item.key!="empty" &&
-                            <View style={{ backgroundColor:MosCeleste, top:IMAGE_HEIGHT*0.8, left:IMAGE_WIDTH*0.75, width:IMAGE_WIDTH*0.18, height:IMAGE_WIDTH*0.18, borderRadius:IMAGE_WIDTH*0.2/2, alignItems:"center", justifyContent:"center" }}>
+                            <View style={{ backgroundColor:MosCeleste, top:IMAGE_HEIGHT*0.9, left:IMAGE_WIDTH*0.75, width:IMAGE_WIDTH*0.18, height:IMAGE_WIDTH*0.18, borderRadius:IMAGE_WIDTH*0.2/2, alignItems:"center", justifyContent:"center" }}>
                                 <TouchableOpacity onPress={()=>{dialogCreaNuovaConversazioneRef.current.open_dialog(item.name, item.id, item.push_notification_token)}}>
                                     <Ionicons name="ios-chatbubble-sharp" size={IMAGE_WIDTH*0.18/2} color="white" />
                                 </TouchableOpacity>
@@ -666,7 +693,7 @@ export default function AroundYouComponent(props){
     </FlingGestureHandler> 
 
     {/* TASTO REFRESH */}
-    <View style={{position:"absolute", top:altezzaBarraScreen+10, right:Dimensions.get("window").width*0.03}}>
+    <View style={{position:"absolute",zIndex:5, top:altezzaBarraScreen+10, right:Dimensions.get("window").width*0.03}}>
         <TouchableOpacityNative onPress={()=>{setRefresh(!refresh)}} disabled={isLoading}>
             <SimpleLineIcons name="reload" size={fontSizeTitoloBarra} color="#444" />
         </TouchableOpacityNative>
@@ -675,7 +702,7 @@ export default function AroundYouComponent(props){
     {/* VIEW CHE APPARE SOLO QUANDO PROPRIO NESSUNO E' STATO TROVATO */}
     {noOne==true
         &&
-    <View style={{width:width, height:height, position:"absolute", justifyContent:"center", alignItems:"center"}}>
+    <View style={{width:width, height:height,zIndex:0, position:"absolute", justifyContent:"center", alignItems:"center"}}>
         <AntDesign name="frowno" size={height*0.2} color="rgba(68, 68, 68,0.3)" />
         <Text style={{fontSize:fontSizeCampi,fontFamily: "Raleway_200ExtraLight", textAlign:"center", marginTop:10}}>
             Sembra non ci sia nessun'altro che rispetti le tue preferenze. Prova a cambiare qualche parametro, come il raggio di azione o la fascia di età.
@@ -710,7 +737,9 @@ const styles = StyleSheet.create({
         height:altezzaBarraScreen,
         justifyContent:"center",
         paddingTop:24,
-        backgroundColor:"#fff"
+        backgroundColor:"#fff",
+        position:"absolute",
+        zIndex:10
         //borderBottomColor:"#e6e6e6",
         //borderBottomWidth:0.7,
     },

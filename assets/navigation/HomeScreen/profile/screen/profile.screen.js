@@ -9,7 +9,7 @@ import ProfileComponent from './component/profile.component';
 
 
 export default function Profile({navigation, route}){
-    
+  
       return (
           <View style={styles.container} >
                   <ProfileComponent navigation={navigation} route={route}/>

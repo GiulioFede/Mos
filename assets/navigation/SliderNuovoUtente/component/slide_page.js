@@ -393,7 +393,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                         <View>
                             <View style={{flexDirection:"column", justifyContent:"center", alignItems:"center", width:"100%"}}>
                                 <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center" }}>
-                                    <Text style={styles.campiDaCompilare}>MASCHIO</Text>
+                                    <TouchableOpacity onPress={() => setSesso('male')}>
+                                        <Text style={styles.campiDaCompilare}>MASCHIO</Text>
+                                    </TouchableOpacity>
                                     <RadioButton
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
@@ -402,7 +404,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         status={ isSexChecked === 'male' ? 'checked' : 'unchecked' }
                                         onPress={() => setSesso('male')}
                                     />
-                                    <Text style={[styles.campiDaCompilare,{paddingLeft:larghezzaDevice*0.1}]}>FEMMINA</Text>
+                                    <TouchableOpacity onPress={() => setSesso('female')}>
+                                        <Text style={[styles.campiDaCompilare,{paddingLeft:larghezzaDevice*0.1}]}>FEMMINA</Text>
+                                    </TouchableOpacity>
                                     <RadioButton
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
@@ -412,7 +416,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     />
                                 </View>
                                 <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
-                                    <Text style={[styles.campiDaCompilare]}>INTERSEX</Text>
+                                    <TouchableOpacity onPress={() => setSesso('intersex')}>
+                                        <Text style={[styles.campiDaCompilare]}>INTERSEX</Text>
+                                    </TouchableOpacity>
                                     <RadioButton
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
@@ -440,7 +446,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         status={ isGenereChecked === 'male' ? 'checked' : 'unchecked' }
                                         onPress={() => setGenere('male')}
                                     />
-                                     <Text style={styles.campiDaCompilare}>MASCHIO</Text>
+                                    <TouchableOpacity onPress={() => setGenere('male')}>
+                                        <Text style={styles.campiDaCompilare}>MASCHIO</Text>
+                                    </TouchableOpacity>
                                 </View>
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
                                     <RadioButton
@@ -450,7 +458,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         status={ isGenereChecked === 'female' ? 'checked' : 'unchecked' }
                                         onPress={() => setGenere('female')}
                                     />
-                                     <Text style={styles.campiDaCompilare}>FEMMINA</Text>
+                                     <TouchableOpacity onPress={() => setGenere('female')}>
+                                        <Text style={styles.campiDaCompilare}>FEMMINA</Text>
+                                    </TouchableOpacity>
                                 </View>
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -460,7 +470,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'agender' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('agender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>AGENDER</Text>
+                                        <TouchableOpacity onPress={() => setGenere('agender')}>
+                                            <Text style={styles.campiDaCompilare}>AGENDER</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -470,7 +482,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'androgynous' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('androgynous')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>ANDROGINO</Text>
+                                       <TouchableOpacity onPress={() => setGenere('androgynous')}>
+                                            <Text style={styles.campiDaCompilare}>ANDROGINO</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -480,7 +494,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'third gender' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('third gender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>TERZO GENERE</Text>
+                                        <TouchableOpacity onPress={() => setGenere('third gender')}>
+                                            <Text style={styles.campiDaCompilare}>TERZO GENERE</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -490,7 +506,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'intergender' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('intergender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>INTERGENDER</Text>
+                                        <TouchableOpacity onPress={() => setGenere('intergender')}>
+                                            <Text style={styles.campiDaCompilare}>INTERGENDER</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -500,7 +518,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'bigender' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('bigender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>BIGENDER</Text>
+                                        <TouchableOpacity onPress={() => setGenere('bigender')}>
+                                            <Text style={styles.campiDaCompilare}>BIGENDER</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -510,7 +530,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'trigender' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('trigender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>TRIGENDER</Text>
+                                        <TouchableOpacity onPress={() => setGenere('trigender')}>
+                                            <Text style={styles.campiDaCompilare}>TRIGENDER</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -520,7 +542,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'pangender' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('pangender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>PANGENDER</Text>
+                                        <TouchableOpacity onPress={() => setGenere('pangender')}>
+                                            <Text style={styles.campiDaCompilare}>PANGEDER</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -530,7 +554,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'genderfluid' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('genderfluid')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>GENDERFLUID</Text>
+                                        <TouchableOpacity onPress={() => setGenere('genderfluid')}>
+                                            <Text style={styles.campiDaCompilare}>GENDERFLUID</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -540,7 +566,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'genderflux' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('genderflux')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>GENDERFLUX</Text>
+                                        <TouchableOpacity onPress={() => setGenere('genderflux')}>
+                                            <Text style={styles.campiDaCompilare}>GENDERFLUX</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -550,7 +578,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'transexual' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('transexual')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>TRANSESSUALE</Text>
+                                        <TouchableOpacity onPress={() => setGenere('transexual')}>
+                                            <Text style={styles.campiDaCompilare}>TRANSESSUALE</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -560,7 +590,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'demi boy' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('demi boy')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>DEMI-BOY</Text>
+                                        <TouchableOpacity onPress={() => setGenere('demi boy')}>
+                                            <Text style={styles.campiDaCompilare}>DEMI-BOY</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -570,7 +602,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'demi girl' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('demi girl')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>DEMI-GIRL</Text>
+                                        <TouchableOpacity onPress={() => setGenere('demi girl')}>
+                                            <Text style={styles.campiDaCompilare}>DEMI-GIRL</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -580,7 +614,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'demi androgynous' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('demi androgynous')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>DEMI-ANDROGINO</Text>
+                                        <TouchableOpacity onPress={() => setGenere('demi androgynous')}>
+                                            <Text style={styles.campiDaCompilare}>DEMI-ANDROGINO</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -590,7 +626,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'demi fluid' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('demi fluid')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>DEMI-FLUID</Text>
+                                        <TouchableOpacity onPress={() => setGenere('demi fluid')}>
+                                            <Text style={styles.campiDaCompilare}>DEMI-FLUID</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -600,7 +638,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isGenereChecked === 'demi flux' ? 'checked' : 'unchecked' }
                                             onPress={() => setGenere('demi flux')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>DEMI-FLUX</Text>
+                                        <TouchableOpacity onPress={() => setGenere('demi flux')}>
+                                            <Text style={styles.campiDaCompilare}>DEMI-FLUX</Text>
+                                        </TouchableOpacity>
                                     </View>
                                    
                             </ScrollView>
@@ -615,20 +655,24 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
                                         style={{width:200, height:200}}
-                                        status={ isSexPreferenceChecked === 'maschio' ? 'checked' : 'unchecked' }
-                                        onPress={() => setPreferenzaSesso('maschio')}
+                                        status={ isSexPreferenceChecked === 'male' ? 'checked' : 'unchecked' }
+                                        onPress={() => setPreferenzaSesso('male')}
                                     />
-                                     <Text style={styles.campiDaCompilare}>MASCHIO</Text>
+                                     <TouchableOpacity onPress={() => setPreferenzaSesso('male')}>
+                                        <Text style={styles.campiDaCompilare}>MASCHIO</Text>
+                                    </TouchableOpacity>
                                 </View>
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
                                     <RadioButton
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
                                         value="femmina"
-                                        status={ isSexPreferenceChecked === 'femmina' ? 'checked' : 'unchecked' }
-                                        onPress={() => setPreferenzaSesso('femmina')}
+                                        status={ isSexPreferenceChecked === 'female' ? 'checked' : 'unchecked' }
+                                        onPress={() => setPreferenzaSesso('female')}
                                     />
-                                     <Text style={styles.campiDaCompilare}>FEMMINA</Text>
+                                    <TouchableOpacity onPress={() => setPreferenzaSesso('female')}>
+                                        <Text style={styles.campiDaCompilare}>FEMMINA</Text>
+                                    </TouchableOpacity>
                                      </View>
                                      <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -638,27 +682,33 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isSexPreferenceChecked === 'agender' ? 'checked' : 'unchecked' }
                                             onPress={() => setPreferenzaSesso('agender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>AGENDER</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('agender')}>
+                                            <Text style={styles.campiDaCompilare}>AGENDER</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="androgino"
-                                            status={ isSexPreferenceChecked === 'androgino' ? 'checked' : 'unchecked' }
-                                            onPress={() => setPreferenzaSesso('androgino')}
+                                            status={ isSexPreferenceChecked === 'androgynous' ? 'checked' : 'unchecked' }
+                                            onPress={() => setPreferenzaSesso('androgynous')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>ANDROGINO</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('androgynous')}>
+                                            <Text style={styles.campiDaCompilare}>ANDROGINO</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="terzo genere"
-                                            status={ isSexPreferenceChecked === 'terzo genere' ? 'checked' : 'unchecked' }
-                                            onPress={() => setPreferenzaSesso('terzo genere')}
+                                            status={ isSexPreferenceChecked === 'third gender' ? 'checked' : 'unchecked' }
+                                            onPress={() => setPreferenzaSesso('third gender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>TERZO GENERE</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('third gender')}>
+                                            <Text style={styles.campiDaCompilare}>TERZO GENERE</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -668,7 +718,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isSexPreferenceChecked === 'intergender' ? 'checked' : 'unchecked' }
                                             onPress={() => setPreferenzaSesso('intergender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>INTERGENDER</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('intergender')}>
+                                            <Text style={styles.campiDaCompilare}>INTERGENDER</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -678,7 +730,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isSexPreferenceChecked === 'bigender' ? 'checked' : 'unchecked' }
                                             onPress={() => setPreferenzaSesso('bigender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>BIGENDER</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('bigender')}>
+                                            <Text style={styles.campiDaCompilare}>BIGENDER</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -688,17 +742,21 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isSexPreferenceChecked === 'trigender' ? 'checked' : 'unchecked' }
                                             onPress={() => setPreferenzaSesso('trigender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>TRIGENDER</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('trigender')}>
+                                            <Text style={styles.campiDaCompilare}>TRIGENDER</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="pangender"
-                                            status={ isSexPreferenceChecked === 'pangeder' ? 'checked' : 'unchecked' }
+                                            status={ isSexPreferenceChecked === 'pangender' ? 'checked' : 'unchecked' }
                                             onPress={() => setPreferenzaSesso('pangender')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>PANGENDER</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('pangender')}>
+                                            <Text style={styles.campiDaCompilare}>PANGENDER</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -708,7 +766,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isSexPreferenceChecked === 'genderfluid' ? 'checked' : 'unchecked' }
                                             onPress={() => setPreferenzaSesso('genderfluid')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>GENDERFLUID</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('genderfluid')}>
+                                            <Text style={styles.campiDaCompilare}>GENDER FLUID</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -718,17 +778,21 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isSexPreferenceChecked === 'genderflux' ? 'checked' : 'unchecked' }
                                             onPress={() => setPreferenzaSesso('genderflux')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>GENDERFLUX</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('genderflux')}>
+                                            <Text style={styles.campiDaCompilare}>GENDERFLUX</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="transessuale"
-                                            status={ isSexPreferenceChecked === 'transessuale' ? 'checked' : 'unchecked' }
-                                            onPress={() => setPreferenzaSesso('transessuale')}
+                                            status={ isSexPreferenceChecked === 'transexual' ? 'checked' : 'unchecked' }
+                                            onPress={() => setPreferenzaSesso('transexual')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>TRANSESSUALE</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('transexual')}>
+                                            <Text style={styles.campiDaCompilare}>TRANSESSUALE</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -738,7 +802,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isSexPreferenceChecked === 'demi boy' ? 'checked' : 'unchecked' }
                                             onPress={() => setPreferenzaSesso('demi boy')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>DEMI BOY</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('demi boy')}>
+                                            <Text style={styles.campiDaCompilare}>DEMI-BOY</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -748,17 +814,21 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isSexPreferenceChecked === 'demi girl' ? 'checked' : 'unchecked' }
                                             onPress={() => setPreferenzaSesso('demi girl')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>DEMI GIRL</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('demi girl')}>
+                                            <Text style={styles.campiDaCompilare}>DEMI-GIRL</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi androgino"
-                                            status={ isSexPreferenceChecked === 'demi androgino' ? 'checked' : 'unchecked' }
-                                            onPress={() => setPreferenzaSesso('demi androgino')}
+                                            status={ isSexPreferenceChecked === 'demi androgynous' ? 'checked' : 'unchecked' }
+                                            onPress={() => setPreferenzaSesso('demi androgynous')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>DEMI ANDROGINO</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('demi androgynous')}>
+                                            <Text style={styles.campiDaCompilare}>DEMI-ANDROGINO</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -768,7 +838,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isSexPreferenceChecked === 'demi fluid' ? 'checked' : 'unchecked' }
                                             onPress={() => setPreferenzaSesso('demi fluid')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>DEMI FLUID</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('demi fluid')}>
+                                            <Text style={styles.campiDaCompilare}>DEMI-FLUID</Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
                                         <RadioButton
@@ -778,7 +850,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             status={ isSexPreferenceChecked === 'demi flux' ? 'checked' : 'unchecked' }
                                             onPress={() => setPreferenzaSesso('demi flux')}
                                         />
-                                        <Text style={styles.campiDaCompilare}>DEMI FLUX</Text>
+                                        <TouchableOpacity onPress={() => setPreferenzaSesso('demi flux')}>
+                                            <Text style={styles.campiDaCompilare}>DEMI-FLUX</Text>
+                                        </TouchableOpacity>
                                     </View>
                             </ScrollView>
                         }
@@ -844,10 +918,10 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     showsHorizontalScrollIndicator={true}
                                     keyExtractor={item => item.id.toString()}
                                     renderItem={({ item, index }) =>
-                                        <View style={{marginTop:10}}>
-                                            <Text style={{color:"white",backgroundColor:MosPurple, borderRadius:10, margin:10, height:50, textAlign:"center", textAlignVertical:"center", padding:10}}>{item.keyword}</Text>
+                                        <View style={{marginTop:10, marginRight:10}}>
+                                            <View style={{backgroundColor:MosPurple, borderRadius:10}}><Text style={{color:"white", marginTop: 20, height:50, textAlign:"center", textAlignVertical:"center", padding:10}}>{item.keyword}</Text></View>
                                             <TouchableOpacity style={{position:"absolute"}} onPress={()=>{eliminaKeyword(index)}}>
-                                                <Entypo name="cross" size={20} color="white" style={{backgroundColor:"red", borderRadius:5}} /> 
+                                                <View style={{backgroundColor:"red", borderRadius:5}}><Entypo name="cross" size={20} color="white" /></View>
                                             </TouchableOpacity>
                                         </View>
                                     }
@@ -862,7 +936,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                         {/*PAGINA 11 --> CREAZIONE PROFILO */}
                         {item.id=='11' && 
                                     <TouchableOpacity onPress={()=>{creaNuovoUser()}}>
-                                        <Text style={[styles.campiDaCompilare,{color:"white", backgroundColor:MosCeleste,fontFamily:"Raleway_400Regular", padding:10, marginTop:20, borderRadius:20}]}> CREA PROFILO</Text>
+                                        <View style={{backgroundColor:MosCeleste, marginTop:20, borderRadius:20}}><Text style={[styles.campiDaCompilare,{color:"white", fontFamily:"Raleway_400Regular", padding:10}]}> CREA PROFILO</Text></View>
                                     </TouchableOpacity> 
                         }
 

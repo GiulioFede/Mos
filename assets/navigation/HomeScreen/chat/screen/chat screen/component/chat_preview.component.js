@@ -10,6 +10,17 @@ import { AutenticazioneUtente } from "../../../../../../context/firebase/autenti
 import { fromDateToHHMM } from "../../../../../../context/utilities/functions.utilities";
 
 
+function getVisibilityString(num){
+    if(num==0){
+        return "Visibilità: 33%";
+    }
+    else if(num==1){
+        return "Visibilità: 66%"
+    }
+    else if(num==2){
+        return "Visibilità: 100%"
+    }
+}
 
 
 /*
@@ -26,29 +37,31 @@ import { fromDateToHHMM } from "../../../../../../context/utilities/functions.ut
 
 */
 
-const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,indicePosizioneChatInArray, ordinaListaChat, token}) => {
+const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, route,indicePosizioneChatInArray, ordinaListaChat, token}) => {
 
     //console.log("Chat ID di "+nome+" -->");
     //console.log(chatId);
     console.log("Chat CONTENT-->");
-    console.log(token);
+    console.log(creationData);
 
     const [lastContent, setLastContent] = useState(content);
     const ascoltatoreUltimoMessaggio = useRef(null);
     const [ultimoMessaggioDoc, setUltimoMessaggioDoc] = useState(null);
+    const [media, setMedia] = useState(null)
+    const [visibility, setVisibility] = useState(-1);
 
-    const {ottieniAscoltatoreUltimoMessaggio, user} = useContext(AutenticazioneUtente);
+    const {ottieniAscoltatoreUltimoMessaggio, user, getMediaProfiloContatto} = useContext(AutenticazioneUtente);
 
     function apriDettagliChat(){
-        console.log("apro dettagli chat con utente "+contactUid);
-        navigation.navigate("Chat detail",{chatId: chatId, contactUid: contactUid, name: nome, token: token, urlProfileImageContactUser:media.value.profileImageUrl});
+        console.log("apro dettagli chat con utente "+contactUid+", chatId:"+chatId);
+        navigation.navigate("Chat detail",{chatId: chatId, contactUid: contactUid, name: nome, token: token, urlProfileImageContactUser:media.profileImageUrl, creationData:creationData});
     }
 
     function apriDettagliProfilo(){
         navigation.navigate("Contact profile",{name: nome, mediaProfilo: media});
     }
 
-    const [uriProfileImage, setUriProfileImage] = useState(media.value.profileImageUrl=="" ? null : media.value.profileImageUrl);
+    const [uriProfileImage, setUriProfileImage] = useState(null) //useState(media.value.profileImageUrl=="" ? null : media.value.profileImageUrl);
 
     const transitionAnimation = useRef(new Animated.Value(20)).current;
     const transitionProfileImage = () => {
@@ -96,9 +109,13 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,i
                                     */
                                     let lastMex = doc.data();
                                     console.log(lastMex);
-                                    //setUltimoMessaggioDoc(JSON.parse(JSON.stringify(lastMex)));
-                                    //avviso la classe superiore di renderizzare l'intera lista (peccato, potremmo farlo qui, ma è necessario per mettere sopra l'ultima chat)
-                                    ordinaListaChat(indicePosizioneChatInArray,lastMex);
+                                    if(lastMex!=undefined){
+                                        console.log("ultima visibilità: "+lastMex.level_of_visibility);
+                                        setVisibility(lastMex.level_of_visibility);
+                                        //setUltimoMessaggioDoc(JSON.parse(JSON.stringify(lastMex)));
+                                        //avviso la classe superiore di renderizzare l'intera lista (peccato, potremmo farlo qui, ma è necessario per mettere sopra l'ultima chat)
+                                        ordinaListaChat(indicePosizioneChatInArray,lastMex);
+                                    }
                                 }
                             }catch(e){
                                 console.log("Si è verificato un errore durante la ricezione/elaborazione delle statistiche:"+e);       
@@ -118,6 +135,25 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,i
         }
     },[])
 
+    useEffect(()=>{
+
+        async function caricaProfiloContatto(){
+            let current_visibility = visibility==0?"100":(visibility==1)?"50":"0";
+            console.log("carico profilo del contatto "+nome+" con visibilità "+current_visibility);
+            getMediaProfiloContatto(contactUid,current_visibility)
+                .then((media)=>{
+                    //console.log("media del contatto: "+nome);
+                    //console.log(media.data());
+                    setMedia(media.data());
+                    setUriProfileImage(media.data().profileImageUrl);
+                })
+        }
+
+        if(visibility>=0){
+            caricaProfiloContatto();
+        }
+    },[visibility])
+
     function elaboraAzione(messaggio){
         if(messaggio==null) 
             return;
@@ -126,30 +162,19 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,i
         setLastContent(newLastContent);
 
         }
-    
-    function getVisibilityString(num){
-        if(num==0){
-            return "Visibilità: 0%";
-        }
-        else if(num==1){
-            return "Visibilità: 50%"
-        }
-        else if(num==2){
-            return "Visibilità: 100%"
-        }
-    }
 
         //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
     let [Raleway2] = useFonts2({Raleway_400Regular});
-    if(!Raleway || !Raleway2)
+    if(!Raleway || !Raleway2 || lastContent==undefined)
             return <View></View>
 
     return (
         <Animated.View style={{marginVertical:0.5, opacity:opacityAnimation}}>
-            {uriProfileImage && (lastContent.lastMessage.value==null) && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={{position:"absolute", width:"100%", height:"100%"}} blurRadius={5} onLoadEnd={()=>{opacityTransition();}} onError={(e)=>{setUriProfileImage(null); opacityTransition();}}></Animated.Image>}
+            {uriProfileImage && media!=null && (lastContent.lastMessage.value==null) && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={{position:"absolute", width:"100%", height:"100%"}} blurRadius={5} onLoadEnd={()=>{opacityTransition();}} onError={(e)=>{setUriProfileImage(null); opacityTransition();}}></Animated.Image>}
         <TouchableOpacity activeOpacity={.7} style={[styles.container,{}]} onPress={()=>{apriDettagliChat()}}>
             {/* IMMAGINE PROFILO */}
+            {media!=null &&
             <Animated.View style={[styles.contenitoreMediaProfilo,{top:transitionAnimation}]}>
                 <TouchableOpacity onPress={()=>{apriDettagliProfilo()}} style={[styles.contenitoreImmagineProfilo,{borderColor:"white", borderTopWidth:1, borderBottomWidth:1, borderLeftWidth:1, borderRightWidth:1 }]}  >
                         {uriProfileImage && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={[styles.immagineProfilo,{}]} onLoadEnd={()=>{transitionProfileImage(); opacityTransition();}} onError={(e)=>{setUriProfileImage(null); transitionProfileImage();opacityTransition();}}></Animated.Image>}
@@ -159,6 +184,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,i
                     <MessageBubble messaggio={lastContent.lastMessage.value} type={lastContent.lastMessage.type} author = {lastContent.lastMessage.author} currentUser={user}/>
                 </View>          
             </Animated.View>
+            }
                     
             <View style={styles.contenitoreInfo}>
                 {/* nome */}
@@ -170,7 +196,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content, media, route,i
                 <Divider  />
                 {lastContent.level_of_visibility!=undefined && lastContent.level_of_visibility!=null &&
                 <View style={styles.contenitoreLivelloDiVisibilita}>
-                    <Text style={styles.livelloDiVisibilita}>{getVisibilityString(lastContent.level_of_visibility)}</Text>
+                    <Text style={styles.livelloDiVisibilita}>{getVisibilityString(visibility)}</Text>
                 </View>
                 } 
                 </View>

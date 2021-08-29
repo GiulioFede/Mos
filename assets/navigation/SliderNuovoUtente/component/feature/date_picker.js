@@ -12,11 +12,12 @@ export const DatePicker = ({setData}) => {
   const [show, setShow] = useState(false);
 
   const onChange = (event, selectedDate) => {
-
+    console.log("cambiata");
+    console.log(selectedDate);
     const currentDate = selectedDate || date;
     setShow(Platform.OS === 'ios');
-    //se ha premuto su ok
-    if(event.type=="set"){
+    //se ha premuto su ok (su android)
+    if(event.type=="set" || Platform.OS === 'ios'){
       //setDate(currentDate);
       const dataDiNascita = new Date(currentDate);
       setDataPickerDate(dataDiNascita);
@@ -55,6 +56,7 @@ export const DatePicker = ({setData}) => {
           testID="dateTimePicker"
           value={date}
           mode={mode}
+         // minimumDate TODO DA METTERE
           maximumDate={new Date()}
           is24Hour={true}
           display="default"

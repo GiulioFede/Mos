@@ -7,7 +7,9 @@ import { MosCeleste, coloreSchermataDiCaricamento, MosPurple, MosViola } from ".
 import MessageModel from "./components/messageModel";
 import * as FileSystem from 'expo-file-system';
 import { sendPushNotification } from '../../../../../context/push_notifications/functions';
-
+import {useFonts, Lobster_400Regular} from '@expo-google-fonts/lobster';
+import {useFonts as useFonts1, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
+import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 //import { LocalStorage } from "../../../../../context/local_storage/localStorage";
@@ -23,6 +25,7 @@ import RecordingKeyboard from "./components/recordingKeyboard";
 import { RowsOfMessagesToUpdate } from "../context/chatContext";
 import DecisionScreen from "./components/decisionScreen";
 import * as Notifications from 'expo-notifications'
+import ThreeDotTab from "./components/threeDotTab";
 //contiene le row da passare alla flat list per indicargli di aggiornare lo stato in "succeed"
 //const [arrayOfRowsToUpdateState, setarrayOfRowsToUpdateState] = useState({});
 
@@ -50,15 +53,17 @@ export default function ChatDetail({ navigation,route}){
     //conterrà l'intera chat
     const [chat, setChat] = useState([]);
     //contesto autenticazione
-    const {getUtenteCorrente,informazioniProfiloUtente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi, ottieniAscoltatoreStatistics, makeDecision, upgradeConversation,removeGroupOfAudiosBeforeTimestamp, removeMessages} = useContext(AutenticazioneUtente);
+    const {getUtenteCorrente,informazioniProfiloUtente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi, ottieniAscoltatoreStatistics, makeDecision, upgradeConversation,removeGroupOfAudiosBeforeTimestamp, removeMessages,removeConversation} = useContext(AutenticazioneUtente);
     
     const {addNewUpdate} = useContext(RowsOfMessagesToUpdate);
 
     //memorizzerà l'ultimo messaggio inviato/ricevuto costantemente rimpiazzando il precedente cosi che quando si torna allo schermo precedente possa aggiornare la chat_preview
     const lastMessage = useRef(null);
 
+    const threeDotTabRef = useRef();
+
     //uid utente
-    const {chatId, contactUid, name, token, urlProfileImageContactUser} = route.params;
+    const {chatId, contactUid, name, token, urlProfileImageContactUser, creationData} = route.params;
     console.log(" MYID CHAT");
     console.log(route.params);
     //reference alla flat list
@@ -78,6 +83,20 @@ export default function ChatDetail({ navigation,route}){
     //mi serve solo come lista per tenermi gli aggiornamenti di chat
     var listTmp = useRef();
     listTmp.current = [...chat];
+
+
+    async function removeCurrentConversation(){
+        try{
+            await removeConversation(chatId,contactUid,name,informazioniProfiloUtente.name,creationData);
+            setTimeout(()=>{
+                navigation.goBack();
+            },2000);
+        }catch(e){
+            console.log("errore eliminazione conversazione: "+e);
+            setSnackBarMessage("E' avvenuto un errore. Impossibile completare la rimozione della conversazione. Riprova più tardi.")
+            threeDotTabRef.current.local_show_loading(false);
+        }
+    }
 
     async function tornaIndietro(){
         try{
@@ -217,6 +236,7 @@ export default function ChatDetail({ navigation,route}){
                                     let stat = doc.data();
                                     console.log("nuove statistiche ricevute");
                                     console.log(stat);
+                                    if(stat==undefined) return;
                                     statistics.current = JSON.parse(JSON.stringify(stat));
 
                                     //se il numero di messaggi è un multiplo di THRESHOLD MA la visibilità è minore di 2 (dove 2 sta per massima visibilità)
@@ -705,18 +725,30 @@ export default function ChatDetail({ navigation,route}){
 
     },[openRecordingKeyboard]);
 
+
+    let [LobsterFont] = useFonts({Lobster_400Regular});
+    let [Raleway] = useFonts1({Raleway_200ExtraLight});
+    let [Raleway2] = useFonts2({Raleway_400Regular});
+    if(!Raleway || !Raleway2 || !LobsterFont)
+        return <View></View>
+
+
+
     return (
       <View style={styles.container}>
+
      {/* BARRA SUPERIORE */}
      <View style={styles.barraSuperiore}>
           <TouchableOpacity  onPress={tornaIndietro} style={{position:"absolute",left:0,zIndex:10, paddingLeft:Dimensions.get("window").width*0.03}}>
               <Ionicons name="chevron-back" size={fontSizeTitoloBarra} color="#52575D" />
           </TouchableOpacity>
           <Text style={styles.titolo}>{name}</Text>
-          <TouchableOpacity style={{position:"absolute", right:Dimensions.get("window").width*0.04}}>
-              <Octicons name="kebab-vertical" size={fontSizeTitoloBarra} color="#52575D" />
+          <TouchableOpacity onPress={()=>{threeDotTabRef.current.open_close_options_tab()}} style={{position:"absolute", right:Dimensions.get("window").width*0.04}}>
+              <Octicons name="kebab-vertical" size={fontSizeTitoloBarra} color="#52575D" />  
           </TouchableOpacity>
       </View>
+     
+
 
      {chat.length>0 &&
      <ListaMessaggi refFlatList={refFlatList} 
@@ -820,7 +852,7 @@ export default function ChatDetail({ navigation,route}){
                       myToken = {informazioniProfiloUtente.push_notification_token}
                       contactToken = {token}
                       />
-
+      <ThreeDotTab ref={threeDotTabRef} removeCurrentConversation={removeCurrentConversation} />
       <Snackbar
             visible={snackBarMessage?true:false}
             onDismiss={hideSnackMessage}
@@ -957,6 +989,14 @@ const styles = StyleSheet.create({
         justifyContent:"center", 
         textAlignVertical:"center",
         padding:10
-    }
+    },
+    itemMenu:{
+        fontSize:fontSizeTitoloBarra*0.6,
+        fontFamily: "Raleway_200ExtraLight",
+        color: "#52575D",
+        textAlign:"center",
+        alignItems:"center",
+        paddingVertical:10
+    },
     
 })
