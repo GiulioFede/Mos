@@ -63,11 +63,10 @@ const BottomSheetUserDetails = forwardRef((props, ref) => {
                            
                             
                         >
-                            <BottomSheetScrollView>
-                                 <View style={{marginBottom:altezzaBarraScreen}}>
-                                     <UserInformationView ref={userInformationViewRef}/>
-                                 </View>
-                                
+                            <BottomSheetScrollView >
+                                    <View style={{marginBottom:altezzaBarraScreen}}>
+                                        <UserInformationView ref={userInformationViewRef}/>
+                                    </View>
                             </BottomSheetScrollView>
                         </BottomSheet>
             </>

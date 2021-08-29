@@ -48,9 +48,23 @@ function orderChatByTimestamp(chat){
         //console.log("CONFRONTO");
         //console.log(a);
         //console.log(b);
-        let tempo1 = (a.value.lastMessage.timestamp==null)?(a.creation_data)*1000:a.value.lastMessage.timestamp;
-        let tempo2 = (b.value.lastMessage.timestamp==null)?(b.creation_data)*1000:b.value.lastMessage.timestamp;
-        //console.log("confronto "+a.contactName+" con "+b.contactName+" con timestamp rispettivamente di: "+tempo1+" e "+tempo2+" , ossia in date "+new Date(tempo1).toString()+" e "+new Date(tempo2).toString());
+        let tempo1 = (a.value.lastMessage.timestamp==null)?(a.creation_data):a.value.lastMessage.timestamp;
+        let tempo2 = (b.value.lastMessage.timestamp==null)?(b.creation_data):b.value.lastMessage.timestamp;
+        console.log("confronto "+a.contactName+" con "+b.contactName+" con timestamp rispettivamente di: "+tempo1+" e "+tempo2+" , ossia in date "+new Date(tempo1).toString()+" e "+new Date(tempo2).toString());
+        return tempo2 - tempo1
+    });
+
+    return sorted;
+}
+
+
+function orderBlockedChatByLockTimestamp(chat){
+    var sorted = chat.sort(function(a, b) {
+        //console.log("CONFRONTO");
+        //console.log(a);
+        //console.log(b);
+        let tempo1 = a.lock_timestamp;
+        let tempo2 = b.lock_timestamp;
         return tempo2 - tempo1
     });
 
@@ -63,7 +77,7 @@ var newChatListener = null;
 export default function ChatListComponent({navigation, route}){
 
     //contesto autenticazione
-    var {listOfConversations,setListOfConversations,ottieniAscoltatoreNuoveConversazioni, getChatSummaryInformation, getMediaProfiloContatto, getUserInformation} = useContext(AutenticazioneUtente);
+    var {listOfConversations,setListOfConversations,ottieniAscoltatoreNuoveConversazioni, getChatSummaryInformation, getMediaProfiloContatto, getUserInformation, setConversazioniBloccate} = useContext(AutenticazioneUtente);
     //se true indica che si stanno caricando le chat
     const [isChatLoading, setIsChatLoading] = useState(true);
     //lista delle conversazioni con relative informazioni
@@ -199,51 +213,40 @@ export default function ChatListComponent({navigation, route}){
                     //const promisesMediaContatti = []; //qui inserisco tutte le promise per le immagini
                     const chatsSummaryTmp = []; //qui avrò tutte le informazioni sulla conversazione
                     const promisesInfoProfileContatti = []; //qui avrò tutte le informazioni sul profilo dei contatti
+                    const blocked = []; //qui metterò le conversazioni bloccate
+                    let j= 0;
                     for(var i = 0; i < listOfConversations["conversations"].length; i++) {
                         //sfrutto questo ciclo per salvarmi i sommari delle conversazioni
                         let conversation = listOfConversations["conversations"][i];
                         console.log("conversazione scaricata");
                         console.log(conversation);
-                        chatsSummaryTmp.push({key:i.toString(),chatId:conversation.chatId, creation_data: conversation.creation_data,  value: summaries[i].data(), contactName:conversation.contactName, contactUid:conversation.uid });
-                        /*
-                            il chats summary, ogni suoi elemento, possiede un campo 'level_of_visibility' 
-                            che se è a zero allora la sgranatura è massima, se 1 è di 50%, se è 2 la visibilità è massima
-                        */
-                       /*const livelloDiSgranatura= "100";
-                       console.log("livello attuale di visibilità con: "+conversation.contactName+" è "+conversation.level_of_visibility);
-                       if(conversation.level_of_visibility==1) livelloDiSgranatura = "50";
-                       else if(conversation.level_of_visibility==2) livelloDiSgranatura = "0";
-                        promisesMediaContatti.push(getMediaProfiloContatto(conversation.uid, livelloDiSgranatura));
-*/
-                        //prelevo informazioni base utente
-                        promisesInfoProfileContatti.push(getUserInformation(conversation.uid));
+                        //se la conversazione è di tipo blocked non la aggiungo al resto delle conversazioni, ma la metto insieme a quelle bloccate
+                        if(conversation.hasOwnProperty("blocked")){
+                            console.log("la aggiungo a blocked");
+                            blocked.push({uid: conversation.uid, name: conversation.contactName, lock_timestamp: conversation.lock_timestamp});
+                            continue;
+                        }else {
+                            console.log("la aggiungo alle conversazioni");
+                            chatsSummaryTmp.push({key:j.toString(),chatId:conversation.chatId, creation_data: conversation.creation_data,  value: summaries[i].data(), contactName:conversation.contactName, contactUid:conversation.uid });
+                            //prelevo informazioni base utente
+                            promisesInfoProfileContatti.push(getUserInformation(conversation.uid));
+                            j++;
+                        }
+  
                     }
 
-                    //ordino per timestamp
+                    //ordino per timestamp le conversazioni
                     let chatsSummaryTmpOrdered = orderChatByTimestamp(chatsSummaryTmp);
+                    console.log("conversazioni bloccate prima del sorting");
+                    console.log(blocked);
+                    //ordino per timestamp quelle bloccate
+                    let blocked_sorted = orderBlockedChatByLockTimestamp(blocked);
+                    console.log("conversazioni bloccate dopo sorting");
+                    console.log([...blocked_sorted]);
 
                     setChatsSummary(chatsSummaryTmpOrdered);
-/*
-                    //avvio promises per i media
-                    Promise.all(promisesMediaContatti)
-                        .then((mediaContattiResult)=>{
-                            console.log("Tutti i media dei contatti sono stati scaricati");
-                            const mediaContattiTmp = [];
-                            for(var i = 0; i < listOfConversations["conversations"].length; i++) {
-                                console.log("contatti "+mediaContattiResult[i].data());
-                                //sfrutto questo ciclo per salvarmi i sommari delle conversazioni
-                                mediaContattiTmp.push({key:i.toString(), value:mediaContattiResult[i].data()});
-                            }
-                            setMediaContatti(mediaContattiTmp);
-                            //indico termine del caricamente delle chat
-                            console.log("fine caricamento conversazioni");
-                            //console.log(chatsSummaryTmp);
-                            //console.log(mediaContattiTmp);
-                            //console.log(listOfConversations);
-                        }).catch((err)=>{
-                            console.log("Si è verificato un errore durante il recupero dei media dei contatti: "+err);
-                        })
-*/
+                    setConversazioniBloccate(blocked_sorted);
+
                     //avvio promises per le info dei profili
                     Promise.all(promisesInfoProfileContatti)
                         .then((infoProfiles)=>{
@@ -256,6 +259,7 @@ export default function ChatListComponent({navigation, route}){
 
 
                 }).catch((err)=>{
+                    
                     console.log("Si è verificato un errore durante il recupero delle informazioni sommarie sulle conversazioni: "+err);
                 })
 
@@ -363,7 +367,7 @@ export default function ChatListComponent({navigation, route}){
                                     route = {route}
                                     indicePosizioneChatInArray={index}
                                     ordinaListaChat={ordinaListaChat}
-                                    token = {infoProfiloContatti[parseInt(item.key)].push_notification_token}
+                                    token = {infoProfiloContatti[parseInt(item.key)].hasOwnProperty("push_notification_token")?infoProfiloContatti[parseInt(item.key)].push_notification_token:""}
                                     />
                         <Divider />
                         </>

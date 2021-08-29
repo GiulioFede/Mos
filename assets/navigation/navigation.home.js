@@ -21,6 +21,7 @@ import registerForPushNotificationsAsync from '../context/push_notifications/reg
 import Constants from 'expo-constants';
 import { idChatCorrente } from './HomeScreen/chat/screen/chat detail/chat_detail';
 import Loading from './HomeScreen/aroundYou/component/loading';
+import BlockedConversationsScreen from './BlockedConversations/blockedConversations';
 
 /*
   NB: Questa funzione decide solo come comportarsi quando si riceve una notifica MA l'app è in FOREGROUND.
@@ -274,7 +275,7 @@ export default function HomeNavigator({navigation}) {
       <Drawer.Navigator initialRouteName="Home" drawerContent={props => <AltriPulsanti {...props} />} >
         <Drawer.Screen name="Home" component={HomeScreen} />
         <Drawer.Screen name="Informazioni Personali" component={InformazioniPersonali} />
-       
+        <Drawer.Screen name="Utenti bloccati" component={BlockedConversationsScreen} />
       </Drawer.Navigator>
       </>
   );

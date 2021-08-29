@@ -45,6 +45,12 @@ function getNotificationStringFromJSON(item){
     else if(item.type=="CHAT_REMOVAL"){
         return " ha rimosso la conversazione."
     }
+    else if(item.type=="YOUR_CHAT_BLOCKER"){
+        return "Hai bloccato "
+    }
+    else if(item.type=="CHAT_BLOCKED"){
+        return " ti ha bloccato. Non potrai più conversare con "+item.author+" fino a quando non ti avrà sbloccato."
+    }
 }
 
 export default function NotificationMessageModel({user, item, decrementaNumeroNotifiche, forceToHideRedBallon}){
@@ -88,6 +94,8 @@ export default function NotificationMessageModel({user, item, decrementaNumeroNo
                     {item.type=="TOTAL_DISCLOSURE" && <Text style={styles.type}>Congratulazioni! Tu e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
                     {item.type=="YOUR_CHAT_REMOVAL" && <Text style={styles.type}>{getNotificationStringFromJSON(item)}<Text style={styles.author}>{item.author}</Text></Text>}
                     {item.type=="CHAT_REMOVAL" && <Text style={styles.author}>{item.author}<Text style={styles.type}>{getNotificationStringFromJSON(item)}</Text></Text> }
+                    {item.type=="YOUR_CHAT_BLOCKER" && <Text style={styles.type}>{getNotificationStringFromJSON(item)}<Text style={styles.author}>{item.author}</Text></Text>}
+                    {item.type=="CHAT_BLOCKED" && <Text style={styles.author}>{item.author}<Text style={styles.type}>{getNotificationStringFromJSON(item)}</Text></Text> }
                 </View>
             </View>
         )

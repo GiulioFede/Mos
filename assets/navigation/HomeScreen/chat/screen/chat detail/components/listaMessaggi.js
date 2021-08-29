@@ -39,6 +39,8 @@ const ListaMessaggi = ({lista_messaggi, refFlatList, caricaSuccessivi10Messaggi,
                         delete updates[contactUid][item.row];
                     }
                 }
+                //console.log("data messaggio");
+                //console.log(item.date);
                 //NB: la flatlist renderizza da sotto (più recenti) a sopra (più vecchi)
                 let dataAttuale = new Date(item.date).setHours(0,0,0,0);
                 let dataPrecedente = null;

@@ -428,7 +428,7 @@ export default function ProfileComponent(props){
         {isUserProfileLoading==false &&
             <>
             <View style={styles.barraSuperiore}>
-                <Text style={styles.titolo}>Profile</Text>
+                <Text style={styles.titolo}>Profilo</Text>
                 <TouchableOpacity onPress={apriUserSettings} style={{position:"absolute", right:Dimensions.get("window").width*0.03}}>
                         <MaterialIcons name="menu" size={fontSizeTitoloBarra} color="#52575D" />
                 </TouchableOpacity>

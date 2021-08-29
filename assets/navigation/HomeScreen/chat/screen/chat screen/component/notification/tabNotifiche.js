@@ -33,7 +33,7 @@ const TabNotifiche = forwardRef((props, ref) => {
     const [isLoading, setIsLoading] = useState(false);
     const [forceToHideRedBallon, setForceToHideRedBallon] = useState(false);
 
-    const {snackMessageRef, incrementaNumeroNotifiche, resettaNumeroNotifiche, decrementaNumeroNotifiche} = props;
+    const {snackMessageRef, incrementaNumeroNotifiche, resettaNumeroNotifiche, decrementaNumeroNotifiche, setIsNotificationTabOpened} = props;
 
     //contesto autenticazione
     const {ottieniAscoltatoreNuoveNotifiche, user, removeNotification} = useContext(AutenticazioneUtente);
@@ -63,6 +63,7 @@ const TabNotifiche = forwardRef((props, ref) => {
      }
 
      function chiudiNotificaTab(){
+         setIsNotificationTabOpened(false);
          hideModal();
      }
 

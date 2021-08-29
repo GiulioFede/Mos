@@ -8,7 +8,7 @@ import { MosCeleste, MosViola } from "../../../../resources/colors";
 const Loading = forwardRef((props, ref) => {
 
 
-     const [isLoading, setIsLoading] = useState(true);
+     const [isLoading, setIsLoading] = useState(false);
 
 
      useImperativeHandle(ref, () => ({
@@ -26,9 +26,13 @@ const Loading = forwardRef((props, ref) => {
      }
 
     return (
-        <View style={{position:"absolute", width:Dimensions.get("window").width, height:Dimensions.get("window").height, justifyContent:"center", alignItems:"center", flex:1, backgroundColor:"rgba(255,255,255,0.5)"}}>
-                <ActivityIndicator animating={isLoading} color={MosCeleste} />
-        </View>
+        <>
+        {isLoading==true &&
+            <View style={{position:"absolute", zIndex:20, width:Dimensions.get("window").width, height:Dimensions.get("window").height, justifyContent:"center", alignItems:"center", flex:1, backgroundColor:"rgba(255,255,255,0.5)"}}>
+                    <ActivityIndicator animating={true} color={MosCeleste} />
+            </View>
+        }
+        </>
     )
 }
 )

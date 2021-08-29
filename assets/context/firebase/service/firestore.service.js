@@ -502,6 +502,7 @@ export function _isProfiloCompletato(uid){
                //scarico conversazioni contatto
                let contact_conversations_info = await transaction.get(contactConversations);
                //se il contatto possiede già una conversazione in cui come uid possiede noi allora fermo tutto
+               //oppure se il contatto ha bloccato l'utente allora fermo tutto
                if(!contact_conversations_info.exists){
                    console.log("errore transazione creazione conversazione: non è stato possibile trovare le informazioni dell'utente");
                    throw "General error";
@@ -511,8 +512,14 @@ export function _isProfiloCompletato(uid){
                    for(let i=0; i<contact_conversations_info.data().conversations.length; i++){
                        //se esistiamo già mando errore
                        if(contact_conversations_info.data().conversations[i].uid==firebase.auth().currentUser.uid){
-                        console.log("errore transazione creazione conversazione: la chat esiste già");
-                            throw "A conversation already exists";
+                           //se però è anche blocked
+                           if(contact_conversations_info.data().conversations[i].hasOwnProperty("blocked")){
+                                console.log("errore transazione creazione conversazione: l'utente corrente è stato bloccato dal contatto'");
+                                throw "The user blocked you";
+                           }else {
+                                console.log("errore transazione creazione conversazione: la chat esiste già");
+                                throw "A conversation already exists";
+                           }
                        }
                    }
                }
@@ -532,7 +539,7 @@ export function _isProfiloCompletato(uid){
                                                                statistics:{
                                                                     [`${nomeCampoContatto}`]:null, 
                                                                     administrator: firebase.auth().currentUser.uid, 
-                                                                    lastAuthor: null, 
+                                                                    //lastAuthor: null, 
                                                                     number_of_messages:0, 
                                                                     [`${nomeCampoUtenteCorrente}`]:null
                                                                }
@@ -607,6 +614,7 @@ export function _isProfiloCompletato(uid){
                                                 contactUid, 
                                                 type, 
                                                 value,
+                                                lastAuthor,
                                                 callbackSuccess,
                                                 callbackFailure){
 
@@ -616,7 +624,7 @@ export function _isProfiloCompletato(uid){
             if(connection_state.isConnected==false) callbackFailure();
 
             if(array_of_requests.length==0){
-                array_of_requests.push([chatId,contactUid,type,value,{'onSuccess': function()  {callbackSuccess();}},{'onSuccess': function()  {callbackFailure();}}]);
+                array_of_requests.push([chatId,contactUid,type,value,lastAuthor,{'onSuccess': function()  {callbackSuccess();}},{'onSuccess': function()  {callbackFailure();}}]);
                     try{
                         while(1){
                             console.log("eseguo richieste di invio messaggi");
@@ -627,16 +635,16 @@ export function _isProfiloCompletato(uid){
                                     console.log(request_params[0]+","+request_params[1]+","+request_params[2]+","+request_params[3]);
                                     console.log(request_params[4]);
                                     //invio messaggio
-                                    await _inviaMessaggio(request_params[0],request_params[1],request_params[2],request_params[3]);
+                                    await _inviaMessaggio(request_params[0],request_params[1],request_params[2],request_params[3],request_params[4]);
                                     console.log("messaggio inviato");
                                     //se è andato tutto bene eseguo la callback di successo
-                                    await request_params[4]['onSuccess']();
+                                    await request_params[5]['onSuccess']();
                                     //indico alla successiva iterazione che è andato tutto bene
                                     Promise.resolve((1));
                                 }catch(e){
                                         console.log("messaggio non inviato:"+e);
                                         //se è andato male eseguo la callback di fallimento
-                                        request_params[5];
+                                        request_params[6];
                                         //indico alla successiva iterazione che è andato male
                                         //Promise.reject(0);
                                         callbackFailure();
@@ -660,13 +668,14 @@ export function _isProfiloCompletato(uid){
                         array_of_requests = [];
                     }
                 }else 
-                    array_of_new_requests.push([chatId,contactUid,type,value,{'onSuccess': function()  {callbackSuccess();}},{'onSuccess': function()  {callbackFailure();}}]);
+                    array_of_new_requests.push([chatId,contactUid,type,value,lastAuthor,{'onSuccess': function()  {callbackSuccess();}},{'onSuccess': function()  {callbackFailure();}}]);
         }
 
     export async function _inviaMessaggio(chatId, 
                                     contactUid, 
                                     type, 
-                                    value
+                                    value,
+                                    lastAuthor
                                     ){
         console.log("invio messaggio...")
         var db = firebase.firestore();
@@ -693,7 +702,7 @@ export function _isProfiloCompletato(uid){
                         type: type,
                         value: value
                     },
-                    'statistics.number_of_messages': firebase.firestore.FieldValue.increment(1)
+                    'statistics.number_of_messages': firebase.firestore.FieldValue.increment( (lastAuthor==null || lastAuthor!=firebase.auth().currentUser.uid)?1:0)
                 }, {merge:true})
 
                 return batch.commit();
@@ -746,7 +755,7 @@ export function _isProfiloCompletato(uid){
                             type: type,
                             value: "" 
                         },
-                        'statistics.number_of_messages': firebase.firestore.FieldValue.increment(1)
+                        'statistics.number_of_messages': firebase.firestore.FieldValue.increment( (lastAuthor==null || lastAuthor!=firebase.auth().currentUser.uid)?1:0)
                     }, {merge:true})
 
                 return batch.commit();
@@ -777,21 +786,21 @@ export function _isProfiloCompletato(uid){
         }
     }
 
-    export async function _removeGroupOfAudiosBeforeTimestamp(chatId,seconds){
+    export async function _removeGroupOfAudiosBeforeTimestamp(chatId,milliseconds){
         try {
             var storage = firebase.storage();
             // ottengo un riferimento dello storage
             var storageRef = storage.ref();
             //accedo alla cartella chats/chatId
             var chatFolder = storageRef.child('chats/'+chatId);
-            console.log("elimino tutti gli audio con timestamp/nome minore di "+seconds);
+            console.log("elimino tutti gli audio con timestamp/nome minore di "+milliseconds);
             return chatFolder.listAll().then((listResults)=>{
                 console.log("listo tutti i files");
                 listResults.items.forEach(async(itemRef)=>{
                     //se il nome di tale elemento (che è un timestamp ) è minore o uguale all'ultimo, allora lo elimino
                     let name = parseInt(itemRef.name.split('.')[0]);
-                    if(name <= seconds){
-                        console.log("l'emento "+name+" è minore o uguale a quello di riferimento "+ seconds)
+                    if(name <= milliseconds){
+                        console.log("l'emento "+name+" è minore o uguale a quello di riferimento "+ milliseconds)
                         await itemRef.delete();
                         console.log("elemento "+name+" eliminato");
                     }
@@ -1124,12 +1133,12 @@ export function _isProfiloCompletato(uid){
                 })
             }
             
-            //in ogni caso resetto il documento statistiche  (e incremento di 1 number_of_messages per sbloccare la chat)
+            //in ogni caso resetto il documento statistiche  (e resetto number_of_messages per sbloccare la chat)
             let nomeCampoContatto = "statistics."+contactUid+"_response";
             let nomeCampoUtenteCorrente = "statistics."+firebase.auth().currentUser.uid+"_response";
             batch.update(pathDocumentoRiassuntivo,
                 {
-                    'statistics.number_of_messages': firebase.firestore.FieldValue.increment(1),
+                    'statistics.number_of_messages': 0,
                     [`${nomeCampoContatto}`]: null,
                     [`${nomeCampoUtenteCorrente}`]: null
                 },{merge:true})
@@ -1154,91 +1163,283 @@ export function _isProfiloCompletato(uid){
         }
     }
 
+    /*
+        IDEA: quando voglio bloccare un utente faccio gli stessi steps di quando rimuovo la conversazione. Di diverso faccio solo che,
+        nelle mie sole conversazioni, non elimino la chat ma metto a true il campo blocked. In questo modo quando l'utente bloccato, che 
+        non ha più la chat nelle sue conversazioni, vuole iniziare una nuova chat, la funzione createNewConversations controllerà se tra le
+        conversazioni del contatto ce n'è una (ormai inesistente nel concreto) che riporta come contactUid il suo nome e come campo blocked il valore true.
+    */
+
+    export async function _blockContact(chatID, contactUid, contactName, myName, chatCreationData){
+        
+        try{
+            console.log("bloccaggio utente e rimozione chat "+chatID+" con utente "+contactName+" di id "+contactUid+" da parte di "+myName+" con data di creazione sotto:");
+            console.log(chatCreationData);
+
+            var db = firebase.firestore();
+            const idUser = firebase.auth().currentUser.uid;
+            //path channel utente corrente
+            const pathChannelCurrentUser = db.collection("chats").doc(chatID).collection(idUser);
+            //path channel contatto
+            const pathChannelContact= db.collection("chats").doc(chatID).collection(contactUid);
+            //path chat
+            const pathChat = db.collection("chats").doc(chatID);
+            //oggetto chat da rimuovere nella mia collezione 
+            const myChatObj = {
+                chatId: chatID,
+                contactName: contactName,
+                creation_data: chatCreationData,
+                uid: contactUid
+            }
+            //nuovo oggetto da inserire nelle mie conversazioni
+            const blockedChatObj = {
+                uid: contactUid,
+                contactName: contactName,
+                blocked: true,
+                lock_timestamp: new Date().getTime()
+            }
+            //oggetto chat da rimuovere nella sua collezione
+            const contactChatObj = {
+                chatId: chatID,
+                contactName: myName,
+                creation_data: chatCreationData,
+                uid: idUser
+            }
+            //path conversations utente corrente
+            const pathConversationsCurrentUser = db.collection("users").doc(idUser).collection("chats").doc("Conversations");
+            //path conversations contatto
+            const pathConversationsContatto = db.collection("users").doc(contactUid).collection("chats").doc("Conversations");
+            //path documento notifiche utente corrente
+            const pathCurrentUserNotification = db.collection("users").doc(idUser).collection("notifications").doc();
+            //path documento notifiche contatto
+            const pathCurrentContactNotification = db.collection("users").doc(contactUid).collection("notifications").doc();
+
+            var batch = db.batch();
+
+            console.log("eliminazione documenti sulla mia collezione");
+            //elimino tutti i messaggi sul mio canale
+            let snaphot1 = await pathChannelCurrentUser.get();
+            for(let i=0; i<snaphot1.docs.length; i++){
+                batch.delete(snaphot21.docs[i].ref)
+            }
+
+            console.log("eliminazione documenti sulla sua collezione");
+            //elimino tutti i messaggi sul canale del contatto
+            let snaphot2 = await pathChannelContact.get();
+            for(let i=0; i<snaphot2.docs.length; i++){
+                batch.delete(snaphot2.docs[i].ref)
+            }
+
+            console.log("elimino chat");
+            //elimino chat
+            batch.delete(pathChat);
+
+            console.log("elimino la chat dalle mie conversazioni");
+            //elimino chat dentro le mie conversazioni
+            batch.update(pathConversationsCurrentUser,{
+                "conversations": firebase.firestore.FieldValue.arrayRemove(myChatObj)
+            });
+            //ne aggiungo una con due soli campi contenenti lo uid del contatto e il label blocked
+            batch.update(pathConversationsCurrentUser,{
+                "conversations": firebase.firestore.FieldValue.arrayUnion(blockedChatObj)
+            });
+
+            console.log("elimino la chat dalle sue conversazioni")
+            //elimino chat dentro le sue conversazioni
+            batch.update(pathConversationsContatto,{
+                "conversations": firebase.firestore.FieldValue.arrayRemove(contactChatObj)
+            })
+
+            //inoltre invio una notifica a entrambi sul bloccaccio della chat
+            batch.set(pathCurrentUserNotification,{
+                author: contactName,
+                type: "YOUR_CHAT_BLOCKER",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            batch.set(pathCurrentContactNotification,{
+                author: myName,
+                type: "CHAT_BLOCKED",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            return await batch.commit().then(async()=>{
+                return await _removeGroupOfAudiosBeforeTimestamp(chatID,new Date().getTime())
+            })
+
+        }catch(e){
+            throw e;
+        }
+
+    }
 
     export async function _removeConversation(chatID, contactUid, contactName, myName, chatCreationData){
+        
+        try{
+            console.log("rimozione chat "+chatID+" con utente "+contactName+" di id "+contactUid+" da parte di "+myName+" con data di creazione sotto:");
+            console.log(chatCreationData);
 
-        console.log("rimozione chat "+chatID+" con utente "+contactName+" di id "+contactUid+" da parte di "+myName+" con data di creazione sotto:");
-        console.log(chatCreationData);
+            var db = firebase.firestore();
+            const idUser = firebase.auth().currentUser.uid;
+            //path channel utente corrente
+            const pathChannelCurrentUser = db.collection("chats").doc(chatID).collection(idUser);
+            //path channel contatto
+            const pathChannelContact= db.collection("chats").doc(chatID).collection(contactUid);
+            //path chat
+            const pathChat = db.collection("chats").doc(chatID);
+            //oggetto chat da rimuovere nella mia collezione 
+            const myChatObj = {
+                chatId: chatID,
+                contactName: contactName,
+                creation_data: chatCreationData,
+                uid: contactUid
+            }
+            //oggetto chat da rimuovere nella sua collezione
+            const contactChatObj = {
+                chatId: chatID,
+                contactName: myName,
+                creation_data: chatCreationData,
+                uid: idUser
+            }
+            //path conversations utente corrente
+            const pathConversationsCurrentUser = db.collection("users").doc(idUser).collection("chats").doc("Conversations");
+            //path conversations contatto
+            const pathConversationsContatto = db.collection("users").doc(contactUid).collection("chats").doc("Conversations");
+            //path documento notifiche utente corrente
+            const pathCurrentUserNotification = db.collection("users").doc(idUser).collection("notifications").doc();
+            //path documento notifiche contatto
+            const pathCurrentContactNotification = db.collection("users").doc(contactUid).collection("notifications").doc();
 
-        var db = firebase.firestore();
-        const idUser = firebase.auth().currentUser.uid;
-        //path channel utente corrente
-        const pathChannelCurrentUser = db.collection("chats").doc(chatID).collection(idUser);
-        //path channel contatto
-        const pathChannelContact= db.collection("chats").doc(chatID).collection(contactUid);
-        //path chat
-        const pathChat = db.collection("chats").doc(chatID);
-        //oggetto chat da rimuovere nella mia collezione 
-        const myChatObj = {
-            chatId: chatID,
-            contactName: contactName,
-            creation_data: chatCreationData,
-            uid: contactUid
-        }
-        //oggetto chat da rimuovere nella sua collezione
-        const contactChatObj = {
-            chatId: chatID,
-            contactName: myName,
-            creation_data: chatCreationData,
-            uid: idUser
-        }
-        //path conversations utente corrente
-        const pathConversationsCurrentUser = db.collection("users").doc(idUser).collection("chats").doc("Conversations");
-        //path conversations contatto
-        const pathConversationsContatto = db.collection("users").doc(contactUid).collection("chats").doc("Conversations");
-        //path documento notifiche utente corrente
-        const pathCurrentUserNotification = db.collection("users").doc(idUser).collection("notifications").doc();
-        //path documento notifiche contatto
-        const pathCurrentContactNotification = db.collection("users").doc(contactUid).collection("notifications").doc();
+            var batch = db.batch();
 
-        var batch = db.batch();
+            console.log("eliminazione documenti sulla mia collezione");
+            //elimino tutti i messaggi sul mio canale
+            let snaphot1 = await pathChannelCurrentUser.get();
+            for(let i=0; i<snaphot1.docs.length; i++){
+                batch.delete(snaphot21.docs[i].ref)
+            }
 
-        console.log("eliminazione documenti sulla mia collezione");
-        //elimino tutti i messaggi sul mio canale
-        pathChannelCurrentUser.get().then(snapshot =>{
-            snapshot.docs.forEach(doc=>{
-                batch.delete(doc.ref);
-            })
-        })
+            console.log("eliminazione documenti sulla sua collezione");
+            //elimino tutti i messaggi sul canale del contatto
+            let snaphot2 = await pathChannelContact.get();
+            for(let i=0; i<snaphot2.docs.length; i++){
+                batch.delete(snaphot2.docs[i].ref)
+            }
 
-        console.log("eliminazione documenti sulla sua collezione");
-        //elimino tutti i messaggi sul canale del contatto
-        pathChannelContact.get().then(snapshot =>{
-            snapshot.docs.forEach(doc=>{
-                batch.delete(doc.ref);
-            })
-        })
+            console.log("elimino chat");
+            //elimino chat
+            batch.delete(pathChat);
 
-        console.log("elimino chat");
-        //elimino chat
-        batch.delete(pathChat);
-
-        console.log("elimino la chat dalle mie conversazioni");
-        //elimino chat dentro le mie conversazioni
-        batch.update(pathConversationsCurrentUser,{
-            "conversations": firebase.firestore.FieldValue.arrayRemove(myChatObj)
-           //conversations: conversations.filter(chat => chat.chatId != chatID)
-        });
-
-        console.log("elimino la chat dalle sue conversazioni")
-        //elimino chat dentro le sue conversazioni
-        batch.update(pathConversationsContatto,{
-            "conversations": firebase.firestore.FieldValue.arrayRemove(contactChatObj)
+            console.log("elimino la chat dalle mie conversazioni");
+            //inserisco label blocked dentro la chat delle mie conversazioni
+            batch.update(pathConversationsCurrentUser,{
+                "conversations": firebase.firestore.FieldValue.arrayRemove(myChatObj)
             //conversations: conversations.filter(chat => chat.chatId != chatID)
-        })
+            });
 
-        //inoltre invio una notifica a entrambi sulla rimozione della chat
-        batch.set(pathCurrentUserNotification,{
-            author: contactName,
-            type: "YOUR_CHAT_REMOVAL",
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        batch.set(pathCurrentContactNotification,{
-            author: myName,
-            type: "CHAT_REMOVAL",
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
+            console.log("elimino la chat dalle sue conversazioni")
+            //elimino chat dentro le sue conversazioni
+            batch.update(pathConversationsContatto,{
+                "conversations": firebase.firestore.FieldValue.arrayRemove(contactChatObj)
+                //conversations: conversations.filter(chat => chat.chatId != chatID)
+            })
 
-        return batch.commit();
+            //inoltre invio una notifica a entrambi sulla rimozione della chat
+            batch.set(pathCurrentUserNotification,{
+                author: contactName,
+                type: "YOUR_CHAT_REMOVAL",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            batch.set(pathCurrentContactNotification,{
+                author: myName,
+                type: "CHAT_REMOVAL",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
 
+            return await batch.commit().then(async()=>{
+                return await _removeGroupOfAudiosBeforeTimestamp(chatID,new Date().getTime())
+            })
+        }catch(e){
+            try{
+                if(e.code=="not-found")
+                    return _removeConversationLocally(chatID,contactUid,contactName,chatCreationData);
+            }catch(e){
+                throw e;
+            }
+
+            throw e;
+        }
+
+    }
+
+    //Questa funzione viene eseguita solo quando la madre ("removeConveration ") non trova il documento del contatto.
+    //siccome il contatto probabilmente si sarà eliminato da Mosaic, procedo a eliminare la chat solo dall'utente corrente
+    //Viene anche chiamata quando si scaricano le chat e quando si richiede le informazioni del contatto queste non si trovano
+    //non elimino la chat in remoto in quanto è stata eliminata dal contatto quando si è disinscritto
+    export async function _removeConversationLocally(chatID, contactUid, contactName, chatCreationData){
+        
+        try{
+            console.log("Sto rimuovendo la chat localmente perchè il contatto non esiste più");
+            var db = firebase.firestore();
+            const idUser = firebase.auth().currentUser.uid;
+
+            //oggetto chat da rimuovere nella mia collezione 
+            const myChatObj = {
+                chatId: chatID,
+                contactName: contactName,
+                creation_data: chatCreationData,
+                uid: contactUid
+            }
+
+            //path conversations utente corrente
+            const pathConversationsCurrentUser = db.collection("users").doc(idUser).collection("chats").doc("Conversations");
+            //path documento notifiche utente corrente
+            const pathCurrentUserNotification = db.collection("users").doc(idUser).collection("notifications").doc();
+            
+            var batch = db.batch();
+
+            console.log("elimino la chat dalle mie conversazioni");
+            //inserisco label blocked dentro la chat delle mie conversazioni
+            batch.update(pathConversationsCurrentUser,{
+                "conversations": firebase.firestore.FieldValue.arrayRemove(myChatObj)
+            //conversations: conversations.filter(chat => chat.chatId != chatID)
+            });
+
+            //inoltre invio una notifica a me spiegandomi che la chat è stata forzatamente eliminata perchè il contatto si è disinscritto
+            batch.set(pathCurrentUserNotification,{
+                author: contactName,
+                type: "YOUR_CHAT_REMOVAL",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+
+            return await batch.commit();
+
+        }catch(e){
+            throw e;
+        }
+
+    }
+
+    export async function _unlockContact(contactName, lock_timestamp, contactUid){
+        try{
+            var db = firebase.firestore();
+            const idUser = firebase.auth().currentUser.uid;
+            //path conversations utente corrente
+            const pathConversationsCurrentUser = db.collection("users").doc(idUser).collection("chats").doc("Conversations");
+            //oggetto da eliminare
+            const removeObj = {
+                blocked:true,
+                contactName: contactName,
+                lock_timestamp: lock_timestamp,
+                uid: contactUid
+            }
+
+            console.log("elimino la chat bloccata dalle mie conversazioni");
+            return pathConversationsCurrentUser.update({
+                "conversations": firebase.firestore.FieldValue.arrayRemove(removeObj)
+            });
+
+        }catch(e){
+            throw e;
+        }
     }

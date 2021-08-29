@@ -86,6 +86,11 @@ export default function ChatScreen({navigation, route}){
         iconaNotificheRef.current.decrement_notification_number();
     }
 
+    function apriChiudiTabNotification(){
+        tabNotificheRef.current.openCloseNotificationTab(); 
+        setIsNotificationTabOpened(!isNotificationTabOpened)
+    }
+
     let [Raleway] = useFonts({Raleway_200ExtraLight});
     let [Raleway2] = useFonts2({Raleway_400Regular});
     if(!Raleway || !Raleway2)
@@ -100,7 +105,7 @@ export default function ChatScreen({navigation, route}){
                             <MaterialIcons name="menu" size={fontSizeTitoloBarra} color="#52575D" />
                     </TouchableOpacity>
                     {/* ICONA NOTIFICHE */}
-                    <TouchableOpacity onPress={()=>{tabNotificheRef.current.openCloseNotificationTab(); setIsNotificationTabOpened(!isNotificationTabOpened);}} style={{position:"absolute", left:Dimensions.get("window").width*0.03}}>
+                    <TouchableOpacity onPress={()=>{apriChiudiTabNotification()}} style={{position:"absolute", left:Dimensions.get("window").width*0.03}}>
                         {isNotificationTabOpened==false && <MaterialCommunityIcons name="bell-ring-outline" size={fontSizeTitoloBarra*1.1} color="#52575D" /> }
                         {isNotificationTabOpened==true && <MaterialCommunityIcons name="bell-ring" size={fontSizeTitoloBarra*1.1} color={MosCeleste} /> }
                         <IconaNotifiche ref={iconaNotificheRef}/>
@@ -116,6 +121,7 @@ export default function ChatScreen({navigation, route}){
                                   incrementaNumeroNotifiche={incrementaNumeroNotifiche}
                                   resettaNumeroNotifiche={resettaNumeroNotifiche}
                                   decrementaNumeroNotifiche={decrementaNumeroNotifiche}
+                                  setIsNotificationTabOpened={setIsNotificationTabOpened}
                                   />
                 </View>
 

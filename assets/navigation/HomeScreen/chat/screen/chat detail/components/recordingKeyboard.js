@@ -30,7 +30,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
     const {addNewUpdate} = useContext(RowsOfMessagesToUpdate);
 
     //prelevo metodi
-    const {setOpenRecordingKeyboard, setSnackBarMessage, ultimaRow, getUtenteCorrente, chat,setChat, refFlatList,chatId, inviaNuovoMessaggio, lastMessage, contactUid, isMounted, arrayOfRowsToUpdateState, setRefresh, refresh} = props;
+    const {setOpenRecordingKeyboard,isOpenRecordingKeyboardOpened, setSnackBarMessage, ultimaRow, getUtenteCorrente, chat,setChat, refFlatList,chatId, inviaNuovoMessaggio, lastMessage, contactUid, isMounted, lastStatistic, arrayOfRowsToUpdateState, setRefresh, refresh} = props;
     //indica la durata attuale dell'audio mentre lo si registra
     const [durataAudio, setDurataAudio] = useState(0);
     //contiene info sul recording
@@ -41,6 +41,8 @@ const RecordingKeyboard = forwardRef((props, ref) => {
     const [uriTmp,setUriTmp] = useState(null);
     const [_stopRecording, setStopRecording] = useState(0);
 
+    console.log("ULTIMA STATISTICA RICEVUTA");
+    console.log(lastStatistic);
     
    useImperativeHandle(ref, () => ({
 
@@ -50,8 +52,17 @@ const RecordingKeyboard = forwardRef((props, ref) => {
             await recordingIconAudioSound.playAsync();
             avviaRegistrazione();
             
-        }
+        },
+        async closeRecordingBoard(){
+            await local_closeRecordingBoard();
+        },
+       
     }));
+
+    async function local_closeRecordingBoard(){
+        if(isRecordingKeyboardOpened==true && isRecording==true)
+            await annullaRecording();
+    }
 
     function avviaRegistrazione(){
         setTimeout(async()=>{
@@ -103,6 +114,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                 console.log("E' avvenuto un errore "+err);
                 setSnackBarMessage("E' avvenuto un errore. Prova a chiudere e riaprire l'app.");
                 setOpenRecordingKeyboard(false);
+                isOpenRecordingKeyboardOpened.current = false;
 
             }
         }else
@@ -167,6 +179,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
             local_setIsRecording(false);
             setSnackBarMessage("Si è verificato un problema.");
             setOpenRecordingKeyboard(false);
+            isOpenRecordingKeyboardOpened.current = false;
         }
     }
 
@@ -202,6 +215,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
             local_setIsRecording(false);
             setSnackBarMessage("Si è verificato un problema.");
             setOpenRecordingKeyboard(false);
+            isOpenRecordingKeyboardOpened.current = false;
             setUriTmp(null);
         }finally{
             setStopRecording(0);
@@ -229,8 +243,9 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                    local_setIsRecording(false);
                    console.log("(in-progress)--> invio audio "+nuovaChiave+" in remoto...");
                    setOpenRecordingKeyboard(false);
+                   isOpenRecordingKeyboardOpened.current = false;
                    //salvo audio in remoto, ma uso approccio asincrono per liberare la UI. Se avviene qualche errore tolgo quello appena inserito
-                   inviaNuovoMessaggio(chatId,contactUid,"audio", uri,
+                   inviaNuovoMessaggio(chatId,contactUid,"audio", uri, lastStatistic.lastMessage.author,
                        async(ris) =>{
                         try{
                            //l'audio è stato salvato con successo, lo lascio cosi com'è
@@ -287,12 +302,14 @@ const RecordingKeyboard = forwardRef((props, ref) => {
             setRecordingInfo(undefined);
             console.log('Recording terminata');
             setOpenRecordingKeyboard(false);
+            isOpenRecordingKeyboardOpened.current = false;
         }catch(e){
             console.log("Si è verificato un problema:"+e);
             setRecordingInfo(undefined);
             local_setIsRecording(false);
             setSnackBarMessage("Si è verificato un problema.");
             setOpenRecordingKeyboard(false);
+            isOpenRecordingKeyboardOpened.current = false;
         }
     }
 

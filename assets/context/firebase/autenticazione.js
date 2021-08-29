@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio,  _removeMessages,_removeGroupOfAudiosBeforeTimestamp, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche,_ottieniAscoltatoreStatistics,_ottieniAscoltatoreUltimoMessaggio,_ottieniAscoltatoreNuoveConversazioni, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken, _makeDecision, _upgradeConversation,_removeConversation} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio,  _removeMessages,_removeGroupOfAudiosBeforeTimestamp, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche,_ottieniAscoltatoreStatistics,_ottieniAscoltatoreUltimoMessaggio,_ottieniAscoltatoreNuoveConversazioni, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken, _makeDecision, _upgradeConversation,_removeConversation, _blockContact,_unlockContact} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -32,8 +32,11 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     const [informazioniProfiloUtente, setInformazioniProfiloUtente] = useState(null);
     //contiene le informazioni riguardo l'autenticazione (se email o telefono e il contenuto )
     const [informazioniAutenticazioneUtente, setInformazioniAutenticazioneUtente] = useState(null);
+    //contiene una lista di informazioni suoi contatti bloccati nella forma {uid: idContattoBloccato, name: nome, timestampDiBloccaggio: 11/08...}
+    const [conversazioniBloccate, setConversazioniBloccate] = useState([]);
     //messaggio che può essere sfruttato per mostrare informazioni globali
     const [messaggioAuth, setMessaggioAuth] = useState(null);
+    
     /*
         contiene le chat dell'utente come array di mappe nel formato:
         {
@@ -77,6 +80,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     informazioniAutenticazioneUtente,
                     messaggioAuth,
                     listOfConversations,
+                    conversazioniBloccate,
+                    setConversazioniBloccate,
                     setMessaggioAuth,
                     setInformazioniProfiloUtente,
                     setInformazioniAutenticazioneUtente,
@@ -125,7 +130,9 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     createNewConversation,
                     makeDecision,
                     upgradeConversation,
-                    removeConversation
+                    removeConversation,
+                    blockContact,
+                    unlockContact
                 }}
                 >
                 {children}
@@ -461,9 +468,9 @@ export const AutenticazioneUtenteProvider = ({children}) => {
   }
 
   //invia un messaggio a un contactUid
-  function inviaNuovoMessaggio(chatId, contactUid, type, value, callbackSuccess, callbackFailure){
+  function inviaNuovoMessaggio(chatId, contactUid, type, value,lastAuthor, callbackSuccess, callbackFailure){
       try{
-       return _inviaNuovoMessaggio(chatId, contactUid, type, value, callbackSuccess, callbackFailure);
+       return _inviaNuovoMessaggio(chatId, contactUid, type, value,lastAuthor, callbackSuccess, callbackFailure);
       }catch(e){
           console.log("errore in inviaNuovoMessaggio");
           throw e;
@@ -478,9 +485,9 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     }
   }
 
-  async function removeGroupOfAudiosBeforeTimestamp(chatId, seconds){
+  async function removeGroupOfAudiosBeforeTimestamp(chatId, milliseconds){
     try{
-        _removeGroupOfAudiosBeforeTimestamp(chatId,seconds);
+        _removeGroupOfAudiosBeforeTimestamp(chatId,milliseconds);
     }catch(e){
         throw e;
     }
@@ -549,6 +556,22 @@ function ottieniAscoltatoreNuoveConversazioni(){
     async function removeConversation(chatID, contactUid, contactName,myName, chatCreationData){
         try{
             return _removeConversation(chatID, contactUid, contactName,myName, chatCreationData);
+        }catch(e){
+            throw e;
+        }
+    }
+
+    async function blockContact(chatID, contactUid, contactName,myName, chatCreationData){
+        try{
+            return _blockContact(chatID, contactUid, contactName,myName, chatCreationData);
+        }catch(e){
+            throw e;
+        }
+    }
+
+    async function unlockContact(contactName, lock_timestamp, contactUid){
+        try{
+            return _unlockContact(contactName, lock_timestamp, contactUid);
         }catch(e){
             throw e;
         }

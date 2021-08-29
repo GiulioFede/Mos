@@ -26,6 +26,7 @@ import { RowsOfMessagesToUpdate } from "../context/chatContext";
 import DecisionScreen from "./components/decisionScreen";
 import * as Notifications from 'expo-notifications'
 import ThreeDotTab from "./components/threeDotTab";
+import OptionsDialog from "./components/dialogoOpzioni";
 //contiene le row da passare alla flat list per indicargli di aggiornare lo stato in "succeed"
 //const [arrayOfRowsToUpdateState, setarrayOfRowsToUpdateState] = useState({});
 
@@ -53,7 +54,7 @@ export default function ChatDetail({ navigation,route}){
     //conterrà l'intera chat
     const [chat, setChat] = useState([]);
     //contesto autenticazione
-    const {getUtenteCorrente,informazioniProfiloUtente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi, ottieniAscoltatoreStatistics, makeDecision, upgradeConversation,removeGroupOfAudiosBeforeTimestamp, removeMessages,removeConversation} = useContext(AutenticazioneUtente);
+    const {getUtenteCorrente,informazioniProfiloUtente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi, ottieniAscoltatoreStatistics, makeDecision, upgradeConversation,removeGroupOfAudiosBeforeTimestamp, removeMessages,removeConversation, blockContact} = useContext(AutenticazioneUtente);
     
     const {addNewUpdate} = useContext(RowsOfMessagesToUpdate);
 
@@ -62,12 +63,20 @@ export default function ChatDetail({ navigation,route}){
 
     const threeDotTabRef = useRef();
 
+    const [initialState, setInitialState] = useState(true);
+
+
     //uid utente
     const {chatId, contactUid, name, token, urlProfileImageContactUser, creationData} = route.params;
     console.log(" MYID CHAT");
     console.log(route.params);
     //reference alla flat list
     const refFlatList = useRef();
+    //reference dialog
+    const optionsDialogRef = useRef();
+
+    const blockListeners = useRef(false);
+
     //se true significa che è possibile tornare indietro, ossia che la lista dei messaggi è stata caricata (altrimenti crea eccezioni)
     const [isChatLoaded,setIsChatLoaded] = useState(false);
     const [refresh, setRefresh] = useState(false);
@@ -78,6 +87,7 @@ export default function ChatDetail({ navigation,route}){
     const hideSnackMessage = () => setSnackBarMessage(null);
 
     const [openRecordingKeyboard, setOpenRecordingKeyboard] = useState(false);
+    const isOpenRecordingKeyboardOpened = useRef(false);
     const recordingKeyboardRef = useRef();
 
     //mi serve solo come lista per tenermi gli aggiornamenti di chat
@@ -87,22 +97,60 @@ export default function ChatDetail({ navigation,route}){
 
     async function removeCurrentConversation(){
         try{
+            if(recordingKeyboardRef.current!=null || recordingKeyboardRef.current!=undefined)
+                await recordingKeyboardRef.current.closeRecordingBoard();
+            blockListeners.current = true;
+            optionsDialogRef.current.show_loading(true);
             await removeConversation(chatId,contactUid,name,informazioniProfiloUtente.name,creationData);
+            await local_storage.removeTable(getUtenteCorrente()+contactUid+"");
             setTimeout(()=>{
                 navigation.goBack();
             },2000);
         }catch(e){
-            console.log("errore eliminazione conversazione: "+e);
-            setSnackBarMessage("E' avvenuto un errore. Impossibile completare la rimozione della conversazione. Riprova più tardi.")
-            threeDotTabRef.current.local_show_loading(false);
+            console.log("errore eliminazione conversazione: "+e.code);
+            if(e.code=="not-found")
+                setSnackBarMessage("L'utente sembra non esistere più. Probabilmente ha cancellato il suo account.")
+            else
+                setSnackBarMessage("E' avvenuto un errore. Impossibile completare la rimozione della conversazione. Riprova più tardi.")
+            optionsDialogRef.current.show_loading(false);
+        }finally{
+            blockListeners.current = false;
         }
     }
 
+    async function blockCurrentContact(){
+        try{
+            if(recordingKeyboardRef.current!=null || recordingKeyboardRef.current!=undefined)
+                await recordingKeyboardRef.current.closeRecordingBoard();
+            blockListeners.current = true;
+            optionsDialogRef.current.show_loading(true);
+            await blockContact(chatId,contactUid,name,informazioniProfiloUtente.name,creationData);
+            await local_storage.removeTable(getUtenteCorrente()+contactUid+"");
+            setTimeout(()=>{
+                navigation.goBack();
+            },2000);
+        }catch(e){
+            console.log("errore bloccaggio ed eliminazione conversazione: "+e);
+            if(e.code=="not-found")
+                setSnackBarMessage("L'utente sembra non esistere più. Probabilmente ha cancellato il suo account.")
+            else
+                setSnackBarMessage("E' avvenuto un errore. Impossibile completare l'operazione. Riprova più tardi.")
+            optionsDialogRef.current.show_loading(false);
+        }finally{
+            blockListeners.current = false;
+        }
+    }
+
+    console.log("INITIAL STATE:"+initialState);
+
     async function tornaIndietro(){
         try{
-            console.log("torno indietro");
-            await resetMessageModel();
-            navigation.navigate("Chat",lastMessage.current);
+            console.log("E' la recording board aperta?"+isOpenRecordingKeyboardOpened.current);
+            if(isOpenRecordingKeyboardOpened.current == false){
+                console.log("torno indietro");
+                await resetMessageModel();
+                navigation.navigate("Chat",lastMessage.current);
+            }
         }catch(e){
             console.log("chat_detail go back errore:"+e);
         }
@@ -126,7 +174,7 @@ export default function ChatDetail({ navigation,route}){
                         setChat(chatTmp);
                         //invio messaggio a firebase
                         console.log("inizio procedura di salvataggio audio in remoto...");
-                        inviaNuovoMessaggio(chatId,contactUid,"mex", messaggio,
+                        inviaNuovoMessaggio(chatId,contactUid,"mex", messaggio,statistics.current.lastMessage.author,
                             async ()=>{
                                 try{
                                     //await local_storage.storeNewMessage(getUtenteCorrente()+contactUid+"",getUtenteCorrente(),"29/07/2021","mex",messaggio, "succeed");
@@ -215,7 +263,8 @@ export default function ChatDetail({ navigation,route}){
     */
    const statistics = useRef();
    const decisionScreenRef = useRef();
-   useEffect(()=>{
+  
+   // useEffect(()=>{
 
     async function ascoltaStatistics(){
         try{
@@ -229,18 +278,25 @@ export default function ChatDetail({ navigation,route}){
                     { includeMetadataChanges: true },
                     async(doc) => {
                         try{
+                                
                                 console.log("ascolto nuove statistiche dal "+doc.metadata.hasPendingWrites==true?"Local":"Server");
+                                if(blockListeners.current==true){
+                                    console.log("Non posso ascoltare,sono in fase di lavoro...");
+                                    return;
+                                }
                                 //se è stato salvato nel server
                                 if(doc.metadata.hasPendingWrites==false){
 
                                     let stat = doc.data();
                                     console.log("nuove statistiche ricevute");
                                     console.log(stat);
-                                    if(stat==undefined) return;
+                                    if(stat==undefined) {               
+                                        return;
+                                    }
+
                                     statistics.current = JSON.parse(JSON.stringify(stat));
 
-                                    //se il numero di messaggi è un multiplo di THRESHOLD MA la visibilità è minore di 2 (dove 2 sta per massima visibilità)
-                                    if( stat.statistics.number_of_messages!=0 && (stat.statistics.number_of_messages % THRESHOLD) == 0 && stat.level_of_visibility<2){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
+                                    if( stat.statistics.number_of_messages>= THRESHOLD && stat.level_of_visibility<2){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
                                         /*
                                             mostro la finestra in cui chiedo di prendere una decisione se svelarsi o meno.
                                             La finestra mostrerà i seguenti messaggi (letti da statistics.current):
@@ -251,6 +307,9 @@ export default function ChatDetail({ navigation,route}){
                                         //se sono qua dentro significa che ancora manca almeno una risposta, la mia, la sua o entrambe
                                         //mostro la decision screen. Se manca la sua risposta vedrà "Attendi...", altrimenti "Vuoi renderti più visibile?"
 
+                                        //chiudo eventuale keyboard di registrazione
+                                        if(recordingKeyboardRef.current!=null || recordingKeyboardRef.current!=undefined)
+                                            await recordingKeyboardRef.current.closeRecordingBoard();
 
                                         console.log("Dettagli");
                                         console.log(stat.statistics[contactUid+"_response"]);
@@ -268,6 +327,7 @@ export default function ChatDetail({ navigation,route}){
                                                         await upgradeConversation(chatId,true,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, stat.level_of_visibility);
                                                         decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
                                                         console.log("upgrade riuscito con successo");
+                                                       
                                                         return;
                                                     }
                                                     //altrimenti in qualsiasi altro caso resetto
@@ -276,6 +336,7 @@ export default function ChatDetail({ navigation,route}){
                                                         await upgradeConversation(chatId,false,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, stat.level_of_visibility);
                                                         console.log("'continua con lo stesso livello di visibilità' riuscito con successo");
                                                         decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
+                                                       
                                                         return;
                                                     }
                                                 }
@@ -290,10 +351,15 @@ export default function ChatDetail({ navigation,route}){
                                     }
                                     //altrimenti non blocco la chat
                                     else{
+                                     
                                         decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
                                     }
 
+                                    if(initialState==true)
+                                        setInitialState(false);
+
                                 }
+
                             }catch(e){
                                 console.log("Si è verificato un errore durante la ricezione/elaborazione delle statistiche:"+e);       
                             }
@@ -305,7 +371,7 @@ export default function ChatDetail({ navigation,route}){
             setSnackBarMessage("Si è verificato un errore. Impossibile avviare la conversazione.");
         }
     }
-
+/*
     ascoltaStatistics();
     
 
@@ -313,7 +379,7 @@ export default function ChatDetail({ navigation,route}){
             console.log("rimuovo ascoltatore statistiche");
             if(ascoltatoreStatistics) ascoltatoreStatistics();
     }
-   },[])
+   },[])*/
 
 
     useEffect(()=>{
@@ -359,7 +425,11 @@ export default function ChatDetail({ navigation,route}){
                             listTmp.current = lista_iniziale;
                             console.log("Lista iniziale di messaggi caricata dallo storage:");
                             console.log(lista_iniziale);
+                            setChat(lista_iniziale);
+                            setIsChatLoaded(true);
 
+                            //inizializzo ascoltatore statistiche e ultimi messaggi
+                            await ascoltaStatistics();
                             await inizializzaAscoltatoreNuoviMessaggi();
 
                         }catch(e){
@@ -419,10 +489,15 @@ export default function ChatDetail({ navigation,route}){
                                         var lastAudioTimestamp = null;
                                         var lastMessageTimestamp = null; //questo è per tutti, ossia tiene in memoria l'ultimo timestamp ricevuto, che il type sia mex o audio
                                         snapshot.docChanges().forEach(async(change) => {
-                                                    console.log("ascolto nuovo doc");
+                                                    console.log("ascolto nuovo messaggio");
                                                     if (change.type != "added") {
                                                         return;
                                                     }
+                                                    if(blockListeners.current==true){
+                                                        console.log("Non posso ascoltare,sono in fase di lavoro...");
+                                                        return;
+                                                    }
+
                                                     let doc = change.doc;
                                                     ultimaRow.current = ultimaRow.current+1;
                                                     console.log("E' un nuovo "+doc.data().type+". Lo memorizzo con chiave:"+ultimaRow.current);
@@ -459,6 +534,10 @@ export default function ChatDetail({ navigation,route}){
                                         let newChat = [...lastMessages.reverse(),...listTmp.current];
                                         setChat(newChat);
                                         setIsChatLoaded(true);
+
+                                        if(initialState==true)
+                                            setInitialState(false);
+
                                     }catch(err){
                                         console.log("Si è verificato un problema sulla promise.all dell'ascoltatore:"+err);
                                     }
@@ -655,7 +734,7 @@ export default function ChatDetail({ navigation,route}){
                         (err) =>{
                             try{
                                 //l'audio non è stato salvato. Lo elimino dalla lista
-                                console.log("non salvato in remoto. Aggiorno stato come fallito in locale");
+                                console.log("non salvato in remoto. Aggiorno stato come fallito in locale:"+err);
                                 if(isMounted.current==true){
                                     setSnackBarMessage("E' avvenuto un errore durante l'invio dell'audio vocale.");
                                     //indico alla flat list la row da aggiornare come succeed
@@ -713,6 +792,7 @@ export default function ChatDetail({ navigation,route}){
 
     function apriRecordingKeyboard(){
         setOpenRecordingKeyboard(true);
+        isOpenRecordingKeyboardOpened.current = true;
     }
 
     console.log("STATISTICHEEEE");
@@ -739,11 +819,11 @@ export default function ChatDetail({ navigation,route}){
 
      {/* BARRA SUPERIORE */}
      <View style={styles.barraSuperiore}>
-          <TouchableOpacity  onPress={tornaIndietro} style={{position:"absolute",left:0,zIndex:10, paddingLeft:Dimensions.get("window").width*0.03}}>
+          <TouchableOpacity disabled={initialState}  onPress={tornaIndietro} style={{position:"absolute",left:0,zIndex:10, paddingLeft:Dimensions.get("window").width*0.03}}>
               <Ionicons name="chevron-back" size={fontSizeTitoloBarra} color="#52575D" />
           </TouchableOpacity>
           <Text style={styles.titolo}>{name}</Text>
-          <TouchableOpacity onPress={()=>{threeDotTabRef.current.open_close_options_tab()}} style={{position:"absolute", right:Dimensions.get("window").width*0.04}}>
+          <TouchableOpacity disabled={initialState}  onPress={()=>{threeDotTabRef.current.open_close_options_tab()}} style={{position:"absolute", right:Dimensions.get("window").width*0.04}}>
               <Octicons name="kebab-vertical" size={fontSizeTitoloBarra} color="#52575D" />  
           </TouchableOpacity>
       </View>
@@ -765,7 +845,7 @@ export default function ChatDetail({ navigation,route}){
                      <Image source={require('../../../../../resources/images/cloud-background.png')} style={{position:"absolute", width:larghezzaDevice,height:larghezzaDevice , alignSelf:"center"}}/>
                     <Text style={[styles.helloTitle,{textAlign:"center", justifyContent:"center", textAlignVertical:"center"}]}>Saluta {name}! </Text>
                     <Text style={[styles.helloContent]}>Su Mosaic esistono 3 livelli di mosaicizzazione del profilo degli utenti, da quello massimo a quello nullo. Tu e {name} partirete con quello massimo. Col tempo, a seconda della conversazione, vi chiederemo di passare al livello successivo e ciò avverrà solo se entrambi sarete daccordo.</Text>
-                    <Text style={[styles.helloContent]}>Dato l'anonimato, Mosaic invita a conversare con messaggi vocali limitando il numero di messaggi testuali a qualche carattere.</Text>
+                    <Text style={[styles.helloContent]}>Dato l'iniziale anonimato, Mosaic invita a conversare con messaggi vocali limitando il numero di messaggi testuali a qualche carattere.</Text>
                 </View>
             }
         </View>
@@ -788,19 +868,19 @@ export default function ChatDetail({ navigation,route}){
         openRecordingKeyboard==false
         &&
         <View style={styles.tastiera}>
-            <TouchableOpacity onPress={inviaMessaggio} style={styles.inviaMessaggio} disabled={messaggio==""?true:false}>
+            <TouchableOpacity onPress={inviaMessaggio} style={styles.inviaMessaggio} disabled={initialState==true?true:(messaggio==""?true:false)}>
                     <FontAwesome name = "location-arrow" size={fontSizeTitoloBarra} color={messaggio==""?"rgba(27, 98, 253,0.3)":MosCeleste} />
             </TouchableOpacity>
             <TextInput
                 style={styles.input}
                 maxLength={25}
-                disabled={!isChatLoaded}
+                disabled={initialState==true?true:!isChatLoaded}
                 onChangeText={(text)=>{setMessaggio(text)}}
                 value={messaggio}
                 placeholder="Scrivi un breve messaggio..."
                 keyboardType="default"
             />
-            <TouchableOpacity onLongPress={apriRecordingKeyboard} disabled={!isChatLoaded} style={styles.pulsanteAudio}>
+            <TouchableOpacity onLongPress={apriRecordingKeyboard} disabled={initialState==true?true:!isChatLoaded} style={styles.pulsanteAudio}>
                 <MaterialIcons name="keyboard-voice" size={fontSizeTitoloBarra} color="white" />
             </TouchableOpacity>
         </View>
@@ -814,6 +894,7 @@ export default function ChatDetail({ navigation,route}){
           <View style={styles.backgroundRecording}/>
           <RecordingKeyboard ref = {recordingKeyboardRef} 
                              setOpenRecordingKeyboard = {setOpenRecordingKeyboard}
+                             isOpenRecordingKeyboardOpened = {isOpenRecordingKeyboardOpened}
                              setSnackBarMessage = {setSnackBarMessage}
                              ultimaRow = {ultimaRow}
                              getUtenteCorrente = {getUtenteCorrente}
@@ -822,6 +903,7 @@ export default function ChatDetail({ navigation,route}){
                              refFlatList = {refFlatList}
                              inviaNuovoMessaggio = {inviaNuovoMessaggio}
                              lastMessage = {lastMessage}
+                             lastStatistic = {statistics.current}
                              contactUid = {contactUid}
                              isMounted = {isMounted}
                              arrayOfRowsToUpdateState = {arrayOfRowsToUpdateState}
@@ -852,7 +934,8 @@ export default function ChatDetail({ navigation,route}){
                       myToken = {informazioniProfiloUtente.push_notification_token}
                       contactToken = {token}
                       />
-      <ThreeDotTab ref={threeDotTabRef} removeCurrentConversation={removeCurrentConversation} />
+      <ThreeDotTab ref={threeDotTabRef} optionsDialogRef={optionsDialogRef} contactName={name} />
+      <OptionsDialog ref={optionsDialogRef} eliminaConversazione={removeCurrentConversation} bloccaContatto={blockCurrentContact} />
       <Snackbar
             visible={snackBarMessage?true:false}
             onDismiss={hideSnackMessage}

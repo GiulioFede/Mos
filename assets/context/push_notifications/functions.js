@@ -1,6 +1,8 @@
 
 export async function sendPushNotification(expoPushToken, title, content, json){
   
+  if(expoPushToken=="") return;
+  
   try{
     console.log("send push notification a "+expoPushToken);
       const message = {

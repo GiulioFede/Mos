@@ -1009,7 +1009,7 @@ function aggiornaPhoneNumber(){
       flex:1
     },
     titolo:{
-        fontSize:fontSizeTitoloBarra,
+        fontSize:fontSizeTitoloBarra*0.8,
         fontFamily: "Raleway_400Regular",
         color: "#52575D",
         paddingBottom: 24,

@@ -268,6 +268,8 @@ export default function AroundYouComponent(props){
                 console.log("errore durante creazione chat:"+err);
                 if(err=="A conversation already exists")
                     snackMessageRef.current.setta_messaggio_da_mostrare("Sembra che stai già avendo una conversazione con "+nameOfCard);
+                else if(err=="The user blocked you")
+                    snackMessageRef.current.setta_messaggio_da_mostrare("Non è possibile iniziare una conversazione con "+nameOfCard+". L'utente ti ha bloccato.");
                 else
                     snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un errore durante la creazione della chat. Riprova più tardi.");
                 

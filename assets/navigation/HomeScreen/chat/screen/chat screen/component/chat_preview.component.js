@@ -49,6 +49,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
     const [ultimoMessaggioDoc, setUltimoMessaggioDoc] = useState(null);
     const [media, setMedia] = useState(null)
     const [visibility, setVisibility] = useState(-1);
+    const isMounted = useRef(true);
 
     const {ottieniAscoltatoreUltimoMessaggio, user, getMediaProfiloContatto} = useContext(AutenticazioneUtente);
 
@@ -81,8 +82,11 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
         }).start();
     }
   
+    
 
     useEffect(()=>{
+
+        isMounted.current == true;
 
         async function ascoltaUltimoMessaggio(){
             try{
@@ -110,11 +114,13 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
                                     let lastMex = doc.data();
                                     console.log(lastMex);
                                     if(lastMex!=undefined){
+                                        if(isMounted.current==true){
                                         console.log("ultima visibilità: "+lastMex.level_of_visibility);
                                         setVisibility(lastMex.level_of_visibility);
                                         //setUltimoMessaggioDoc(JSON.parse(JSON.stringify(lastMex)));
                                         //avviso la classe superiore di renderizzare l'intera lista (peccato, potremmo farlo qui, ma è necessario per mettere sopra l'ultima chat)
                                         ordinaListaChat(indicePosizioneChatInArray,lastMex);
+                                        }
                                     }
                                 }
                             }catch(e){
@@ -132,6 +138,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
         return () =>{
             console.log("rimuovo ascoltatore ultimo messaggio");
             if(ascoltatoreUltimoMessaggio.current!=null) ascoltatoreUltimoMessaggio.current();
+            isMounted.current = false;
         }
     },[])
 
@@ -142,10 +149,10 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
             console.log("carico profilo del contatto "+nome+" con visibilità "+current_visibility);
             getMediaProfiloContatto(contactUid,current_visibility)
                 .then((media)=>{
-                    //console.log("media del contatto: "+nome);
-                    //console.log(media.data());
-                    setMedia(media.data());
-                    setUriProfileImage(media.data().profileImageUrl);
+                    if(isMounted.current==true){
+                        setMedia(media.data());
+                        setUriProfileImage(media.data().profileImageUrl);
+                    }
                 })
         }
 
@@ -154,19 +161,11 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
         }
     },[visibility])
 
-    function elaboraAzione(messaggio){
-        if(messaggio==null) 
-            return;
-        //modifico contenuto
-        let newLastContent = JSON.parse(JSON.stringify(messaggio));
-        setLastContent(newLastContent);
-
-        }
 
         //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
     let [Raleway2] = useFonts2({Raleway_400Regular});
-    if(!Raleway || !Raleway2 || lastContent==undefined)
+    if(!Raleway || !Raleway2 || lastContent==undefined || isMounted.current==false)
             return <View></View>
 
     return (

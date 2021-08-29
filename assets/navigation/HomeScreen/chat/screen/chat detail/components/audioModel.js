@@ -33,8 +33,9 @@ let date = new Date();
 function getDate(mostraNuovaData, myDate){
     if(mostraNuovaData==true){
         date = new Date(myDate);
-        console.log("ritorno data");
-        let data_str = date.getFullYear()+"/"+date.getMonth()+"/"+date.getDay();
+        console.log("ritorno data usando:"+myDate);
+        let data_str = date.getFullYear()+"/"+(date.getMonth()+1)+"/"+date.getDate();
+        console.log(data_str);
         return( 
             <Text style={styles.dataCentrale}>{data_str}</Text>
         )
