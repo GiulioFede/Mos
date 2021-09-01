@@ -67,7 +67,7 @@ export default function ChatDetail({ navigation,route}){
 
 
     //uid utente
-    const {chatId, contactUid, name, token, urlProfileImageContactUser, creationData} = route.params;
+    const {chatId, contactUid, name, token, urlProfileImageContactUser, creationData, visibilityBeforeOpenChatDetail} = route.params;
     //console.log(" MYID CHAT");
     //console.log(route.params);
     //reference alla flat list
@@ -225,50 +225,20 @@ export default function ChatDetail({ navigation,route}){
 
     const isMounted = useRef(false);
 
-    //DA ELIMINARE
-    /*useEffect(()=>{
-        async function test(){
-            try{
-            let db = firebase.firestore();
-            const path = db.collection("chats").doc("BQCktyNpkjv9Lb8kBsoj");
-            path.update({
-                lastMessage: {
-                    author: getUtenteCorrente(),
-                    timestamp: new Date(),
-                    type: "text",
-                    value: "prova2"
-                },
-                numberOfMessages: firebase.firestore.FieldValue.increment(1)
-            }).then((ris)=>{
-                console.log("test chat: successo");
-            }).catch((e)=>{
-                console.log("test chat fallito: "+e);
-            })
-        }catch(e){
-            console.log("test chat eccezione:"+e);
-        }
-        }
 
-        test();
-    },[])*/
-
-
-    /*
-        Mi metto in ascolto del documento statistics:
-            - number_of_messages: 17
-            - last_author: ABCD...
-            - ABCD.._response: null/false/true
-            - KYDZ.._response: null/false/true
-            - administrator: ABCD...
-    */
    const statistics = useRef();
    const decisionScreenRef = useRef();
-  
-   // useEffect(()=>{
-    const statisticsToProcess = useRef([]);
 
     async function ascoltaStatistics(){
         try{
+      
+            var lastStatisticReceived = null;
+            //se l'ultima visibilità, prima di aprire la chat era di 2 allora non "spendo" ad attaccare un listener
+            if(visibilityBeforeOpenChatDetail>=2){
+                console.log("la visibilità è già massima. Non attacco listener");
+                return;
+            }
+
             ascoltatoreStatistics = ottieniAscoltatoreStatistics(chatId)
                 .onSnapshot(
                     /*
@@ -295,9 +265,17 @@ export default function ChatDetail({ navigation,route}){
                                         return;
                                     }
 
-                                    
+
+                                    console.log((JSON.stringify(stat)==JSON.stringify(lastStatisticReceived)));
+                                    if(lastStatisticReceived!=null){
+                                        if(JSON.stringify(stat)==JSON.stringify(lastStatisticReceived))
+                                            return;
+                                    }
+
+                                    lastStatisticReceived = JSON.parse(JSON.stringify(stat));
+                                    console.log(lastStatisticReceived);
+
                                     statistics.current = JSON.parse(JSON.stringify(stat));
-                                    statisticsToProcess.current.push(stat);
 
                                     if( stat.statistics.number_of_messages>=THRESHOLD && stat.level_of_visibility<2){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
                                         /*
@@ -433,6 +411,12 @@ export default function ChatDetail({ navigation,route}){
                                     else{
                                         if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
                                             decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
+                                        
+                                        //se la visibilità è 2 stacco listener
+                                        if(stat.level_of_visibility>=2){
+                                            ascoltatoreStatistics();
+                                            return;
+                                        }
                                     }
 
                                     if(initialState==true)
@@ -454,7 +438,6 @@ export default function ChatDetail({ navigation,route}){
 /*
     ascoltaStatistics();
     
-
     return () => {
             console.log("rimuovo ascoltatore statistiche");
             if(ascoltatoreStatistics) ascoltatoreStatistics();
@@ -539,9 +522,11 @@ export default function ChatDetail({ navigation,route}){
             BackHandler.removeEventListener('hardwareBackPress', tornaIndietro);
             isMounted.current = false;
             console.log("rimuovo ascoltatore nuovi messaggi");
+            console.log("rimuovo ascoltatore statistics...")
             if(ascoltatoreNuoviMessaggi) ascoltatoreNuoviMessaggi(); //rimuovo listener
-              //resetto id chat corrente
-              idChatCorrente = null;
+            if(ascoltatoreStatistics) ascoltatoreStatistics(); //rimuovo listener
+            //resetto id chat corrente
+            idChatCorrente = null;
         }
         
     },[])

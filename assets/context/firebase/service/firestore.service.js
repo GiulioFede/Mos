@@ -1119,8 +1119,31 @@ export function _isProfiloCompletato(uid){
         Se la successiva chiamata è stata fatta prima di 5 min dalla precedente (in realtà basta mettere anche 10 secondi) allora non viene fatta.
     */
    let timestampUltimaChiamataUpgradeConversation = null;
-    export async function _upgradeConversation(chatID, isUpgrade, contactUid, nameContactUid, myName, contactToken, myToken,lastLevelOfVisibility){
+   
+   function once(fn, context){
+       var called = false;
+       return async function(){
+          console.log("chiamo once con called="+called);
+           if(!called){
+               called = true;
+               let res = await fn.apply(context || this, arguments);
+              setTimeout(()=>{
+                    called = false;
+               },10000)
+               return res;
+           }else{
+               console.log("tentativo di chiamata multipla!");
+           }
+       }
+   }
+
+   export var _upgradeConversation = once(_newUpgradeConversation);
+
+   async function _newUpgradeConversation(chatID, isUpgrade, contactUid, nameContactUid, myName, contactToken, myToken,lastLevelOfVisibility){
         try{
+            console.log("ultimo timestamp:"+timestampUltimaChiamataUpgradeConversation);
+            console.log("corrente timestamp:"+new Date().getTime());
+            if(timestampUltimaChiamataUpgradeConversation==null || (timestampUltimaChiamataUpgradeConversation!=null && ((new Date().getTime())-timestampUltimaChiamataUpgradeConversation>10000))){
 
             console.log(firebase.auth().currentUser.uid+" chiama upgradeConversation con i seguenti argomenti:");
             console.log(chatID+","+isUpgrade+","+contactUid+","+nameContactUid+","+myName+","+contactToken+","+myToken+","+lastLevelOfVisibility);
@@ -1190,7 +1213,10 @@ export function _isProfiloCompletato(uid){
                         await sendPushNotification(contactToken, "Congratulazioni! Tu e "+myName+" siete visibili al 100%!","",{});
                         await sendPushNotification(myToken, "Congratulazioni! Tu e "+nameContactUid+" siete visibili al 100%!","",{});
                     }
-                }               
+                } 
+                
+            timestampUltimaChiamataUpgradeConversation = new Date().getTime();
+            }        
         }catch(e){
             throw e;
         }

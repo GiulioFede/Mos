@@ -55,7 +55,7 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
 
     function apriDettagliChat(){
         console.log("apro dettagli chat con utente "+contactUid+", chatId:"+chatId);
-        navigation.navigate("Chat detail",{chatId: chatId, contactUid: contactUid, name: nome, token: token, urlProfileImageContactUser:media.profileImageUrl, creationData:creationData});
+        navigation.navigate("Chat detail",{chatId: chatId, contactUid: contactUid, name: nome, token: token, urlProfileImageContactUser:media.profileImageUrl, creationData:creationData, visibilityBeforeOpenChatDetail: visibility});
     }
 
     function apriDettagliProfilo(){

@@ -21,6 +21,7 @@ const DecisionScreen = forwardRef((props, ref) => {
      const [urlProfileImage, setUrlProfileImage] = useState(null);
      const current_statistics = useRef(null);
      const isMounted = useRef(false);
+     const [wait, setWait] = useState(false);
 
      const {makeDecision,upgradeConversation, chatID, uidCurrentUser, contactUid, contactName,currentUserName, urlProfileImageContactUser,informazioniProfiloUtenteCorrente, myToken, contactToken} = props;
 
@@ -117,10 +118,12 @@ const DecisionScreen = forwardRef((props, ref) => {
         if(isMounted.current == true){
             setShowDecisionScreen(true);
             setRefresh(!refresh);
+            setWait(false);
         }
      }
 
-     console.log("mostra decision screen?:"+showDecisionScreen+" con visibilità "+currentVisibility);
+     if(isMounted.current==true)
+        console.log("mostra decision screen?:"+showDecisionScreen+" con visibilità "+currentVisibility);
 
      async function inizializzaImmagineProfiloUtenteCorrente(current_level_of_visibility){
         try{
@@ -228,42 +231,6 @@ const DecisionScreen = forwardRef((props, ref) => {
             opacityTransition();
             motionTransition();
         }
-
-        async function inizializzaImmagineProfiloUtenteCorrente(){
-            try{
-                isMounted.current = true;
-                //carico l'immagine del profilo (tento di salvarla, ma se esiste già, mi viene ritornato l'uri locale)
-                console.log("il livello corrente di visibilità è: "+current_level_of_visibility);
-                console.log("token: "+contactToken+", "+myToken)
-                //console.log(informazioniProfiloUtenteCorrente);
-                let actual_remote_uri = "";
-                if(current_level_of_visibility==null || current_level_of_visibility==undefined || current_level_of_visibility==0)
-                    actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_100"];
-                else if(current_level_of_visibility==1) actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_50"];
-                    //else if(visibility=="75") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_75"];
-                else if(current_level_of_visibility>=2) actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_0"];
-                
-                //console.log("actual_remote_uri:"+actual_remote_uri);
-                if(actual_remote_uri==""){
-                    if(isMounted.current==true){
-                        setUri1Error(true);
-                        return;
-                    }
-                }
-                let local_uri = await local_storage.saveImageLocally(uidCurrentUser,actual_remote_uri);
-                console.log("Local uri:"+local_uri);
-                if(isMounted.current==true){
-                    setUrlProfileImage(local_uri);
-                }
-            }catch(e){
-                if(isMounted.current==true)
-                    setUrlProfileImage(actual_remote_uri);
-                console.log("eccezione galleria: "+e);
-                //se sopra ci sono degli errori stai tranquillo, comunqe actual_remote_uri è un uri valido per scaricare l'immagine 
-            }
-        }
-
-    
         
     },[refresh])
 
@@ -276,6 +243,8 @@ const DecisionScreen = forwardRef((props, ref) => {
 
     //questa funzione viene chiamata quando si preme Si o No alla domanda "Vuoi renderti più visibile?"
     async function makeLocalDecision(response){
+        if(isMounted.current==true)
+            setWait(true);
         //per sicurezza controllo che la visibilità non è stata già raggiunta
         if(currentVisibility<2){
             try{
@@ -365,12 +334,20 @@ const DecisionScreen = forwardRef((props, ref) => {
                         {question!=loadPhrase &&
                         <View style={{height:"20%", justifyContent:"center", borderBottomRightRadius:larghezzaDevice*0.02, borderBottomLeftRadius:larghezzaDevice*0.02, flexDirection:"row"}}>
                             <View style={{width:larghezzaDevice*0.9*0.5, justifyContent:"center"}}>
-                                <TouchableOpacity onPress={async()=>{makeLocalDecision(true)}}>
+                                <TouchableOpacity onPress={async()=>{
+                                    if(wait==false) {
+                                        makeLocalDecision(true);
+                                    }
+                                    }}>
                                     <Text style={[styles.question,{color:MosCeleste}]}>Si</Text>
                                 </TouchableOpacity>
                             </View>
                             <View style={{width:larghezzaDevice*0.9*0.5, justifyContent:"center"}}>
-                                <TouchableOpacity onPress={async()=>{makeLocalDecision(false)}}>
+                                <TouchableOpacity onPress={async()=>{
+                                    if(wait==false) {
+                                        makeLocalDecision(false);
+                                    }                        
+                                    }}>
                                     <Text style={[styles.question,{color:MosPurple}]}>Non ancora</Text>
                                 </TouchableOpacity>
                             </View>
