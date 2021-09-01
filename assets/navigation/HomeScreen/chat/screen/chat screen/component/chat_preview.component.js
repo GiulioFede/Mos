@@ -2,13 +2,14 @@ import React, {useState, useEffect,useContext, useRef} from "react";
 import {View, StyleSheet, Image,Text,TouchableOpacity, Animated} from "react-native";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
+import {useFonts as useFonts3, Lobster_400Regular} from '@expo-google-fonts/lobster';
 import MessageBubble from "./message_bubble";
 import { Divider } from "react-native-paper";
 import { altezzaDevice, fontSizeCampi, fontSizeSottoTitolo, fontSizeTitolo, fontSizeTitoloPiccolo, larghezzaDevice } from "../../../../../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste, MosPurple, MosViola } from "../../../../../../resources/colors";
 import { AutenticazioneUtente } from "../../../../../../context/firebase/autenticazione";
 import { fromDateToHHMM } from "../../../../../../context/utilities/functions.utilities";
-
+import LottieView from 'lottie-react-native';
 
 function getVisibilityString(num){
     if(num==0){
@@ -37,6 +38,8 @@ function getVisibilityString(num){
 
 */
 
+let THRESHOLD = 3;
+
 const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,contactUid, content,creationData, route,indicePosizioneChatInArray, ordinaListaChat, token}) => {
 
     //console.log("Chat ID di "+nome+" -->");
@@ -50,7 +53,8 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
     const [media, setMedia] = useState(null)
     const [visibility, setVisibility] = useState(-1);
     const isMounted = useRef(true);
-
+    const [radarVisibility, setRadarVisibility] = useState(false); //true solo quando manca la mia risposta
+    const [fireworksVisibility, setFireworksVisibility] = useState(false);
     const {ottieniAscoltatoreUltimoMessaggio, user, getMediaProfiloContatto} = useContext(AutenticazioneUtente);
 
     function apriDettagliChat(){
@@ -93,6 +97,7 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
 
     useEffect(()=>{
 
+        let ultimaVisibilità = -1;
         async function ascoltaUltimoMessaggio(){
             try{
                 ascoltatoreUltimoMessaggio.current = ottieniAscoltatoreUltimoMessaggio(chatId)
@@ -120,8 +125,26 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
                                     //console.log(lastMex);
                                     if(lastMex!=undefined){
                                         if(isMounted.current==true){
-                                        console.log("ultima visibilità: "+lastMex.level_of_visibility);
+                                        console.log("ultima visibilità con "+nome+": "+lastMex.level_of_visibility+", corrente visibilità:"+ultimaVisibilità);
+                                        //se la visibilità è cambiata rispetto a prima --> fai apparire i fireworks
+                                        if(lastMex.level_of_visibility>ultimaVisibilità && lastMex.level_of_visibility>0)
+                                            setFireworksVisibility(true);
+                                        else
+                                            setFireworksVisibility(false);
+                                        ultimaVisibilità = lastMex.level_of_visibility;
                                         setVisibility(lastMex.level_of_visibility);
+                                        //se manca solo la mia risposta, setto il radar
+                                        let contactResponse = contactUid+"_response";
+                                        let myResponse = user+"_response";
+                                        console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAA");
+                                        console.log(lastMex.statistics[contactResponse]);
+                                        console.log(lastMex.statistics[myResponse]);
+                                        console.log(lastMex.statistics["number_of_messages"]);
+                                        if(lastMex.statistics[contactResponse]!=null && lastMex.statistics[myResponse]==null && lastMex.statistics["number_of_messages"]>=THRESHOLD)
+                                            setRadarVisibility(true);
+                                        else
+                                            setRadarVisibility(false);
+
                                         //setUltimoMessaggioDoc(JSON.parse(JSON.stringify(lastMex)));
                                         //avviso la classe superiore di renderizzare l'intera lista (peccato, potremmo farlo qui, ma è necessario per mettere sopra l'ultima chat)
                                         ordinaListaChat(indicePosizioneChatInArray,lastMex);
@@ -167,30 +190,41 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
     },[visibility])
 
 
-        //carico font
+    //carico font
+    let [LobsterFont] = useFonts3({Lobster_400Regular});
     let [Raleway] = useFonts({Raleway_200ExtraLight});
     let [Raleway2] = useFonts2({Raleway_400Regular});
     if(!Raleway || !Raleway2 || lastContent==undefined || isMounted.current==false)
             return <View></View>
 
     return (
-        <Animated.View style={{marginVertical:0.5, opacity:opacityAnimation}}>
-            {uriProfileImage && media!=null && (lastContent.lastMessage.value==null) && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={{position:"absolute", width:"100%", height:"100%"}} blurRadius={5} onLoadEnd={()=>{opacityTransition();}} onError={(e)=>{setUriProfileImage(null); opacityTransition();}}></Animated.Image>}
+        <Animated.View style={{marginVertical:0.5,opacity:opacityAnimation}}>
+            {uriProfileImage && media!=null && (lastContent.lastMessage.value==null) && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={{position:"absolute", width:"100%", height:"100%"}} blurRadius={5} onLoadEnd={()=>{opacityTransition();}} onError={(e)=>{setUriProfileImage(null); opacityTransition();}}></Animated.Image>} 
         <TouchableOpacity activeOpacity={.7} style={[styles.container,{}]} onPress={()=>{apriDettagliChat()}}>
             {/* IMMAGINE PROFILO */}
             {media!=null &&
             <Animated.View style={[styles.contenitoreMediaProfilo,{top:transitionAnimation}]}>
+                {radarVisibility &&
+                <View style={styles.contenitoreRadar}>
+                    <LottieView autoPlay loop={true} source={require('../../../../../../resources/lottie/radar_animation.json')} resizeMode="cover" />
+                </View> 
+                }
                 <TouchableOpacity onPress={()=>{apriDettagliProfilo()}} style={[styles.contenitoreImmagineProfilo,{borderColor:"white", borderTopWidth:1, borderBottomWidth:1, borderLeftWidth:1, borderRightWidth:1 }]}  >
                         {uriProfileImage && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={[styles.immagineProfilo,{}]} onLoadEnd={()=>{if(isMounted.current==true){transitionProfileImage(); opacityTransition();}}} onError={(e)=>{if(isMounted.current==true){ setUriProfileImage(null); transitionProfileImage();opacityTransition();}}}></Animated.Image>}
                         {!uriProfileImage && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
                 </TouchableOpacity>
                 <View style={[styles.ultimoMessaggio,{opacity:1}]}>
                     <MessageBubble messaggio={lastContent.lastMessage.value} type={lastContent.lastMessage.type} author = {lastContent.lastMessage.author} currentUser={user}/>
-                </View>          
+                </View>        
             </Animated.View>
             }
                     
             <View style={styles.contenitoreInfo}>
+                {fireworksVisibility==true &&
+                <View style={{width:"100%", height:"100%"}}>
+                    <LottieView autoPlay loop={true} source={require('../../../../../../resources/lottie/fireworks.json')} resizeMode="cover" />
+                </View>
+                }
                 {/* nome */}
                 <View style={styles.contenitoreNome}>
                     <View style={{padding:5}}>
@@ -268,6 +302,14 @@ const styles = StyleSheet.create({
             }
         })
     },
+    contenitoreRadar: {
+        width: altezzaDevice*0.23,
+        height: altezzaDevice*0.23,
+        borderRadius: altezzaDevice*0.2/23,
+        left:altezzaDevice*0.005,
+        overflow: "hidden",
+        position:"absolute"
+    },
     contenitoreInfo: {
         width:larghezzaDevice*0.46
     },
@@ -344,6 +386,11 @@ const styles = StyleSheet.create({
     newTab: {
         padding:5,
         color:"white"
+    },
+    waitMessage:{
+        fontFamily: 'Lobster_400Regular',
+        fontSize:fontSizeCampi,
+        color:MosViola
     }
 })
 

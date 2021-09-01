@@ -1000,7 +1000,7 @@ function aggiornaPhoneNumber(){
                         <View style={{ alignSelf:"center"}}>
                             <AgeRange ref={rangeEtaRef} uid={user} dateOfBirth={informazioniProfiloUtente.date_of_birth} modificaPreferenzaRangeDiEta={modificaPreferenzaRangeDiEta} />
                         </View>
-                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Il divario tra massimo e minimo deve essere di massimo 10. Nella sezione "Attorno a te" ti mostreremo solo coloro che rintrano in questa fascia d'età.</Text>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Il divario tra massimo e minimo deve essere di massimo 9 anni. Nella sezione "Attorno a te" ti mostreremo solo coloro che rintrano in questa fascia d'età.</Text>
 
                         {/*MOSTRAMI SU MOSAIC*/}
                         <Text style={[styles.titoloCampo,{marginTop:20}]}>Mostrami su Mosaic</Text>

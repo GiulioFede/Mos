@@ -13,12 +13,12 @@ import { Directions, FlingGestureHandler, State, TouchableOpacity} from 'react-n
 //import { FlatList } from 'react-native-gesture-handler';
 import BottomSheet, {BottomSheetScrollView} from '@gorhom/bottom-sheet'
 import BottomSheetUserDetails from './bottomSheetUserDetails';
-import LottieView from 'lottie-react-native';
 import DialogCreaNuovaConversazione from './dialogoCreaNuovaConversazione';
 import { AutenticazioneUtente } from '../../../../context/firebase/autenticazione';
 import { computeDistance, getAgeFromTimestamp, range } from '../../../../context/utilities/functions.utilities';
 import localStorage from '../../../../context/local_storage/localStorage';
 import { sendPushNotification } from '../../../../context/push_notifications/functions';
+import LottieView from 'lottie-react-native';
 
 const {width, height} = Dimensions.get("window");
 const IMAGE_WIDTH = width*0.86;
@@ -714,6 +714,9 @@ export default function AroundYouComponent(props){
     <BottomSheetUserDetails ref={bottomSheetUserDetailsRef} IMAGE_HEIGHT={IMAGE_HEIGHT} />
     <DialogCreaNuovaConversazione ref={dialogCreaNuovaConversazioneRef} creaNuovaConversazione = {creaNuovaConversazione} />
     {isLoading==true && <View style={{position:"absolute", width:Dimensions.get("window").width, height:Dimensions.get("window").height, justifyContent:"center", alignItems:"center", flex:1, backgroundColor:"rgba(255,255,255,0.85)"}}>
+            <View style={{position:"absolute", width:larghezzaDevice, height:larghezzaDevice}}>
+                <LottieView autoPlay loop={true} source={require('../../../../resources/lottie/radar_animation.json')} resizeMode="cover" />
+            </View>
             <ActivityIndicator animating={isLoading} color={MosCeleste} />
             {isChatCreating==true && <Text style={styles.messaggioCreazioneChat}>Creazione chat in corso...</Text>}
     </View>}

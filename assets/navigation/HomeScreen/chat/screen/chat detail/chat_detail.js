@@ -27,6 +27,7 @@ import DecisionScreen from "./components/decisionScreen";
 import * as Notifications from 'expo-notifications'
 import ThreeDotTab from "./components/threeDotTab";
 import OptionsDialog from "./components/dialogoOpzioni";
+import ProgressRequest from "./components/progressRequest";
 //contiene le row da passare alla flat list per indicargli di aggiornare lo stato in "succeed"
 //const [arrayOfRowsToUpdateState, setarrayOfRowsToUpdateState] = useState({});
 
@@ -44,7 +45,7 @@ var arrayOfRowsToUpdateState = {};
 var idChatAlreadyOpened = [];
 let ascoltatoreNuoviMessaggi = null;
 let ascoltatoreStatistics = null;
-let THRESHOLD = 3;
+let THRESHOLD = 3; //NB: cambiare anche l'omonima in chat_preview
 
 export var idChatCorrente = null;
 
@@ -64,6 +65,8 @@ export default function ChatDetail({ navigation,route}){
     const threeDotTabRef = useRef();
 
     const [initialState, setInitialState] = useState(true);
+
+    const progressRequestRef = useRef();
 
 
     //uid utente
@@ -89,6 +92,8 @@ export default function ChatDetail({ navigation,route}){
     const [openRecordingKeyboard, setOpenRecordingKeyboard] = useState(false);
     const isOpenRecordingKeyboardOpened = useRef(false);
     const recordingKeyboardRef = useRef();
+
+    const isVisibilityMaximum = useRef(false);
 
     //mi serve solo come lista per tenermi gli aggiornamenti di chat
     var listTmp = useRef();
@@ -174,7 +179,8 @@ export default function ChatDetail({ navigation,route}){
                         setChat(chatTmp);
                         //invio messaggio a firebase
                         console.log("inizio procedura di salvataggio audio in remoto...");
-                        inviaNuovoMessaggio(chatId,contactUid,"mex", messaggio,statistics.current.lastMessage.author,
+                        //se sono al livello 2 avrò che statistics.current sarà undefined.
+                        inviaNuovoMessaggio(chatId,contactUid,"mex", messaggio,(isVisibilityMaximum.current == true)?("MAXIMUM_VISIBILITY_ACHIVED"):(statistics.current.lastMessage.author),
                             async ()=>{
                                 try{
                                     //await local_storage.storeNewMessage(getUtenteCorrente()+contactUid+"",getUtenteCorrente(),"29/07/2021","mex",messaggio, "succeed");
@@ -236,6 +242,7 @@ export default function ChatDetail({ navigation,route}){
             //se l'ultima visibilità, prima di aprire la chat era di 2 allora non "spendo" ad attaccare un listener
             if(visibilityBeforeOpenChatDetail>=2){
                 console.log("la visibilità è già massima. Non attacco listener");
+                isVisibilityMaximum.current = true;
                 return;
             }
 
@@ -276,6 +283,9 @@ export default function ChatDetail({ navigation,route}){
                                     console.log(lastStatisticReceived);
 
                                     statistics.current = JSON.parse(JSON.stringify(stat));
+
+                                    //aggiorno progress bar
+                                    progressRequestRef.current.set_percentage(stat.statistics.number_of_messages);
 
                                     if( stat.statistics.number_of_messages>=THRESHOLD && stat.level_of_visibility<2){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
                                         /*
@@ -412,9 +422,11 @@ export default function ChatDetail({ navigation,route}){
                                         if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
                                             decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
                                         
-                                        //se la visibilità è 2 stacco listener
+                                        //se la visibilità è 2 stacco listener e levo la barra di progress prossima richiesta
                                         if(stat.level_of_visibility>=2){
                                             ascoltatoreStatistics();
+                                            isVisibilityMaximum.current = true;
+                                            progressRequestRef.current.make_invisible();
                                             return;
                                         }
                                     }
@@ -873,19 +885,21 @@ export default function ChatDetail({ navigation,route}){
         return <View></View>
 
 
-
     return (
       <View style={styles.container}>
 
      {/* BARRA SUPERIORE */}
      <View style={styles.barraSuperiore}>
-          <TouchableOpacity disabled={initialState}  onPress={tornaIndietro} style={{position:"absolute",left:0,zIndex:10, paddingLeft:Dimensions.get("window").width*0.03}}>
-              <Ionicons name="chevron-back" size={fontSizeTitoloBarra} color="#52575D" />
-          </TouchableOpacity>
-          <Text style={styles.titolo}>{name}</Text>
-          <TouchableOpacity disabled={initialState}  onPress={()=>{threeDotTabRef.current.open_close_options_tab()}} style={{position:"absolute", right:Dimensions.get("window").width*0.04}}>
-              <Octicons name="kebab-vertical" size={fontSizeTitoloBarra} color="#52575D" />  
-          </TouchableOpacity>
+         <View style={{width:larghezzaDevice, height:altezzaBarraScreen*0.6, justifyContent:"flex-end"}}>
+            <TouchableOpacity disabled={initialState}  onPress={tornaIndietro} style={{position:"absolute",left:0,zIndex:10, paddingLeft:Dimensions.get("window").width*0.03}}>
+                <Ionicons name="chevron-back" size={fontSizeTitoloBarra} color="#52575D" />
+            </TouchableOpacity>
+            <Text style={styles.titolo}>{name}</Text>
+            <TouchableOpacity disabled={initialState}  onPress={()=>{threeDotTabRef.current.open_close_options_tab()}} style={{position:"absolute", right:Dimensions.get("window").width*0.04}}>
+                <Octicons name="kebab-vertical" size={fontSizeTitoloBarra} color="#52575D" />  
+            </TouchableOpacity>
+          </View>
+          {visibilityBeforeOpenChatDetail<=1 && <ProgressRequest ref={progressRequestRef} initialVisibility={visibilityBeforeOpenChatDetail} threshold={THRESHOLD} />}
       </View>
      
 
@@ -903,8 +917,9 @@ export default function ChatDetail({ navigation,route}){
             {isChatLoaded==true &&
                 <View style={{width:larghezzaDevice, height:larghezzaDevice, justifyContent:"center"}}>
                      <Image source={require('../../../../../resources/images/cloud-background.png')} style={{position:"absolute", width:larghezzaDevice,height:larghezzaDevice , alignSelf:"center"}}/>
-                    <Text style={[styles.helloTitle,{textAlign:"center", justifyContent:"center", textAlignVertical:"center"}]}>Saluta {name}! </Text>
+                    <Text style={[styles.helloTitle,{textAlign:"center", justifyContent:"center", textAlignVertical:"center", marginTop:altezzaBarraScreen}]}>Saluta {name}! </Text>
                     <Text style={[styles.helloContent]}>Su Mosaic esistono 3 livelli di mosaicizzazione del profilo degli utenti, da quello massimo a quello nullo. Tu e {name} partirete con quello massimo. Col tempo, a seconda della conversazione, vi chiederemo di passare al livello successivo e ciò avverrà solo se entrambi sarete daccordo.</Text>
+                    <Text style={[styles.helloContent]}>Puoi monitorare quanto manca alla prossima richiesta guardando la percentuale di progresso della barra sopra.</Text>
                     <Text style={[styles.helloContent]}>Dato l'iniziale anonimato, Mosaic invita a conversare con messaggi vocali limitando il numero di messaggi testuali a qualche carattere.</Text>
                 </View>
             }
@@ -1031,7 +1046,6 @@ const styles = StyleSheet.create({
         width:larghezzaDevice,
         height:altezzaBarraScreen,
         justifyContent:"center",
-        paddingTop:24,
         backgroundColor:"#fff"
     },
     areaMessaggi: {

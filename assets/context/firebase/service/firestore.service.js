@@ -696,15 +696,27 @@ export function _isProfiloCompletato(uid){
                      });
                 var aggiornaUltimoMessaggio = db.collection("chats")
                      .doc(chatId);
-                batch.update(aggiornaUltimoMessaggio,{
-                    lastMessage: {
-                        author: firebase.auth().currentUser.uid,
-                        timestamp: data,
-                        type: type,
-                        value: value
-                    },
-                    'statistics.number_of_messages': firebase.firestore.FieldValue.increment( (lastAuthor==null || lastAuthor!=firebase.auth().currentUser.uid)?1:0)
-                }, {merge:true})
+                
+                if(lastAuthor!="MAXIMUM VISIBILITY ACHIVED"){
+                    batch.update(aggiornaUltimoMessaggio,{
+                        lastMessage: {
+                            author: firebase.auth().currentUser.uid,
+                            timestamp: data,
+                            type: type,
+                            value: value
+                        },
+                        'statistics.number_of_messages': firebase.firestore.FieldValue.increment( (lastAuthor==null || lastAuthor!=firebase.auth().currentUser.uid)?1:0)
+                    }, {merge:true})
+                }else {
+                    batch.update(aggiornaUltimoMessaggio,{
+                        lastMessage: {
+                            author: firebase.auth().currentUser.uid,
+                            timestamp: data,
+                            type: type,
+                            value: value
+                        },
+                    }, {merge:true})
+                }
 
                 return batch.commit();
                      
