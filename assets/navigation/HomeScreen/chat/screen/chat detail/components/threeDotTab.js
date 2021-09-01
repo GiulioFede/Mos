@@ -36,7 +36,7 @@ const ThreeDotTab = forwardRef((props, ref) => {
                 <Text style={styles.itemMenu}>Elimina conversazione</Text>
             </TouchableOpacity>
             <Divider />
-            <TouchableOpacity onPress={()=>{optionsDialogRef.current.open_dialog("Blocca contatto", "Vuoi davvero bloccare "+contactName+"? L'intera conversazione verrà rimossa e "+contactName+" non potrà più contattarti fino a quando non lo sbloccherai.",1)}}>
+            <TouchableOpacity onPress={()=>{optionsDialogRef.current.open_dialog("Blocca contatto", "Vuoi davvero bloccare "+contactName+"? L'intera conversazione verrà rimossa e "+contactName+" non potrà più contattarti fino a quando non sbloccherai il contatto.",1)}}>
                 <Text style={styles.itemMenu}>Blocca utente</Text>
             </TouchableOpacity>
         </View>

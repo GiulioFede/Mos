@@ -1,11 +1,11 @@
-import React, {useState, useContext, useEffect, useRef} from 'react';
+import React, {useState, useContext, useEffect,useCallback, useRef} from 'react';
 import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions, Platform, FlatList} from 'react-native';
-import {MaterialIcons, Entypo} from "@expo/vector-icons";
+import {MaterialIcons, Entypo,Ionicons} from "@expo/vector-icons";
 import { MosCeleste, MosViola } from '../../../../../resources/colors';
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button, Divider } from 'react-native-paper';
-import {navbarHeight, fontSizeTitolo, altezzaBarraScreen, larghezzaDevice, fontSizeTitoloBarra, altezzaMenuNavigazione, fontSizeCampi, fontSizeSottoTitolo } from '../../../../../context/variabili_globali/variabiliGlobali'
+import {navbarHeight, fontSizeTitolo, altezzaBarraScreen, larghezzaDevice, fontSizeTitoloBarra, altezzaMenuNavigazione, fontSizeCampi, fontSizeSottoTitolo, fontSizeTitoloPiccolo } from '../../../../../context/variabili_globali/variabiliGlobali'
 import * as ImagePicker from 'expo-image-picker';
 import { AutenticazioneUtente } from "../../../../../context/firebase/autenticazione";
 import GalleriaImmagini from './galleriaImmagini';
@@ -17,6 +17,8 @@ import DialogEliminaImmagineDiGalleria from './dialogEliminaImmagineDiGalleria';
 import SnackMessage from './snackMessage';
 import { LinearGradient } from "expo-linear-gradient";
 import Loading from '../../../aroundYou/component/loading';
+import SliderDetails from './sliderDetails';
+import { createFakeUser } from '../../../../../context/firebase/service/firestore.service';
 
 /*
     MISURE
@@ -104,9 +106,11 @@ export default function ProfileComponent(props){
     //riferimento snackmessage (barra errori)
     const snackMessageRef = useRef();
 
+    const [dettagli, setDettagli] = useState([]);
+
 
     console.log("INFORMAZIONI PROFILO UTENTE__________________________________________");
-    console.log(galleria);
+    //console.log(galleria);
     /*
         Esempio di struttura di galleria:
 
@@ -140,7 +144,11 @@ export default function ProfileComponent(props){
     */
         console.log("INFORMAZIONI PROFILO UTENTE::::::::::::::::::");
         
-    const inizializzaGalleria = () =>{
+    const inizializzaGalleria = async() =>{
+
+        //DA ELIMINARE (insieme all'async di sopra)
+       //await createFakeUser();
+
         console.log("reinizializzo galleria");
         //console.log(galleria);
         /*
@@ -164,6 +172,111 @@ export default function ProfileComponent(props){
         setGalleria(tmp);
     }
 
+    function inizializzaDettagli(){
+        console.log("inizializzo dettali usando");
+        console.log(informazioniProfiloUtente);
+
+        let dettagliTMP = [];
+        //dettagli posizione
+        dettagliTMP.push({
+            section: "location",
+            city: informazioniProfiloUtente.location.city,
+            region: informazioniProfiloUtente.location.region,
+            country: informazioniProfiloUtente.location.country
+        });
+        //dettagli genere
+        dettagliTMP.push({
+            section: "sex and gender",
+            sex: informazioniProfiloUtente.biological_sex,
+            gender_identity: informazioniProfiloUtente.gender_identity,
+            gender_preference: informazioniProfiloUtente.gender_preference
+        });
+        //dettagli occupazione e descrizione
+        dettagliTMP.push({
+            section: "occupation and decription",
+            occupation: informazioniProfiloUtente.current_occupation,
+            description: informazioniProfiloUtente.self_description,
+        });
+        //dettagli hobby interessi e passionioni
+        dettagliTMP.push({
+            section: "hobbies interests and passions",
+            hobbies_interests_and_passions: informazioniProfiloUtente.hobbies_interests_and_passions
+        });
+        
+        setDettagli([...dettagliTMP]);
+    }
+
+    function getDetailViewFromSection(item){
+
+        if(item.section=="location"){
+            return (
+                <View style={{width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, flexDirection:"row", padding:10, margin:10, justifyContent:"center"}}>
+                    
+                    <Ionicons name="location-sharp" size={fontSizeTitoloPiccolo} color={MosCeleste} style={{alignSelf:"center"}} />
+                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}>{item.city}</Text>
+                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}>,{item.region}</Text>
+                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}>,{item.country}</Text>
+                </View>
+            )
+        }
+        else if(item.section=="sex and gender"){
+            return (
+                <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center"}}>
+                    <View style={{flexDirection:"row"}}>
+                        <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>Sesso:</Text>
+                        <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.sex}</Text>
+                    </View>
+                    <View style={{flexDirection:"row"}}>
+                        <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Identità di genere:</Text>
+                        <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_identity}</Text>
+                    </View>
+                    <View style={{flexDirection:"row"}}>
+                        <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Genere di preferenza:</Text>
+                        <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_preference}</Text>
+                    </View>
+                    </View>
+            )
+        }
+        else if(item.section=="occupation and decription"){
+            return (
+                <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center"}}>
+                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>Occupazione corrente</Text>
+                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.occupation}</Text>
+
+                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Descrizione personale</Text>
+                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.description}</Text>
+                </View>
+            )
+        }
+        else if(item.section=="hobbies interests and passions"){
+            return (
+                <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center"}}>
+                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola, marginBottom:5}]}>Hobby, interessi e passioni</Text>
+                    <View style={{flexDirection:"row", flex:1, flexWrap:"wrap"}}>
+                    {item.hobbies_interests_and_passions.map((data)=>{
+                        return (
+                            <View key={data} style={{padding:5, margin:3, backgroundColor:MosCeleste, borderRadius:fontSizeTitoloPiccolo*0.2, justifyContent:"center"}}><Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.4, textAlignVertical:"center", color:"white"}]}>{data}</Text></View>
+                        )
+                    })} 
+                    </View>
+                </View>
+            )
+        }
+    }
+
+    const _onViewableItemsChanged = useCallback(({ viewableItems, changed }) => {
+        console.log("Visible items are", viewableItems);
+        console.log("Changed in this iteration", changed);
+    }, []);
+
+    const _viewabilityConfig = {
+        itemVisiblePercentThreshold: 50
+    }
+
+    const [slideNumber, setSlideNumber] = useState(1);
+
+
+
     function getAge(timestamp) {
         var today = new Date();
         var birthDate = new Date(timestamp.seconds*1000);
@@ -186,10 +299,16 @@ export default function ProfileComponent(props){
     function setSnackMessage(message){
         snackMessageRef.current.setta_messaggio_da_mostrare(message);
     }
+
+    useEffect(()=>{
+        isMounted.current = true;
+
+        return () => isMounted.current = false;
+    },[])
     
     useEffect(()=>{
         console.log("chiamo use effect profileComponent");
-        isMounted.current = true;
+      
 
         //ogni volta che cambia informazioniProfiloUtente controllo se è cambiata l'immagine di profilo e in tal caso la salvo in locale
         const getLocalUri = async() =>{
@@ -213,13 +332,16 @@ export default function ProfileComponent(props){
             }
 
         }
+
+        if(isMounted.current == true){
             setUrlProfileImage("null");
             getLocalUri();
 
             inizializzaGalleria();
+            inizializzaDettagli();
             setIsUserProfileLoading(false);
+        }
 
-        return () => isMounted.current = false;
     },[informazioniProfiloUtente.urlGalleryImages, informazioniProfiloUtente.age, informazioniProfiloUtente.self_description, visibility])
 
 
@@ -461,17 +583,16 @@ export default function ProfileComponent(props){
                         <Text style={styles.age}>{informazioniProfiloUtente.age}</Text>
                     </View>
 
-                    {/* DESCRIZIONE */}
-                    <View style ={styles.areaDescrizione}>
-                        <Text style={styles.descrizioneTesto}>{informazioniProfiloUtente.self_description}</Text>
-                    </View>
+                    <SliderDetails dettagli={dettagli} />
+
+                    {/*
+                        <View style ={styles.areaDescrizione}>
+                            <Text style={styles.descrizioneTesto}>{informazioniProfiloUtente.self_description}</Text>
+                        </View>
+                    */}
                     </View>
                     <View style={{backgroundColor:"#fff"}}>
-                    <LinearGradient
-                        // Background Linear Gradient sopra chat
-                        colors={["rgb(219, 219, 219)",'transparent']}
-                        style={{width: larghezzaDevice,height: 50, position:"absolute"}}
-                        />
+                    
                 {/*SEZIONE DELLA GALLERIA */}  
                     <View style={styles.sezioneGalleria}>
 
@@ -532,6 +653,11 @@ const styles = StyleSheet.create({
     },
     nome:{
         fontFamily: "Raleway_200ExtraLight",
+        color: "#52575D",
+        fontSize:fontSizeTitolo*0.7
+    },
+    nomeGrassetto:{
+        fontFamily: "Raleway_400Regular",
         color: "#52575D",
         fontSize:fontSizeTitolo*0.7
     },

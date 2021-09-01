@@ -1,5 +1,5 @@
 import React, {useState, useRef, useContext, useEffect} from "react";
-import {View,Button, Text, StyleSheet,Dimensions, FlatList, ScrollView,Image,Platform, TouchableOpacity,KeyboardAvoidingView, Touchable} from "react-native";
+import {View,Button, Text, StyleSheet,Dimensions, FlatList, ScrollView,Image,Platform, TouchableOpacity,KeyboardAvoidingView,BackHandler} from "react-native";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { MosCeleste, MosPurple, MosViola } from "../../resources/colors";
@@ -61,6 +61,11 @@ export default function LoginScreen({navigation}){
     useEffect(()=>{
         console.log("use effect home:"+userAuth);
 
+        const backAction = () => {
+            return true;
+          };
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
             console.log("stampo dettagli");
             console.log("vado alla home con "+(userAuth!=null?userAuth.uid:null)+","+isUserProfileCompleted+","+isControlDone+",");
         if(userAuth){
@@ -69,12 +74,15 @@ export default function LoginScreen({navigation}){
         }
         if(userAuth && userAuth.uid!=null && userAuth.uid!=undefined && isUserProfileCompleted==true && isControlDone==true){
             navigation.reset({routes: [{name: "Home"}]});
+            setIsLoading(false);
             navigation.navigate("Home");
         }
         if(userAuth && userAuth.uid!=null && userAuth.uid!=undefined && isUserProfileCompleted==false && isControlDone==true && (userAuth.email!=null && userAuth.emailVerified==true)){
             setSnackmessageEmailVerified(true);
             setIsLoading(false);
         }
+
+        return () => backHandler.remove();
 
         
     },[userAuth,isUserProfileCompleted, isControlDone ])
@@ -465,9 +473,9 @@ export default function LoginScreen({navigation}){
 
                         <ScrollView alignItems="center" justifyContent="center" showsVerticalScrollIndicator={false}>
                             <View style={{alignItems:"center", justifyContent:"center", paddingBottom:20}}>
-                                <Image source={require('../../../assets/icon/logoMos.jpg')} style={{width:altezzaDevice*0.25,height:altezzaDevice*0.25 , alignSelf:"center"}}/> 
+                                <Image source={require("../../resources/images/logoMosaic.png")} style={{width:altezzaDevice*0.18,height:altezzaDevice*0.18 , alignSelf:"center"}}/> 
                                 <Text style={styles.titolo}>Accedi a Mosaic</Text>
-                                <Text style={styles.testo}>il social network alternativo</Text>
+                                <Text style={styles.testo}>Prima la mente, poi il corpo</Text>
                                     {/*BOTTONE ACCEDI CON EMAIL/PASSWORD*/}
 
                                     {/*MOSTRO I BOTTONI REGISTRATI,TELEFONO e nella seconda parte I CAMPI EMAIL E PASSWORD DA COMPILARE*/}

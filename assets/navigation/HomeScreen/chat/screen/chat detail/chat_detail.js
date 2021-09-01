@@ -68,8 +68,8 @@ export default function ChatDetail({ navigation,route}){
 
     //uid utente
     const {chatId, contactUid, name, token, urlProfileImageContactUser, creationData} = route.params;
-    console.log(" MYID CHAT");
-    console.log(route.params);
+    //console.log(" MYID CHAT");
+    //console.log(route.params);
     //reference alla flat list
     const refFlatList = useRef();
     //reference dialog
@@ -141,7 +141,7 @@ export default function ChatDetail({ navigation,route}){
         }
     }
 
-    console.log("INITIAL STATE:"+initialState);
+    //console.log("INITIAL STATE:"+initialState);
 
     async function tornaIndietro(){
         try{
@@ -265,6 +265,7 @@ export default function ChatDetail({ navigation,route}){
    const decisionScreenRef = useRef();
   
    // useEffect(()=>{
+    const statisticsToProcess = useRef([]);
 
     async function ascoltaStatistics(){
         try{
@@ -288,15 +289,17 @@ export default function ChatDetail({ navigation,route}){
                                 if(doc.metadata.hasPendingWrites==false){
 
                                     let stat = doc.data();
-                                    console.log("nuove statistiche ricevute");
+                                    console.log("nuove statistiche ricevute in "+getUtenteCorrente());
                                     console.log(stat);
                                     if(stat==undefined) {               
                                         return;
                                     }
 
+                                    
                                     statistics.current = JSON.parse(JSON.stringify(stat));
+                                    statisticsToProcess.current.push(stat);
 
-                                    if( stat.statistics.number_of_messages>= THRESHOLD && stat.level_of_visibility<2){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
+                                    if( stat.statistics.number_of_messages>=THRESHOLD && stat.level_of_visibility<2){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
                                         /*
                                             mostro la finestra in cui chiedo di prendere una decisione se svelarsi o meno.
                                             La finestra mostrerà i seguenti messaggi (letti da statistics.current):
@@ -312,52 +315,129 @@ export default function ChatDetail({ navigation,route}){
                                             await recordingKeyboardRef.current.closeRecordingBoard();
 
                                         console.log("Dettagli");
-                                        console.log(stat.statistics[contactUid+"_response"]);
-                                        console.log(stat.statistics[getUtenteCorrente()+"_response"]);
+                                        let miaScelta = stat.statistics[getUtenteCorrente()+"_response"];
+                                        let suaScelta = stat.statistics[contactUid+"_response"];
+                                        let livelloCorrenteDiVisibilità = stat["level_of_visibility"];
+                                        console.log(miaScelta);
+                                        console.log(suaScelta);
 
-                                        //se non sono amministartore dovrò attendere fino a che il % numero messaggi è != da THRESHOLD
+                                        //se non sono l'amministratore
+                                        if(getUtenteCorrente()!=stat.statistics.administrator){
+                                            //se nel documento arrivato non ho dato la mia risposta, allora mostro il decision screen con le scelte
+                                            if(miaScelta==null){
+                                                if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                                    //non sono amministratore
+                                                    //la mia scelta è null
+                                                    //la sua è null
+                                                    decisionScreenRef.current.show(false,null, null,livelloCorrenteDiVisibilità);
+                                                    
+                                            }
+                                            //altrimenti se ho dato la mia scelta
+                                            else {
+                                                //se l'amministratore non ha ancora dato la sua risposta, mi metto in attesa
+                                                if(suaScelta==null){
+                                                    if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                                        decisionScreenRef.current.show(false,miaScelta, null,livelloCorrenteDiVisibilità);
+                                                }
+                                                //altrimenti se la sua scelta è stata data chiudo il decision screen
+                                                else if(suaScelta!=null){
+                                                    if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                                        decisionScreenRef.current.hide();
+                                                }
+                                            }
+                                            return;
+                                        }
+
+                                        //se sono l'amministratore
+                                        if(getUtenteCorrente()==stat.statistics.administrator){
+
+                                            //se la mia risposta è nulla cosi come quella del contatto, mostro tutto
+                                            if(miaScelta==null && suaScelta==null){
+                                                if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                                        decisionScreenRef.current.show(true,null, null,livelloCorrenteDiVisibilità);
+                                            }
+                                            //se invece la mia scelta è null ma il contatto ha già risposto, al solito mostro tutto
+                                            else if(miaScelta==null && suaScelta!=null){
+                                                if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                                        decisionScreenRef.current.show(true,null, suaScelta, livelloCorrenteDiVisibilità);
+                                            }
+                                            //se invece la mia scelta non è null ma lo è quella del contatto mi metto in attesa
+                                            else if(miaScelta!=null && suaScelta==null){
+                                                if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                                        decisionScreenRef.current.show(true,miaScelta, null, livelloCorrenteDiVisibilità);
+                                            }
+                                            //se invece sia la mia scelta che quella sua è !=null allora chiudo tutto
+                                            else if(miaScelta!=null && suaScelta!=null){
+                                                //devo però fare l'upgrade o meno
+                                                //se sia la mia che la sua sono false, resetto solo
+                                                if(miaScelta==false && suaScelta==false)
+                                                    await upgradeConversation(chatId,false,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, livelloCorrenteDiVisibilità);
+                                                else if(miaScelta==false && suaScelta==true)
+                                                    await upgradeConversation(chatId,false,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, livelloCorrenteDiVisibilità);
+                                                else if(miaScelta==true && suaScelta==false)
+                                                    await upgradeConversation(chatId,false,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, livelloCorrenteDiVisibilità);
+                                                else if(miaScelta==true && suaScelta==true)
+                                                    await upgradeConversation(chatId,true,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, livelloCorrenteDiVisibilità);
+
+                                                if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                                    decisionScreenRef.current.hide();
+                                                }
+                                            return;
+                                        }
+
+
+
+                                        /*
+                                        //se non sono amministratore dovrò attendere fino a che il % numero messaggi è != da THRESHOLD
                                         //se invece sono amministratore devo fare ogni volta i seguenti controlli
                                         //in particolare tali controlli dovrò farli solo se ho già dato la mia risposta in quanto le stesse azioni verranno fatte in DecisionScreen.js quando invece non ho preso decisioni
                                         if(stat.statistics[getUtenteCorrente()+"_response"]!=null && getUtenteCorrente()==stat.statistics.administrator) {
+                                            console.log("io ho dato risposta e io sono l'amministratore");
                                             //se l'utente corrente ha risposto
                                             if(stat.statistics[contactUid+"_response"]!=null){
+                                                console.log("contatto ha dato risposta ");
                                                     //se la risposta dell'utente è true e la mia è true faccio l'upgrade
                                                     if(stat.statistics[contactUid+"_response"]==true && stat.statistics[getUtenteCorrente()+"_response"]==true){
                                                         //faccio upgrade
+                                                        console.log("contatto ha dato risposta true come me");
                                                         await upgradeConversation(chatId,true,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, stat.level_of_visibility);
-                                                        decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
+                                                        if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                                            decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
                                                         console.log("upgrade riuscito con successo");
                                                        
                                                         return;
                                                     }
                                                     //altrimenti in qualsiasi altro caso resetto
                                                     else {
-                                                        //resetto solo
+                                                        //resetto 
+                                                        console.log("io o il contatto abbiamo dato risposta false");
                                                         await upgradeConversation(chatId,false,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, stat.level_of_visibility);
                                                         console.log("'continua con lo stesso livello di visibilità' riuscito con successo");
-                                                        decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
+                                                        if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                                            decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
                                                        
                                                         return;
                                                     }
                                                 }
-                                            }
+                                            }*/
                     
-                                        //altrimenti, se non ho risposto oppure ho risposto ma manca l'altro oppure semplicemente non sono l'amministratore mi metto in attesa
-                                        decisionScreenRef.current.show(stat);
-
+                                        //altrimenti, se non ho risposto oppure ho risposto ma non sono amministratore mi metto in attesa
+                                        if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                            decisionScreenRef.current.show(stat);
+                                        console.log("non ho risposto oppure ho risposto ma non sono amministratore mi metto in attesa");
 
 
                                         
                                     }
                                     //altrimenti non blocco la chat
                                     else{
-                                     
-                                        decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
+                                        if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                            decisionScreenRef.current.hide(); //se prima era aperto (in attesa di risposta) ora lo chiudo per sicurezza.
                                     }
 
                                     if(initialState==true)
                                         setInitialState(false);
-
+                                    
                                 }
 
                             }catch(e){
@@ -423,8 +503,8 @@ export default function ChatDetail({ navigation,route}){
                                 ultimaRow.current = 0;
 
                             listTmp.current = lista_iniziale;
-                            console.log("Lista iniziale di messaggi caricata dallo storage:");
-                            console.log(lista_iniziale);
+                            //console.log("Lista iniziale di messaggi caricata dallo storage:");
+                            //console.log(lista_iniziale);
                             setChat(lista_iniziale);
                             setIsChatLoaded(true);
 
@@ -460,14 +540,6 @@ export default function ChatDetail({ navigation,route}){
             isMounted.current = false;
             console.log("rimuovo ascoltatore nuovi messaggi");
             if(ascoltatoreNuoviMessaggi) ascoltatoreNuoviMessaggi(); //rimuovo listener
-            //riattivo le notifiche
-            Notifications.setNotificationHandler({
-                handleNotification: async () => ({
-                  shouldShowAlert: true,
-                  shouldPlaySound: false,
-                  shouldSetBadge: false
-                })
-              });
               //resetto id chat corrente
               idChatCorrente = null;
         }
@@ -475,8 +547,8 @@ export default function ChatDetail({ navigation,route}){
     },[])
 
     async function inizializzaAscoltatoreNuoviMessaggi(){
-        console.log("LISTA TMP ATTUALE. Ultima chiave attuale: "+ultimaRow.current);
-            console.log(listTmp.current);
+        //console.log("LISTA TMP ATTUALE. Ultima chiave attuale: "+ultimaRow.current);
+          //  console.log(listTmp.current);
             //prelevo ultimo timestamp memorizzato
             let ultimoTimestampMemorizzato = -1;
             if(listTmp.current[0])
@@ -559,8 +631,9 @@ export default function ChatDetail({ navigation,route}){
         const utcTime = doc.data().timestamp + localOffset;
         console.log("aggiungo ai ms del timestamp ricevuto ottenendo:"+utcTime+" per una equivalente data di: "+new Date(utcTime));*/
         
+        let local_uri = "";
         if(doc.data().type == "audio"){
-            await local_storage.saveAudioIntoFolder(getUtenteCorrente(),
+            local_uri = await local_storage.saveAudioIntoFolder(getUtenteCorrente(),
                                                     contactUid,
                                                     row,
                                                     contactUid,
@@ -578,7 +651,7 @@ export default function ChatDetail({ navigation,route}){
         console.log("fine memorizzazione doc "+row);
         //posso procedere ad eliminare l'audio in remoto. Se fallisco, comunque non blocco l'utente in quanto tanto l'eliminazione è per timestamp<ultimoTimestamp (ogni volta), quindi al primo corretto si eliminano TUTTI i precedenti
 
-        let newMex = {row: row ,author:contactUid, date:new Date(doc.data().timestamp).getTime(), type:doc.data().type+"",content:doc.data().value+"",state:"succeed"};
+        let newMex = {row: row ,author:contactUid, date:new Date(doc.data().timestamp).getTime(), type:doc.data().type+"",content: doc.data().type=="audio"?local_uri:(doc.data().value+""),state:"succeed"};
         return newMex;
         /* chatTmp = [newMex,...listTmp.current];
         //if(isMounted.current==true)
@@ -795,8 +868,10 @@ export default function ChatDetail({ navigation,route}){
         isOpenRecordingKeyboardOpened.current = true;
     }
 
-    console.log("STATISTICHEEEE");
-    console.log(statistics.current);
+    //console.log("STATISTICHEEEE");
+    //console.log(statistics.current);
+    //console.log("STATISTICHE ATTUALI IN CHAT DETAIL");
+    //console.log((statistics.current!=null && statistics.current.statistics!=undefined)?statistics.current.statistics.number_of_messages:"....");
 
     useEffect(()=>{
         //se la voglio aprire...

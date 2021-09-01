@@ -11,7 +11,7 @@ import {_accediConEmailPassword,
         _inviaEmailDiVerifica,
         _logOut,
         _aggiornaEmail} from "./service/autenticazione.service";
-import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio,  _removeMessages,_removeGroupOfAudiosBeforeTimestamp, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche,_ottieniAscoltatoreStatistics,_ottieniAscoltatoreUltimoMessaggio,_ottieniAscoltatoreNuoveConversazioni, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken, _makeDecision, _upgradeConversation,_removeConversation, _blockContact,_unlockContact} from "./service/firestore.service";
+import { _aggiornaImmagineProfilo, _caricaNuovaImmagineDiGalleria, _creaNuovoUtente,_creaNuovoProfiloUtente, _getUrlImmagineProfiloUtente, _getUserInformation, _isProfiloCompletato, _eliminaImmagineDiGalleria, _cambiaImmagineDiProfilo, _aggiornaDettagliProfiloUtente, _caricaNuovaImmagine, _scaricaUrlImmagine, _eliminaImmagineDiProfilo, _getGalleriaUtente, _getMediaProfiloUtente, _getNomeImmagineDaUrl, _getListOfConversations, _getChatSummaryInformation, _getMediaProfiloContatto,_getAllMediaOfCurrentUser,_inviaNuovoMessaggio,  _removeMessages,_removeGroupOfAudiosBeforeTimestamp, _ottieniAscoltatoreNuoviMessaggi,_ottieniAscoltatoreNuoveNotifiche,_ottieniAscoltatoreStatistics,_ottieniAscoltatoreUltimoMessaggio,_ottieniAscoltatoreNuoveConversazioni, _findNextTenClosestUsers, _updateAge, _createNewConversation, _removeNotification, _saveNewPushNotificationToken, _makeDecision, _upgradeConversation,_removeConversation, _blockContact,_unlockContact,_deleteUserAccount} from "./service/firestore.service";
 
 console.log("autenticazione.js");
 
@@ -132,7 +132,8 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     upgradeConversation,
                     removeConversation,
                     blockContact,
-                    unlockContact
+                    unlockContact,
+                    deleteUserAccount
                 }}
                 >
                 {children}
@@ -189,7 +190,7 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     }
 
     function getUtenteCorrente(){
-        console.log("ritorno utente corrente:"+user);
+        //console.log("ritorno utente corrente:"+user);
         return user;
     }
 
@@ -261,6 +262,17 @@ export const AutenticazioneUtenteProvider = ({children}) => {
         async function findNextTenClosestUsers(startAt, endAt, ageRange){
             try{
                 return _findNextTenClosestUsers(startAt,endAt, informazioniProfiloUtente.gender_preference, ageRange);
+            }catch(e){
+                throw e;
+            }
+        }
+
+        async function deleteUserAccount(myName){
+            try{
+                let res = await _deleteUserAccount(myName);
+                await firebase.auth().signOut();
+                //await firebase.auth().currentUser.delete(); NB: è corretto, mettilo
+                return res;
             }catch(e){
                 throw e;
             }

@@ -32,10 +32,18 @@ const SliderKMPreference = forwardRef((props, ref) => {
                 setPos(1);
                 setStartMarker(0);
             }else {
-                if(val<=0.25) setPos(1);
-                else if(val<=0.50) setPos(2);
-                else if(val<=0.75) setPos(3);
-                else setPos(4);
+                if(val<=0.33) {
+                    setPos(1);
+                    val=0;
+                }
+                else if(val<=0.66){
+                    setPos(2);
+                    val=0.5;
+                }
+                else {
+                    setPos(3);
+                    val=1
+                }
                 setStartMarker(parseFloat(val));
                 ultimoValoreSalvato.current = val;
             }
@@ -63,18 +71,14 @@ const SliderKMPreference = forwardRef((props, ref) => {
                 <View style={{ justifyContent:"center", flex: pos==3?2/4:2/8}}>
                     <Text style={pos==3?styles.active:styles.off}>2500Km</Text>
                 </View>
-                <View style={{ justifyContent:"center", flex: pos==4?2/4:2/8}}>
-                    <Text style={pos==4?styles.active:styles.off}>Ovunque</Text>
-                </View>
                 
             </View>
             <Slider
                 value = {startMarker}
                 onValueChange = {(t) =>{
-                    if(t<=0.25) setPos(1);
-                    else if(t<=0.50) setPos(2);
-                    else if(t<=0.75) setPos(3);
-                    else setPos(4);
+                    if(t<=0.33) setPos(1);
+                    else if(t<=0.66) setPos(2);
+                    else setPos(3);
                     setStartMarker(t);
                     }}
                 style={{flex:1, height:altezzaDevice*0.2, width:larghezzaDevice*0.8}}

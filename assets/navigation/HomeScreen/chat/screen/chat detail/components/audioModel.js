@@ -142,7 +142,7 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
             }else {
                     
                     //preparo audio
-                        console.log("preparo nuovo audio");
+                        console.log("preparo nuovo audio di uri "+messaggio.content);
                         //questa parte, per quanto insensata, risolve un bug su IOS. Per registrare l'audio ho bisogno di 'allowsRecordingIOS=false
                         //ma per riprodurlo ho bisogno di settarlo come false.
                         await Audio.setAudioModeAsync({

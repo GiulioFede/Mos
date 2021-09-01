@@ -5,7 +5,7 @@ import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { MosCeleste, MosViola } from "../../resources/colors";
 import { Ionicons } from '@expo/vector-icons';
-import { ColoreBarraDiStato, fontSizeTitoloPiccolo,fontSizeSottoTitolo, iconSize, fontSizeCampi } from "../../context/variabili_globali/variabiliGlobali";
+import { ColoreBarraDiStato, fontSizeTitoloPiccolo,fontSizeSottoTitolo, iconSize, fontSizeCampi, larghezzaDevice } from "../../context/variabili_globali/variabiliGlobali";
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 import {LinearGradient} from "expo-linear-gradient";
 
@@ -147,10 +147,7 @@ export default function RegisterScreen({navigation}){
                                     }}>
                                     {snackmessage}
              </Snackbar>
-                
-            <KeyboardAvoidingView
-                    behavior= {(Platform.OS === 'ios')? "padding" : null}
-                >
+  
                  <ScrollView showsVerticalScrollIndicator={false}>
 
                     <View style={{alignItems:"center", justifyContent:"center"}}> 
@@ -159,11 +156,11 @@ export default function RegisterScreen({navigation}){
                             <View style={styles.contenitoreImmagineSfondo}>
                                 {/* immagine */}
                                 <View style={styles.contenitoreImmagine}>
-                                    <Image source={require("../../../assets/resources/images/sfondoRegistrazione.png")} style={styles.immagine}></Image>
+                                    <Image source={require("../../resources/images/logoMosaic.png")} style={{width:larghezzaDevice*0.4, height:larghezzaDevice*0.4}} ></Image>
                                 </View>
 
                                 <LinearGradient
-                                colors={['transparent',MosCeleste]}
+                                colors={['transparent','rgba(27, 99, 253,0.2)',MosCeleste]}
                                 style={{
                                     width:Dimensions.get("window").width,
                                     height: Dimensions.get("window").height*0.3,
@@ -178,7 +175,7 @@ export default function RegisterScreen({navigation}){
                             <View style={{width:Dimensions.get("window").width,flexGrow:1, backgroundColor:MosCeleste}}>
                                 <View style={{alignItems:"center", justifyContent:"center", paddingBottom:10}}>
                                     <Text style={styles.titolo}>Benvenuto su Mosaic</Text>
-                                    <Text style={styles.testo}>il social network alternativo</Text>
+                                    <Text style={styles.testo}>Prima la mente, poi il corpo</Text>
                                 </View>
 
                                 {/*EMAIL*/}
@@ -229,7 +226,6 @@ export default function RegisterScreen({navigation}){
 
                             </View>
                         </ScrollView>
-                </KeyboardAvoidingView>
             </View>
 
         )
@@ -256,7 +252,7 @@ const styles = StyleSheet.create({
         color: "white",
     },
     testo:{
-        fontSize:fontSizeSottoTitolo,
+        fontSize:fontSizeSottoTitolo*0.8,
         fontFamily: "Raleway_200ExtraLight",
         color: "white",
     },
@@ -282,9 +278,13 @@ const styles = StyleSheet.create({
         height: Dimensions.get("window").height*0.3
     },
     contenitoreImmagine: {
-        width: Dimensions.get("window").width,
-        height: Dimensions.get("window").height*0.4,
-        overflow: "hidden",
+        width: larghezzaDevice*0.5,
+        height: larghezzaDevice*0.5,
+        backgroundColor:"#fff",
+        alignSelf:"center",
+        alignContent:"center",
+        justifyContent:"center",
+        alignItems:"center"
     },
   });
   

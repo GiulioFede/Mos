@@ -618,6 +618,7 @@ export function _isProfiloCompletato(uid){
                                                 callbackSuccess,
                                                 callbackFailure){
 
+
             console.log("_invia nuovo messaggio "+type);
             //se manca la connessione chiamo subito la callback di failure
             let connection_state = await NetInfo.fetch();
@@ -812,6 +813,26 @@ export function _isProfiloCompletato(uid){
         }
     }
 
+    export async function _removeMediaFolderOnStorage(userId){
+        try {
+            var storage = firebase.storage();
+            // ottengo un riferimento dello storage
+            var storageRef = storage.ref();
+            //accedo alla cartella chats/chatId
+            var mediaFolder = storageRef.child('users/'+userId);
+
+            return mediaFolder.listAll().then((listResults)=>{
+                console.log("listo tutti i files");
+                listResults.items.forEach(async(itemRef)=>{
+                        await itemRef.delete();
+                })
+            })
+            
+        }catch(e){
+            throw e;
+        }
+    }
+
 
     function getRandomString(length) {
         var randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -850,7 +871,7 @@ export function _isProfiloCompletato(uid){
                 return db.collection("users")
                          .doc(firebase.auth().currentUser.uid)
                          .collection("notifications")
-                         .where("timestamp",">", new Date()); //perchè? Ogni volta che scarico una notifica la salvo in locale e la elimino in remoto. 
+                         .where("timestamp",">", new Date().getTime()); //perchè? Ogni volta che scarico una notifica la salvo in locale e la elimino in remoto. 
                                                               //Se quest'ultima operazione dovesse fallire allora potrei avere su un device diverso
                                                               //il download della stessa notifica anche se sono passati molti giorni. Ho bisogno quindi
                                                               //di un punto di inizio fermo.
@@ -858,7 +879,7 @@ export function _isProfiloCompletato(uid){
                 return db.collection("users")
                          .doc(firebase.auth().currentUser.uid)
                          .collection("notifications")
-                         .where("timestamp",'>',new Date(ultimoTimestamp*1000));
+                         .where("timestamp",'>',ultimoTimestamp);
             }
         }catch(e){
             throw e;
@@ -906,11 +927,11 @@ export function _isProfiloCompletato(uid){
     export async function _removeNotification(seconds){
         try {
             let db = firebase.firestore();
-            console.log("elimino notifiche con timestamp minore di "+new Date(seconds*1000).toString());
+            console.log("elimino notifiche con timestamp minore di "+new Date(seconds).toString());
             return await db.collection("users")
                      .doc(firebase.auth().currentUser.uid)
                      .collection("notifications")
-                     .where("timestamp","<=",new Date(seconds*1000))
+                     .where("timestamp","<=",seconds)
                      .get().then(function(querySnapshot){
                         querySnapshot.forEach(function(doc){
                             console.log("elimino doc:"+doc.id);
@@ -927,7 +948,7 @@ export function _isProfiloCompletato(uid){
             AROUND YOU
     */
 
-    const MAX_CARD_INTO_LIST = 10;
+    const MAX_CARD_INTO_LIST = 3;
     export async function _findNextTenClosestUsers(startAt, endAt, gender_preference, ageRange){
         return new Promise(async(resolveMaster, rejectMaster)=>{
             try{
@@ -942,6 +963,9 @@ export function _isProfiloCompletato(uid){
             try{
             
                 let nearest_users_snapshot = null;
+
+            //ageRange è un array di 10 elementi, per sicurezza lo tronco a 10
+            ageRange = ageRange.slice(0,9);
             //se lo startAt non è un documento...
             if(typeof(startAt)=="string"){
             console.log("query tipo startAt");
@@ -1089,8 +1113,18 @@ export function _isProfiloCompletato(uid){
         }
     }
 
-    export function _upgradeConversation(chatID, isUpgrade, contactUid, nameContactUid, myName, contactToken, myToken,lastLevelOfVisibility){
+    /*
+        Poichè a volte tale funzione viene richiamata anche 10 volte in un'unica botta (ho cercato l'errore e ho trovato una soluzione che evitasse a level_of_visibility
+        di essere incrementato più volte, però in ogni caso 10 notifiche vengono inviate), è necessario creare una variabile che contenga il timestamp di ultima chiamata.
+        Se la successiva chiamata è stata fatta prima di 5 min dalla precedente (in realtà basta mettere anche 10 secondi) allora non viene fatta.
+    */
+   let timestampUltimaChiamataUpgradeConversation = null;
+    export async function _upgradeConversation(chatID, isUpgrade, contactUid, nameContactUid, myName, contactToken, myToken,lastLevelOfVisibility){
         try{
+
+            console.log(firebase.auth().currentUser.uid+" chiama upgradeConversation con i seguenti argomenti:");
+            console.log(chatID+","+isUpgrade+","+contactUid+","+nameContactUid+","+myName+","+contactToken+","+myToken+","+lastLevelOfVisibility);
+
             let db = firebase.firestore();
             var batch = firebase.firestore().batch();
             //path documento riassuntivo
@@ -1101,35 +1135,36 @@ export function _isProfiloCompletato(uid){
             //path documento notifiche contatto
             const pathCurrentContactNotification = db.collection("users").doc(contactUid).collection("notifications").doc();
             
+            let date = new Date().getTime();
             
             //se c'è un upgrade modifico livello di visibilità
             if(isUpgrade==true){
                 batch.update(pathDocumentoRiassuntivo,{
-                    level_of_visibility: firebase.firestore.FieldValue.increment(1)
+                    level_of_visibility: lastLevelOfVisibility+1
                 },{merge:true});
 
                 //inoltre invio una notifica a entrambi sul successo!
                 batch.set(pathCurrentUserNotification,{
                     author: nameContactUid,
                     type: lastLevelOfVisibility==0?"UPGRADE_VISIBILITY":"TOTAL_DISCLOSURE",
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    timestamp: date
                 });
                 batch.set(pathCurrentContactNotification,{
                     author: myName,
                     type: lastLevelOfVisibility==0?"UPGRADE_VISIBILITY":"TOTAL_DISCLOSURE",
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    timestamp: date
                 })
             }else {
                 //inoltre invio una notifica a entrambi sul mancato successo
                 batch.set(pathCurrentUserNotification,{
                     author: nameContactUid,
                     type: "NO_UPGRADE_VISIBILITY",
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    timestamp: date
                 });
                 batch.set(pathCurrentContactNotification,{
                     author: myName,
                     type: "NO_UPGRADE_VISIBILITY",
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    timestamp: date
                 })
             }
             
@@ -1143,9 +1178,9 @@ export function _isProfiloCompletato(uid){
                     [`${nomeCampoUtenteCorrente}`]: null
                 },{merge:true})
 
-            return batch.commit().then(async(ris)=>{
-                //invio push notification solo se c'è stato l'upgrade
-                if(isUpgrade==true){
+            await batch.commit();
+            //invio push notification solo se c'è stato l'upgrade
+            if(isUpgrade==true){
                     if(lastLevelOfVisibility==0){
                         console.log("invio push notification a "+nameContactUid+" con token "+contactToken+" e a me,"+myName+", con token "+myToken);
                         await sendPushNotification(contactToken, "Tu e "+myName+" siete passati al livello successivo!","Tu e "+myName+" siete entrambi daccordo per passare al livello successivo",{});
@@ -1156,10 +1191,8 @@ export function _isProfiloCompletato(uid){
                         await sendPushNotification(myToken, "Congratulazioni! Tu e "+nameContactUid+" siete visibili al 100%!","",{});
                     }
                 }               
-                return;
-            })
         }catch(e){
-
+            throw e;
         }
     }
 
@@ -1250,20 +1283,21 @@ export function _isProfiloCompletato(uid){
                 "conversations": firebase.firestore.FieldValue.arrayRemove(contactChatObj)
             })
 
+            let date = new Date().getTime();
             //inoltre invio una notifica a entrambi sul bloccaccio della chat
             batch.set(pathCurrentUserNotification,{
                 author: contactName,
                 type: "YOUR_CHAT_BLOCKER",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                timestamp: date
             });
             batch.set(pathCurrentContactNotification,{
                 author: myName,
                 type: "CHAT_BLOCKED",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                timestamp: date
             });
 
             return await batch.commit().then(async()=>{
-                return await _removeGroupOfAudiosBeforeTimestamp(chatID,new Date().getTime())
+                return await _removeGroupOfAudiosBeforeTimestamp(chatID,date)
             })
 
         }catch(e){
@@ -1343,20 +1377,21 @@ export function _isProfiloCompletato(uid){
                 //conversations: conversations.filter(chat => chat.chatId != chatID)
             })
 
+            let dateTime = new Date().getTime();
             //inoltre invio una notifica a entrambi sulla rimozione della chat
             batch.set(pathCurrentUserNotification,{
                 author: contactName,
                 type: "YOUR_CHAT_REMOVAL",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                timestamp: dateTime
             });
             batch.set(pathCurrentContactNotification,{
                 author: myName,
                 type: "CHAT_REMOVAL",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                timestamp: dateTime
             });
 
             return await batch.commit().then(async()=>{
-                return await _removeGroupOfAudiosBeforeTimestamp(chatID,new Date().getTime())
+                return await _removeGroupOfAudiosBeforeTimestamp(chatID,date)
             })
         }catch(e){
             try{
@@ -1442,4 +1477,457 @@ export function _isProfiloCompletato(uid){
         }catch(e){
             throw e;
         }
+    }
+
+
+    /*
+        TEST FATTI (conclusi con successo):
+        1) Caso generale: l'utente corrente ha N chat e ogni N utente è ancora iscritto e ha ancora la chat sia sulle proprie conversazioni che sulla chats/idChat
+        2) Caso particolare1: a qualcuno degli N utenti manca la chat
+        3) Caso particolare2: qualcuno degli N utenti ha l'array conversations vuoto
+        4) Caso particolare3: una delle chat (in chats/idChat) manca
+        5) Caso particolare4: l'utente corrente non ha conversazioni nè notifications
+        6) Caso particolare5: uno degli utenti non esiste più
+    */
+
+    export async function _deleteUserAccount(myName){
+
+        try{
+            return new Promise(async(resolve,reject)=>{
+                var db = firebase.firestore();
+                //DA CORREGGERE
+                const currentUser = "fake_user63";//firebase.auth().currentUser.uid;
+                //DA ELIMINARE
+                myName="fake_user63";
+
+                //array contenente le promise per eliminare sullo storage i dati
+                let storagePromises = [];
+                
+                try{
+                    await db.runTransaction(async (transaction) =>{
+                        try{
+                            let idContatto = null;
+                            let contactConversationsPath = null;
+                            let contactConversations = null;
+                            let contactChatObj = null;
+                            let pathChat = null;
+                            let pathMyChannel = null;
+                            let myMessages = null;
+                            let pathContactChannel = null;
+                            let contactMessages = null;
+                            let chat = null;
+                            //scarico documento conversations dell'utente corrente
+                            console.log("scarico mie conversazioni...");
+                            let currentUserConversationsPath = db.collection("users").doc(currentUser).collection("chats").doc("Conversations");
+                            let currentUserConversations = await transaction.get(currentUserConversationsPath);
+                            console.log(currentUserConversations);
+
+                            //se ha delle conversazioni procedo a cancellare tutti i riferimenti esterni
+                            if(currentUserConversations.exists && currentUserConversations.data()["conversations"].length>0){
+                                console.log("l'utente ha delle conversazioni. Procedo a eliminare i riferimenti");
+                                let conversations = currentUserConversations.data()["conversations"];
+                                //per ogni elemento di conversations...(prima aggancio tutti i documenti di tutti e poi alla fine elimino tutto il mio (non c'è bisogno che faccio arrayRemove sul mio ogni volta))
+                                for(let i=0; i<conversations.length; i++){
+                                    console.log("elimino conversazione "+i+"-esima:");
+                                    console.log(conversations[i]);
+                                    //controllo se l'utente esiste ancora... (magari ha eliminato il suo account)
+                                    //invece di scaricare il suo doc scarico le sue conversazioni, tanto se non esistono quelle allora non esiste neppure l'utente, cosi risparmio banda
+                                    idContatto = conversations[i].uid;
+                                    contactConversationsPath = db.collection("users").doc(idContatto).collection("chats").doc("Conversations");
+                                    contactConversations = await contactConversationsPath.get();
+                                    //se esiste...devo eliminare la nostra conversazione anche dalle sue conversations
+                                    if(contactConversations.exists){
+                                        console.log("il contatto "+conversations[i].contactName+" esiste ancora")
+                                        //creo oggetto chat per contatto
+                                        contactChatObj = {
+                                            uid: currentUser,
+                                            contactName: myName,
+                                            chatId: conversations[i].chatId,
+                                            creation_data: conversations[i].creation_data
+                                        }
+                                        //elimino 
+                                        console.log("elimino chat "+conversations[i].chatId+" nel profilo del contatto");
+                                        await transaction.update(contactConversationsPath,{
+                                            "conversations": firebase.firestore.FieldValue.arrayRemove(contactChatObj)
+                                        })
+                                        //aggiungo la promise per eliminare la chat dallo storage
+                                        storagePromises.push(_removeGroupOfAudiosBeforeTimestamp(conversations[i].chatId,new Date().getTime()));
+                                    }else
+                                        console.log("il contatto "+conversations[i].contactName+" non esiste più")
+                                    
+                                    console.log("elimino channel "+currentUser);
+                                    pathMyChannel = db.collection("chats").doc(conversations[i].chatId).collection(currentUser);
+                                    myMessages = await pathMyChannel.get();
+                                    myMessages.docs.map(async(doc) =>{
+                                        console.log("elimino documento di id:"+doc.id)
+                                        await transaction.delete(doc.ref);
+                                    })
+
+                                    console.log("elimino channel "+conversations[i].uid);
+                                    pathContactChannel = db.collection("chats").doc(conversations[i].chatId).collection(conversations[i].uid);
+                                    contactMessages = await pathContactChannel.get();
+                                    contactMessages.docs.map(async(doc) =>{
+                                        console.log("elimino documento di id:"+doc.id)
+                                        await transaction.delete(doc.ref);
+                                    })
+
+                                    console.log("elimino chat in chats")
+                                    pathChat = db.collection("chats").doc(conversations[i].chatId);
+                                    chat = await pathChat.get();
+                                    //se esiste la chat, la elimino
+                                    if(chat.exists){
+                                        await transaction.delete(pathChat);
+                                        console.log("chat eliminata");
+                                    }
+                                }
+                            }else 
+                                console.log("l'utente non ha conversazioni.");
+
+                            //terminato il ciclo for ho eliminato tutti i riferimenti alle chat negli altri contatti, ed eliminato la chat stessa
+                            //adesso procedo a eliminare il documento conversations
+                            await transaction.delete(currentUserConversationsPath);
+                            //adesso procedo a eliminare i media
+                            let mediaPathDoc0 = db.collection("users").doc(currentUser).collection("media").doc("0");
+                            let mediaPathDoc50 = db.collection("users").doc(currentUser).collection("media").doc("50");
+                            let mediaPathDoc100 = db.collection("users").doc(currentUser).collection("media").doc("100");
+                            await transaction.delete(mediaPathDoc0);
+                            await transaction.delete(mediaPathDoc50);
+                            await transaction.delete(mediaPathDoc100);
+
+                            //procedo ad eliminare le notifiche
+                            let notificationPath = db.collection("users").doc(currentUser).collection("notifications");
+                            const notifications = await notificationPath.get();
+                            notifications.docs.map(async(doc) =>{
+                                console.log("elimino notifica "+doc.id);
+                                await transaction.delete(doc.ref);
+                            })
+
+                            //elimino il documento principale
+                            let mainPath = db.collection("users").doc(currentUser);
+                            await transaction.delete(mainPath);
+                        }catch(e){
+                            throw e;
+                        }
+                    });
+                
+
+                    //se sono qua tutto è andato bene su firestore. Elimino documento chat su storage
+                    for(let i=0; i<storagePromises.length; i++)
+                        await storagePromises[i];
+                    
+                    //infine elimino cartella users/id sullo storage contenente i miei media
+                    await _removeMediaFolderOnStorage(currentUser);
+                    
+                    resolve(true);
+                }catch(e){
+                    reject(e);
+                    throw e;
+                }
+            });
+        }catch(e){
+            throw e;
+    }
+
+    }
+
+    export async function createFakeUser(){
+        var db = firebase.firestore();
+        let nome_id = "fake_user64";//"fake_user"+Math.floor(Math.random() * 1000);
+        let contatto1 = "fake_user63";
+        let contatto2 = "whd3uAlHjQQGBa2la1tooVjoXmd2";
+       //aggiungo documento
+        await db.collection("users").doc(nome_id)
+            .set({
+                age:27,
+                biological_sex: "male",
+                current_occupation: "impiegata",
+                date_of_birth: new Date(30*12*30*24*50*60*1000),
+                gender_identity: "trigender",
+                gender_preference: "trigender",
+                hobbies_interests_and_passions: ["cantare", "volare", "ballare", "giocare", "leggere"],
+                location: {
+                    city: "Alcamo",
+                    country: "Italia",
+                    geohash: "sqc0p",
+                    lat: "37.970",
+                    lng: "12.965",
+                    region:"Sicilia"
+                },
+                name: nome_id,
+                push_notification_token:null,
+                self_description:" Sono il fake user di nome "+nome_id,
+                show_me: true
+            })
+            //aggiungo media
+        await db.collection("users").doc(nome_id)
+            .collection("media")
+            .doc("0")
+            .set({
+                profileImageUrl: "https://i.pinimg.com/736x/38/93/07/389307d6af5c4be0051b7d3c4f93bf3d.jpg",
+                gallery: [
+                    "https://images.squarespace-cdn.com/content/v1/51773f51e4b054c7ac3739b7/1500601873116-Y6YQOMZCW6DYY5DWN0FG/Antonio_L_178.JPG?format=1500w",
+                    "https://i.pinimg.com/736x/a9/54/0b/a9540b12f85f1c467d4de74a49ce048e.jpg"
+                ]
+            });
+        await db.collection("users").doc(nome_id)
+            .collection("media")
+            .doc("50")
+            .set({
+                profileImageUrl: "https://i.pinimg.com/736x/38/93/07/389307d6af5c4be0051b7d3c4f93bf3d.jpg",
+                gallery: [
+                    "https://images.squarespace-cdn.com/content/v1/51773f51e4b054c7ac3739b7/1500601873116-Y6YQOMZCW6DYY5DWN0FG/Antonio_L_178.JPG?format=1500w",
+                    "https://i.pinimg.com/736x/a9/54/0b/a9540b12f85f1c467d4de74a49ce048e.jpg"
+                ]
+            })
+        await db.collection("users").doc(nome_id)
+            .collection("media")
+            .doc("100")
+            .set({
+                profileImageUrl: "https://i.pinimg.com/736x/38/93/07/389307d6af5c4be0051b7d3c4f93bf3d.jpg",
+                gallery: [
+                    "https://images.squarespace-cdn.com/content/v1/51773f51e4b054c7ac3739b7/1500601873116-Y6YQOMZCW6DYY5DWN0FG/Antonio_L_178.JPG?format=1500w",
+                    "https://i.pinimg.com/736x/a9/54/0b/a9540b12f85f1c467d4de74a49ce048e.jpg"
+                ]
+            })
+
+        //aggiungo notifiche
+        await db.collection("users").doc(nome_id)
+            .collection("notifications")
+            .doc("1")
+            .set({
+                type:"uno"
+            })
+        await db.collection("users").doc(nome_id)
+            .collection("notifications")
+            .doc("2")
+            .set({
+                type:"due"
+            })
+        await db.collection("users").doc(nome_id)
+            .collection("notifications")
+            .doc("3")
+            .set({
+                type:"tre"
+            })
+        await db.collection("users").doc(nome_id)
+            .collection("notifications")
+            .doc("4")
+            .set({
+                type:"quattro"
+            })
+
+        //aggiungo chats
+        let data = new Date().getTime();
+        await db.collection("users").doc(nome_id)
+        .collection("chats")
+        .doc("Conversations")
+        .set({
+            "conversations": firebase.firestore.FieldValue.arrayUnion({
+                chatId: "fakeChat1",
+                uid: contatto1,
+                contactName: "Giulio",
+                creation_data: data
+            })
+        })
+        await db.collection("users").doc(nome_id)
+        .collection("chats")
+        .doc("Conversations")
+        .update({
+            "conversations": firebase.firestore.FieldValue.arrayUnion({
+                chatId: "fakeChat2",
+                uid: contatto2,
+                contactName: "sara",
+                creation_data: data
+            })
+        })
+//aggiungo chat, i due canali e qualche messaggio
+          await db.collection("chats")
+            .doc("fakeChat1")
+            .set({
+                lastMessage:{
+                    author: nome_id,
+                    timestamp: new Date().getTime(),
+                    type:"mex",
+                    value: "sono un fake mex"
+                },
+                level_of_visibility: 1,
+                statistics:{
+                    administrator:nome_id,
+                    "contatto1_response": null,
+                    "fake_response": null,
+                    number_of_messages: 2,
+                }
+            });
+        db.collection("chats")
+          .doc("fakeChat1")
+          .collection(nome_id)
+          .doc("1")
+          .set({
+                field: "...."
+          });
+        db.collection("chats")
+          .doc("fakeChat1")
+          .collection(nome_id)
+          .doc("2")
+          .set({
+                field: "...."
+          });
+        db.collection("chats")
+          .doc("fakeChat1")
+          .collection(nome_id)
+          .doc("3")
+          .set({
+                field: "...."
+          })
+        db.collection("chats")
+          .doc("fakeChat1")
+          .collection(contatto1)
+          .doc("1")
+          .set({
+                field: "...."
+          });
+        db.collection("chats")
+          .doc("fakeChat1")
+          .collection(contatto1)
+          .doc("2")
+          .set({
+                field: "...."
+          });
+        db.collection("chats")
+          .doc("fakeChat1")
+          .collection(contatto1)
+          .doc("3")
+          .set({
+                field: "...."
+          })
+
+        
+        db.collection("chats")
+          .doc("fakeChat2")
+          .set({
+              lastMessage:{
+                  author: nome_id,
+                  timestamp: new Date().getTime(),
+                  type:"mex",
+                  value: "sono un fake mex"
+              },
+              level_of_visibility: 1,
+              statistics:{
+                  administrator:nome_id,
+                  "contatto2_response": null,
+                  "fake_response": null,
+                  number_of_messages: 2,
+              }
+          });
+      db.collection("chats")
+        .doc("fakeChat2")
+        .collection(nome_id)
+        .doc("1")
+        .set({
+              field: "...."
+        });
+      db.collection("chats")
+        .doc("fakeChat2")
+        .collection(nome_id)
+        .doc("2")
+        .set({
+              field: "...."
+        });
+      db.collection("chats")
+        .doc("fakeChat2")
+        .collection(nome_id)
+        .doc("3")
+        .set({
+              field: "...."
+        })
+      db.collection("chats")
+        .doc("fakeChat2")
+        .collection(contatto2)
+        .doc("1")
+        .set({
+              field: "...."
+        });
+      db.collection("chats")
+        .doc("fakeChat2")
+        .collection(contatto2)
+        .doc("2")
+        .set({
+              field: "...."
+        });
+      db.collection("chats")
+        .doc("fakeChat2")
+        .collection(contatto2)
+        .doc("3")
+        .set({
+              field: "...."
+        })
+
+        //aggiungo a obYCXDPHLKXlsvi9TPrPlYginj62 e a whd3uAlHjQQGBa2la1tooVjoXmd2 la chat di id fakeChat
+        await db.collection("users").doc(contatto1)
+          .collection("chats")
+          .doc("Conversations")
+          .update({
+              "conversations": firebase.firestore.FieldValue.arrayUnion({
+                  chatId: "fakeChat1",
+                  uid: nome_id,
+                  contactName: nome_id,
+                  creation_data: data
+              })
+          })
+        await db.collection("users").doc(contatto2)
+          .collection("chats")
+          .doc("Conversations")
+          .update({
+               "conversations": firebase.firestore.FieldValue.arrayUnion({
+                  chatId: "fakeChat2",
+                  uid: nome_id,
+                  contactName: nome_id,
+                  creation_data: data
+              })
+          })
+
+          
+
+        //carico dati sulle chat storage
+        let file = await fetch("file:///data/user/0/host.exp.exponent/files/ExperienceData/%2540giuliofederico%252FMos/whd3uAlHjQQGBa2la1tooVjoXmd2/m0Wz5EsEnmYJChGoM99mmAGy7rr2/m0Wz5EsEnmYJChGoM99mmAGy7rr2_TueAug31202111:33:39GMT+0200(CEST).aac");
+        let blob = await file.blob();
+        let storage = firebase.storage();
+        let name = 0; //NB: crealo adesso e utilizzalo come nome e come timestamp per la chat perchè altrimenti se utilizzi new Date due volte saranno diversi
+ 
+        let destinationFolderRef = storage.ref("chats/fakeChat1/"+name.toString()+".m4a");
+        //aggiungo il file alla prima chat
+        await destinationFolderRef.put(blob);
+        name = 1;
+        destinationFolderRef = storage.ref("chats/fakeChat1/"+name.toString()+".m4a");
+        await destinationFolderRef.put(blob);
+        name = 2;
+        destinationFolderRef = storage.ref("chats/fakeChat1/"+name.toString()+".m4a");
+        await destinationFolderRef.put(blob);
+        //aggiungo il file alla seconda chat
+        destinationFolderRef = storage.ref("chats/fakeChat2/"+name.toString()+".m4a");
+        await destinationFolderRef.put(blob);
+        name = 1;
+        destinationFolderRef = storage.ref("chats/fakeChat2/"+name.toString()+".m4a");
+        await destinationFolderRef.put(blob);
+        name = 3;
+        destinationFolderRef = storage.ref("chats/fakeChat2/"+name.toString()+".m4a");
+        await destinationFolderRef.put(blob);
+        
+       //aggiungo cartella media utente sullo storage
+       console.log("creo falsi media");
+       file = await fetch("https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=976&q=80");
+       blob = await file.blob();
+       name = getRandomString(10);
+       destinationFolderRef = storage.ref("users/"+nome_id+"/"+name.toString()+".jpg");
+       await destinationFolderRef.put(blob);
+       file = await fetch("https://images.unsplash.com/photo-1497316730643-415fac54a2af?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=700&q=80");
+       blob = await file.blob();
+       name = getRandomString(10);
+       destinationFolderRef = storage.ref("users/"+nome_id+"/"+name.toString()+".jpg");
+       await destinationFolderRef.put(blob);
+       file = await fetch("https://images.unsplash.com/photo-1520155707862-5b32817388d6?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80");
+       blob = await file.blob();
+       name = getRandomString(10);
+       destinationFolderRef = storage.ref("users/"+nome_id+"/"+name.toString()+".jpg");
+       await destinationFolderRef.put(blob);
     }

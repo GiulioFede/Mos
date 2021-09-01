@@ -1,6 +1,6 @@
 
 // Import react
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 // Import react-native components
 import {
@@ -57,12 +57,15 @@ export default function NotificationMessageModel({user, item, decrementaNumeroNo
 
     const [showRedBallon, setShowRedBallon] = useState(false);
 
+    const isMounted = useRef(false);
+
     //all'inizio, controllo se lo stato è 'unseen'. Se è cosi lo aggiorno a seen
     useEffect(()=>{
         async function init(){
             if(item.state=='unseen'){
                 //anche se aggiorno lo stato, mostro il pallino rosso ad indicare una nuova notifica. Tanto al successivo reload verrà resettata
-                setShowRedBallon(true);
+                if(isMounted.current==true)
+                    setShowRedBallon(true);
                 //aggiorno stato
                 await localStorage.updateNotificationState(user, item.timestamp);
                 //decremento numero notifiche visuali
@@ -75,10 +78,16 @@ export default function NotificationMessageModel({user, item, decrementaNumeroNo
 
         return ()=>{
             console.log("chiudo");
-            setShowRedBallon(false);
+            if(isMounted.current==true)
+                setShowRedBallon(false);
         }
     },[])
 
+    useEffect(()=>{
+        isMounted.current = true;
+
+        return () => isMounted.current = false;
+    },[])
    
 
     return (
@@ -92,9 +101,9 @@ export default function NotificationMessageModel({user, item, decrementaNumeroNo
                     {item.type=="UPGRADE_VISIBILITY" && <Text style={styles.type}>Congratulazioni! Tu e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
                     {item.type=="NO_UPGRADE_VISIBILITY" && <Text style={styles.type}>Forse è troppo presto per mostrarsi per te e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
                     {item.type=="TOTAL_DISCLOSURE" && <Text style={styles.type}>Congratulazioni! Tu e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
-                    {item.type=="YOUR_CHAT_REMOVAL" && <Text style={styles.type}>{getNotificationStringFromJSON(item)}<Text style={styles.author}>{item.author}</Text></Text>}
+                    {item.type=="YOUR_CHAT_REMOVAL" && <Text style={styles.type}>{getNotificationStringFromJSON(item)}<Text style={styles.author}>{item.author}</Text>.</Text>}
                     {item.type=="CHAT_REMOVAL" && <Text style={styles.author}>{item.author}<Text style={styles.type}>{getNotificationStringFromJSON(item)}</Text></Text> }
-                    {item.type=="YOUR_CHAT_BLOCKER" && <Text style={styles.type}>{getNotificationStringFromJSON(item)}<Text style={styles.author}>{item.author}</Text></Text>}
+                    {item.type=="YOUR_CHAT_BLOCKER" && <Text style={styles.type}>{getNotificationStringFromJSON(item)}<Text style={styles.author}>{item.author}</Text>.</Text>}
                     {item.type=="CHAT_BLOCKED" && <Text style={styles.author}>{item.author}<Text style={styles.type}>{getNotificationStringFromJSON(item)}</Text></Text> }
                 </View>
             </View>

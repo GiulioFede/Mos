@@ -9,6 +9,7 @@ const Loading = forwardRef((props, ref) => {
 
 
      const [isLoading, setIsLoading] = useState(false);
+     const [text, setText] = useState("");
 
 
      useImperativeHandle(ref, () => ({
@@ -17,6 +18,12 @@ const Loading = forwardRef((props, ref) => {
         },
         off(){
             local_setIsLoading(false);
+        },
+        set_message(mex){
+            local_set_message(mex);
+        },
+        get_state(){
+            local_get_state();
         }
         
      }));
@@ -25,11 +32,22 @@ const Loading = forwardRef((props, ref) => {
          setIsLoading(val);
      }
 
+     function local_set_message(mex){
+         setText(mex);
+     }
+
+     function local_get_state(){
+         return isLoading;
+     }
+
     return (
         <>
         {isLoading==true &&
-            <View style={{position:"absolute", zIndex:20, width:Dimensions.get("window").width, height:Dimensions.get("window").height, justifyContent:"center", alignItems:"center", flex:1, backgroundColor:"rgba(255,255,255,0.5)"}}>
-                    <ActivityIndicator animating={true} color={MosCeleste} />
+            <View style={{position:"absolute", zIndex:20, width:Dimensions.get("window").width, height:"100%", flex:1, backgroundColor:"rgba(255,255,255,0.75)"}}>
+                    <View style={{position:"absolute",width:Dimensions.get("window").width, height:Dimensions.get("window").height,justifyContent:"center", alignItems:"center"}}>
+                        <ActivityIndicator animating={true} color={MosCeleste} />
+                        <Text style={{textAlign:"center", padding:20}}>{text}</Text>
+                    </View>
             </View>
         }
         </>

@@ -106,8 +106,8 @@ const TabNotifiche = forwardRef((props, ref) => {
                 let listOfNotificationsResultArray = [...JSON.parse(listOfNotificationsResult)];
                 listOfNotifications.current = [...listOfNotificationsResultArray];
                 setList([...listOfNotificationsResultArray]);
-                console.log("lista locale trasformata in array");
-                console.log(listOfNotificationsResultArray);
+                //console.log("lista locale trasformata in array");
+                //console.log(listOfNotificationsResultArray);
 
                 //inizializzo il contatore per indicare quante notifiche sono mostrate
                 contatoreNumeroNotificheMostrate = listOfNotificationsResultArray.length;
@@ -155,19 +155,19 @@ const TabNotifiche = forwardRef((props, ref) => {
                                         return;
                                     
                                     //se sono qui allora c'è una nuova notifica
-                                    console.log("documento nuovo:");
+                                    console.log("documento di notifica nuovo:");
                                     let doc = change.doc.data();
-                                    console.log(doc);
+                                    //console.log(doc);
                                     doc.state = "unseen";
                                     
                                     //la elimino da remoto. Elimino tutte le notifiche con data inferiore o uguale al documento corrente
                                     await removeNotification(doc.timestamp);
                                     //la memorizzo
-                                    console.log("Memorizzo"+doc.timestamp.seconds);
+                                    console.log("Memorizzo"+doc.timestamp);
                                     //se lo schermo è visibile allora metto stato "seen", altrimenti "unseeen";
-                                    await localStorage.storeNewNotification(user,doc.timestamp.seconds, doc.type,doc.author,visible==false?"unseen":"seen");
+                                    await localStorage.storeNewNotification(user,doc.timestamp, doc.type,doc.author,visible==false?"unseen":"seen");
                                     //l'aggiungo all'array temporaneo
-                                    doc.timestamp = doc.timestamp.seconds;
+                                    doc.timestamp = doc.timestamp;
                                     arrayTmp.push(doc);
                                     //incremento contatore
                                     contatoreNumeroNotificheMostrate = contatoreNumeroNotificheMostrate + 1;
@@ -178,14 +178,14 @@ const TabNotifiche = forwardRef((props, ref) => {
                                     }
                                     
                                 }catch(e){
-                                    console.log(e);
+                                    console.log("errore durante la ricezione della notifica"+e);
                                     //snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un errore.");
                                 }
                                 
                             }
-                        console.log("aggiorno notifiche");
-                        console.log(listOfNotifications.current);
-                        console.log(arrayTmp);
+                        //console.log("aggiorno notifiche");
+                        //console.log(listOfNotifications.current);
+                        //console.log(arrayTmp);
                         let lastListOfNotifications = [...listOfNotifications.current];
                         listOfNotifications.current = [ ...arrayTmp, ...listOfNotifications.current];
                          //aggiorno lo stato con l'array di notifiche prelevate

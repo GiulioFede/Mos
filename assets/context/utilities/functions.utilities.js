@@ -56,7 +56,7 @@ export function range(min, max) {
 
 export function fromDateToGGMMYYYYHHMM(seconds){
 
-  const date = new Date(seconds*1000);
+  const date = new Date(seconds);
     
   return ( date.getFullYear().toString() + "/"+pad2(date.getMonth() + 1) +"/"+ pad2( date.getDate()) +"  "+ pad2( date.getHours() ) +":"+ pad2( date.getMinutes() ) );
 }

@@ -30,12 +30,33 @@ import BlockedConversationsScreen from './BlockedConversations/blockedConversati
       setterò shouldShowAlert=true (voglio che mi spunti) ma shouldPlaySound=false (non voglio alcun suono).
 
 */
+/*
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: false,
     shouldSetBadge: false
   })
+});*/
+
+Notifications.setNotificationHandler({
+  handleNotification: (notif) => {
+    //console.log("notifica ricevuta in chat corrente:"+idChatCorrente);
+    //console.log(notif.request.content);
+    //console.log("notifica stampata");
+
+    let showNotification = true;
+    if(notif.request.content.data.hasOwnProperty("chatId") && idChatCorrente==notif.request.content.data.chatId)
+      showNotification=false;
+    console.log("mostro?"+showNotification);
+    return new Promise((resolve) =>
+      resolve({
+        shouldShowAlert: showNotification,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    );
+  },
 });
 
 const Drawer = createDrawerNavigator();
@@ -115,8 +136,8 @@ export default function HomeNavigator({navigation}) {
               .then((info)=>{
                   console.log("info ottenute");
                   if (info.exists) {
-                    console.log("Home: informazioni utente recuperate");
-                    console.log(info.data());
+                    //console.log("Home: informazioni utente recuperate");
+                    //console.log(info.data());
                     //creo variabile info_utente in cui inserirò tutto come unico documento (informazioni base profilo + url media)
                     const info_utente = info.data();
                     
@@ -188,34 +209,17 @@ export default function HomeNavigator({navigation}) {
                                         //2) mi registro affinchè sia avvertito ogni volta che una notifica arrivi quando l'app è in FOREGROUND
                                         notificationListener.current = Notifications.addNotificationReceivedListener(notif => {
                                           //se sono qui allora potrebbe essere arrivata (true o false) una notifica mentre ero in foreground
-                                          console.log("notifica ricevuta in chat corrente:"+idChatCorrente);
-                                          console.log(notif.request.content);
+                                          console.log("Nuova notifica");
                                           /*console.log(idChatCorrente);*/
                                           //se la notifica proviene da una chat su cui sono per adesso allora non la mostro (appena esco dalla chat, nel return del suo useEffect riattivo la notifica)
-                                        if(notif.request.content.data.hasOwnProperty("chatId") && idChatCorrente==notif.request.content.data.chatId){
-                                            Notifications.setNotificationHandler({
-                                              handleNotification: async () => ({
-                                                shouldShowAlert: false,
-                                                shouldPlaySound: false,
-                                                shouldSetBadge: false
-                                              })
-                                            });
-                                          }else {
-                                            Notifications.setNotificationHandler({
-                                              handleNotification: async () => ({
-                                                shouldShowAlert: true,
-                                                shouldPlaySound: false,
-                                                shouldSetBadge: false
-                                              })
-                                            });
-                                          }
+                                        
                                         })
 
                                         console.log("mi registro alla notifica tipo 2");
                                         //3) mi registro affinchè possa far partire un azione personalizzata quando l'utente riceve una notifica e vi clicca. Funziona quando l'app è sia in foreground, che background che killata!
                                         notificationReceiverListener.current = Notifications.addNotificationResponseReceivedListener( response => {
                                           console.log("NOTIFICAAAAAAAAA");
-                                          console.log(response);
+                                          //console.log(response);
                                         });
                                     }
                                       //faccio partire tutto

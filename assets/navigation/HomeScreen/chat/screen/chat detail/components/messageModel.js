@@ -18,9 +18,9 @@ import { Feather } from '@expo/vector-icons';
 
 const ref = function MessageModel({messaggio, utenteCorrente, mostraNuovaData}){
 
-    console.log("data messaggio:");
+    //console.log("data messaggio:");
     let data = new Date(messaggio.date);
-    console.log(data);
+    //console.log(data);
 
     //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});

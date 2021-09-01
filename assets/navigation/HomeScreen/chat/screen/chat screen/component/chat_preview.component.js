@@ -37,12 +37,12 @@ function getVisibilityString(num){
 
 */
 
-const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, route,indicePosizioneChatInArray, ordinaListaChat, token}) => {
+const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,contactUid, content,creationData, route,indicePosizioneChatInArray, ordinaListaChat, token}) => {
 
     //console.log("Chat ID di "+nome+" -->");
     //console.log(chatId);
-    console.log("Chat CONTENT-->");
-    console.log(creationData);
+    //console.log("Chat CONTENT-->");
+    //console.log(creationData);
 
     const [lastContent, setLastContent] = useState(content);
     const ascoltatoreUltimoMessaggio = useRef(null);
@@ -59,7 +59,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
     }
 
     function apriDettagliProfilo(){
-        navigation.navigate("Contact profile",{name: nome, mediaProfilo: media});
+        navigation.navigate("Contact profile",{informazioniProfiloUtente:informazioniPersonaliContatto, mediaProfilo: media});
     }
 
     const [uriProfileImage, setUriProfileImage] = useState(null) //useState(media.value.profileImageUrl=="" ? null : media.value.profileImageUrl);
@@ -82,11 +82,16 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
         }).start();
     }
   
+    useEffect(()=>{
+        isMounted.current == true;
+
+        return () =>{
+            isMounted.current = false;
+        }
+    },[])
     
 
     useEffect(()=>{
-
-        isMounted.current == true;
 
         async function ascoltaUltimoMessaggio(){
             try{
@@ -112,7 +117,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
                                     }
                                     */
                                     let lastMex = doc.data();
-                                    console.log(lastMex);
+                                    //console.log(lastMex);
                                     if(lastMex!=undefined){
                                         if(isMounted.current==true){
                                         console.log("ultima visibilità: "+lastMex.level_of_visibility);
@@ -138,7 +143,6 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
         return () =>{
             console.log("rimuovo ascoltatore ultimo messaggio");
             if(ascoltatoreUltimoMessaggio.current!=null) ascoltatoreUltimoMessaggio.current();
-            isMounted.current = false;
         }
     },[])
 
@@ -151,7 +155,8 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
                 .then((media)=>{
                     if(isMounted.current==true){
                         setMedia(media.data());
-                        setUriProfileImage(media.data().profileImageUrl);
+                        //può capitare che l'utente si elimini l'account e lasci qualche riferimento a noi (al 99% mai)
+                        setUriProfileImage((media.data()!=undefined && media.data()!=null)?media.data().profileImageUrl:null);
                     }
                 })
         }
@@ -176,7 +181,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
             {media!=null &&
             <Animated.View style={[styles.contenitoreMediaProfilo,{top:transitionAnimation}]}>
                 <TouchableOpacity onPress={()=>{apriDettagliProfilo()}} style={[styles.contenitoreImmagineProfilo,{borderColor:"white", borderTopWidth:1, borderBottomWidth:1, borderLeftWidth:1, borderRightWidth:1 }]}  >
-                        {uriProfileImage && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={[styles.immagineProfilo,{}]} onLoadEnd={()=>{transitionProfileImage(); opacityTransition();}} onError={(e)=>{setUriProfileImage(null); transitionProfileImage();opacityTransition();}}></Animated.Image>}
+                        {uriProfileImage && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={[styles.immagineProfilo,{}]} onLoadEnd={()=>{if(isMounted.current==true){transitionProfileImage(); opacityTransition();}}} onError={(e)=>{if(isMounted.current==true){ setUriProfileImage(null); transitionProfileImage();opacityTransition();}}}></Animated.Image>}
                         {!uriProfileImage && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
                 </TouchableOpacity>
                 <View style={[styles.ultimoMessaggio,{opacity:1}]}>
@@ -189,7 +194,7 @@ const ChatPreview =({navigation,chatId, nome,contactUid, content,creationData, r
                 {/* nome */}
                 <View style={styles.contenitoreNome}>
                     <View style={{padding:5}}>
-                        <Text style={[styles.nome,{color:(lastContent.lastMessage.value==null)?"white":"#52575D", textShadowColor:(lastContent.lastMessage.value==null)?'#444':'transparent',textShadowOffset:(lastContent.lastMessage.value==null)?{width: 1, height: 1}:{width:0, height:0},textShadowRadius:(lastContent.lastMessage.value==null)?1:0}]}>{nome}</Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nome,{color:(lastContent.lastMessage.value==null)?"white":"#52575D", textShadowColor:(lastContent.lastMessage.value==null)?'#444':'transparent',textShadowOffset:(lastContent.lastMessage.value==null)?{width: 1, height: 1}:{width:0, height:0},textShadowRadius:(lastContent.lastMessage.value==null)?1:0}]}>{nome}</Text>
                     </View>
                 {/* livello di visibilità */}
                 <Divider  />
@@ -309,7 +314,8 @@ const styles = StyleSheet.create({
         backgroundColor:"orange",
         padding:5,
         margin:5,
-        borderRadius:10
+        borderRadius:10,
+        alignSelf: 'flex-start'
     },
     livelloDiVisibilita:{
         fontFamily: "Raleway_400Regular",

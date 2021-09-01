@@ -191,7 +191,7 @@ let endDateToSearch = null;
     successivo aggiornamento.
     NB: se viene cambiato, cambiare anche l'omonimo in firestore.service.js
 */
-const MAX_CARD_INTO_LIST = 10;
+const MAX_CARD_INTO_LIST = 3;
 
 //variabili di appoggio
 var radius = 25;
@@ -356,8 +356,7 @@ export default function AroundYouComponent(props){
             if(action_range!=null){
                 if(action_range<=0.25) radius = 25;
                 else if (action_range<=0.50) radius = 250;
-                else if (action_range<=0.75) radius = 2500;
-                else radius = 400000;
+                else radius = 2500;
             }
             const radiusInM = radius*1000;
 
@@ -655,7 +654,7 @@ export default function AroundYouComponent(props){
                                     style={{position: 'absolute',bottom:0, width: IMAGE_WIDTH,height: IMAGE_HEIGHT*0.8, borderBottomLeftRadius: 16, borderBottomRightRadius:16}}
                                     />
                                 <View style={{position:"absolute", alignItems:"flex-start", justifyContent:"flex-end", height:IMAGE_HEIGHT, bottom:10, overflow:"hidden", width:IMAGE_WIDTH*0.7}}>
-                                    <Text style={styles.name}>{item.name},{item.age}</Text>
+                                    <View style={{flexDirection:"row", flexWrap:"wrap", marginBottom:5}}><Text style={styles.name}>{item.name}</Text><Text style={styles.name}> {item.age}</Text></View>
                                     {getCityRegionCountryView(item.location.city, item.location.region, item.location.country)}
                                     <Text style={[styles.name,{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:MosCeleste}]}>{item.gender_identity}</Text>
                                     <Text style={[styles.name,{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5}]}>{item.current_occupation}</Text>

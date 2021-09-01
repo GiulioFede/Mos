@@ -22,11 +22,11 @@ const DecisionScreen = forwardRef((props, ref) => {
      const current_statistics = useRef(null);
      const isMounted = useRef(false);
 
-     const {makeDecision,upgradeConversation, chatID, uidCurrentUser, contactUid, contactName,currentUserName, urlProfileImageContactUser,current_level_of_visibility,informazioniProfiloUtenteCorrente, myToken, contactToken} = props;
+     const {makeDecision,upgradeConversation, chatID, uidCurrentUser, contactUid, contactName,currentUserName, urlProfileImageContactUser,informazioniProfiloUtenteCorrente, myToken, contactToken} = props;
 
      useImperativeHandle(ref, () => ({
-        show(statistics){
-            local_show(statistics);
+        show(sonoAmministratore, miaScelta, suaScelta, livelloCorrenteDiVisibilità){
+            local_show(sonoAmministratore, miaScelta, suaScelta, livelloCorrenteDiVisibilità);
         },
         hide(){
             local_hide();
@@ -34,28 +34,134 @@ const DecisionScreen = forwardRef((props, ref) => {
         
      }));
 
-     function local_show(statistics){
-        console.log("apro decision screen");
-        let nomeCampoDiInteresse = uidCurrentUser+"_response";
-        console.log(statistics[nomeCampoDiInteresse]);
-        //se l'utente corrente ha già risposto allora lo metto in attesa
-        current_statistics.current = statistics;
-        if(statistics["statistics"][nomeCampoDiInteresse]!=null)
-            setQuestion(loadPhrase);
-        else {
-            if(current_level_of_visibility==0)    
-                setQuestion(questionPhrase1);
-            else
-                setQuestion(questionPhrase2);
+     const [currentVisibility, setCurrentVisibility] = useState(0);
+     const [myChoice, setMyChoice] = useState(null);
+     const [contactChoice, setContactChoise] = useState(null);
+     const [imAdministrator, setImAdministrator] = useState(false);
+
+     async function local_show(sonoAmministratore, miaScelta, suaScelta, livelloCorrenteDiVisibilità){
+
+        console.log("LOCAL SHOW CON");
+        console.log(sonoAmministratore+","+ miaScelta+","+ suaScelta+","+livelloCorrenteDiVisibilità);
+        //carico immagini di profilo
+        await inizializzaImmagineProfiloUtenteCorrente(livelloCorrenteDiVisibilità);
+
+        if(isMounted.current==true)
+            setCurrentVisibility(livelloCorrenteDiVisibilità);
+
+        if(isMounted.current==true){
+            setMyChoice(miaScelta);
+            setContactChoise(suaScelta);
+            setImAdministrator(sonoAmministratore);
         }
 
-         setShowDecisionScreen(true);
-         setRefresh(!refresh);
+        //se non sono amministratore
+        if(sonoAmministratore==false){
+            //se la mia scelta e la sua scelta sono a null mostro tutto
+            if(miaScelta==null && suaScelta==null){
+                //se siamo all'inizio
+                if(livelloCorrenteDiVisibilità==0){
+                    //mostro la scelta si e no e la frase 1
+                    if(isMounted.current == true)
+                        setQuestion(questionPhrase1);
+                }
+                else if (livelloCorrenteDiVisibilità==1){
+                    if(isMounted.current == true)
+                        setQuestion(questionPhrase2)
+                }
+            }
+            //se la mia scelta è diversa da null (true o false) e la sua è ancora a null
+            else if(miaScelta!=null && suaScelta==null){
+                //mi metto in attesa
+                if(isMounted.current == true)
+                    setQuestion(loadPhrase);
+            }
+        }
 
+        //se sono AMMINISTRATORE
+        if(sonoAmministratore==true){
+            //se sia la mia che quella del contatto sono a null 
+            if(miaScelta==null && suaScelta==null){
+                //se siamo all'inizio
+                if(livelloCorrenteDiVisibilità==0){
+                    //mostro la scelta si e no e la frase 1
+                    if(isMounted.current == true)
+                        setQuestion(questionPhrase1);
+                }
+                else if (livelloCorrenteDiVisibilità==1){
+                    if(isMounted.current == true)
+                        setQuestion(questionPhrase2)
+                }
+            }
+            //se la mia è null ma quella del contatto no, mostro tutto sempre
+            else if(miaScelta==null && suaScelta!=null){
+                //se siamo all'inizio
+                if(livelloCorrenteDiVisibilità==0){
+                    //mostro la scelta si e no e la frase 1
+                    if(isMounted.current == true)
+                        setQuestion(questionPhrase1);
+                }
+                else if (livelloCorrenteDiVisibilità==1){
+                    if(isMounted.current == true)
+                        setQuestion(questionPhrase2);
+                }
+            }
+            //se la mia scelta è !=null mentre quella del contatto è null mi metto in attesa
+            else if(miaScelta!=null && suaScelta==null){
+                if(isMounted.current == true)
+                    setQuestion(loadPhrase);
+            }
+            
+        }
+
+        if(isMounted.current == true){
+            setShowDecisionScreen(true);
+            setRefresh(!refresh);
+        }
      }
 
+     console.log("mostra decision screen?:"+showDecisionScreen+" con visibilità "+currentVisibility);
+
+     async function inizializzaImmagineProfiloUtenteCorrente(current_level_of_visibility){
+        try{
+            //carico l'immagine del profilo (tento di salvarla, ma se esiste già, mi viene ritornato l'uri locale)
+            console.log("il livello corrente di visibilità è: "+current_level_of_visibility);
+            console.log("token: "+contactToken+", "+myToken)
+            //console.log(informazioniProfiloUtenteCorrente);
+            let actual_remote_uri = "";
+            if(current_level_of_visibility==null || current_level_of_visibility==undefined || current_level_of_visibility==0)
+                actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_100"];
+            else if(current_level_of_visibility==1) actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_50"];
+                //else if(visibility=="75") actual_remote_uri = informazioniProfiloUtente.urlProfileImage["url_75"];
+            else if(current_level_of_visibility>=2) actual_remote_uri = informazioniProfiloUtenteCorrente.urlProfileImage["url_0"];
+            
+            //console.log("actual_remote_uri:"+actual_remote_uri);
+            if(actual_remote_uri==""){
+                if(isMounted.current==true){
+                    setUri1Error(true);
+                    return;
+                }
+            }
+            let local_uri = await local_storage.saveImageLocally(uidCurrentUser,actual_remote_uri);
+            console.log("Local uri:"+local_uri);
+            if(isMounted.current==true){
+                setUrlProfileImage(local_uri);
+            }
+        }catch(e){
+            if(isMounted.current==true)
+                setUrlProfileImage(actual_remote_uri);
+            console.log("eccezione galleria: "+e);
+            //se sopra ci sono degli errori stai tranquillo, comunqe actual_remote_uri è un uri valido per scaricare l'immagine 
+        }
+    }
+
      function local_hide(){
-        setShowDecisionScreen(false);
+        
+        if(isMounted.current==true){
+            setMyChoice(null);
+            setContactChoise(null);
+            setShowDecisionScreen(false);
+        }
      }
 
      const topTransitionAnimation = useRef(new Animated.Value(-larghezzaDevice*0.9*0.4*0.3)).current;
@@ -111,14 +217,17 @@ const DecisionScreen = forwardRef((props, ref) => {
            useNativeDriver: false
         }).start();
     }
-
-    console.log("STATISTICHE ATTUALI");
-    console.log(current_statistics.current);
-
+/*
+    console.log("STATISTICHE ATTUALI IN DECISION SCREEN");
+    console.log(current_statistics.current.statistics.number_of_messages);
+*/
     
     useEffect(()=>{
-        opacityTransition();
-        motionTransition();
+
+        if(isMounted.current==true){
+            opacityTransition();
+            motionTransition();
+        }
 
         async function inizializzaImmagineProfiloUtenteCorrente(){
             try{
@@ -154,28 +263,28 @@ const DecisionScreen = forwardRef((props, ref) => {
             }
         }
 
-        inizializzaImmagineProfiloUtenteCorrente().then((ris)=>{
-            console.log("...");
-        }).catch((err)=>{
-            console.log(err);
-        })
-
-        return () => isMounted.current = false;
+    
         
     },[refresh])
+
+    useEffect(()=>{
+        isMounted.current = true;
+
+        return () => isMounted.current = false;
+    },[])
+   
 
     //questa funzione viene chiamata quando si preme Si o No alla domanda "Vuoi renderti più visibile?"
     async function makeLocalDecision(response){
         //per sicurezza controllo che la visibilità non è stata già raggiunta
-        if(current_level_of_visibility<2){
+        if(currentVisibility<2){
             try{
                 //se non sono l'amministratore, una volta data la mia risposta dovrò attendere che l'amministratore riceva il documento con la mia response=true/false e la sua a true/false/null
-                if(current_statistics.current!=null){
                     console.log("Sono amministratore?");
-                    console.log(current_statistics.current["statistics"]["administrator"]);
+                    //console.log(current_statistics.current["statistics"]["administrator"]);
                     //quindi se non sono l'amministratore mi limito a dare la mia risposta
-                    if(current_statistics.current["statistics"]["administrator"] != uidCurrentUser){
-                        console.log("non sono amministratore?");
+                    if(!imAdministrator){
+                        console.log("non sono amministratore");
                         await makeDecision(response,chatID);
                     }
                     //se invece sono l'amministratore...
@@ -183,20 +292,20 @@ const DecisionScreen = forwardRef((props, ref) => {
                         console.log("sono amministratore");
                         //se la risposta del contatto è null
                         let nomeCampoDiInteresse = contactUid+"_response";
-                        if(current_statistics.current["statistics"][nomeCampoDiInteresse]==null){
+                        if(contactChoice==null){
                             console.log("la risposta del contatto non è data");
                             //mi limito a dare la mia e mi metto in attesa
                             await makeDecision(response,chatID);
-                            setQuestion(loadPhrase);
+                            //setQuestion(loadPhrase);
                         }
                         //se invece la risposta del contatto è true o false devo fare l'upgrade (o no) e resettare 
                         else {
-                            console.log("la risposta del contatto è già stata data ed è: "+current_statistics.current["statistics"][nomeCampoDiInteresse]);
+                            //console.log("la risposta del contatto è già stata data ed è: "+current_statistics.current["statistics"][nomeCampoDiInteresse]);
                             //se la risposta dell'utente è true e la mia è true faccio l'upgrade
-                            if(current_statistics.current["statistics"][nomeCampoDiInteresse]==true && response==true){
+                            if(contactChoice==true && response==true){
                                 //faccio upgrade
                                 console.log("essendo la riposta true, cosi come la mia, faccio l'upgrade");
-                                upgradeConversation(chatID,true,contactUid, contactName, currentUserName, contactToken, myToken, current_level_of_visibility)
+                                upgradeConversation(chatID,true,contactUid, contactName, currentUserName, contactToken, myToken, currentVisibility)
                                     .then((ris)=>{
                                         console.log("upgrade riuscito con successo");
                                         //invio due push notification
@@ -214,22 +323,22 @@ const DecisionScreen = forwardRef((props, ref) => {
                             else {
                                 console.log("eseguo reset");
                                 //resetto solo
-                                await upgradeConversation(chatID,false,contactUid,contactName, currentUserName, contactToken, myToken, current_level_of_visibility);
+                                await upgradeConversation(chatID,false,contactUid,contactName, currentUserName, contactToken, myToken, currentVisibility);
                                 console.log("'continua con lo stesso livello di visibilità' riuscito con successo");
                             }
                         }
 
-                    }
+                    
                     console.log("Decisione presa:"+response);
                 //disabilita bottoni (dovrei chiudere la schermata ma tanto la riaprirà subito il listener del documento modificato. Per evitare di lasciare la chat libera aspetto che sia lui a farlo, disabilitando intato i bottoni)
                 }
-                setQuestion(loadPhrase);
+                //setQuestion(loadPhrase);
             }catch(e){
                 console.log("Errore nel prendere la decisione:"+e);
             }
         }
     }
-
+ 
 
     if(showDecisionScreen==true){
         return (

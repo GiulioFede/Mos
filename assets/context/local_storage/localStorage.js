@@ -349,18 +349,18 @@ const saveImageLocally = async(userUid, url) => {
                 });
             //controllo che l'immagine non esiste già
             let hash_url = stringToHash(url);
-            console.log("controllo esistenza immagine hash "+hash_url+" in locale...");
+            //console.log("controllo esistenza immagine hash "+hash_url+" in locale...");
             let info = await FileSystem.getInfoAsync(FileSystem.documentDirectory + userUid+"/media/"+hash_url, {md5:false, size:false});
             //se non esiste, la salvo e ritorno l'uri locale
             if(info.exists==false){
-                        console.log("immagine non esistente in locale. La salvo...");
+                        //console.log("immagine non esistente in locale. La salvo...");
                         let new_image = await FileSystem.downloadAsync(url,FileSystem.documentDirectory + userUid+"/media/"+hash_url);
-                        console.log("salvata in "+new_image.uri);
+                        //console.log("salvata in "+new_image.uri);
                         resolve(new_image.uri);
             }
             //se invece esiste ritorna l'uri locale
             else {
-                console.log("immagine esistente in "+info.uri);
+                //console.log("immagine esistente in "+info.uri);
                 resolve(info.uri);
             }
         }catch(e){
@@ -872,6 +872,33 @@ const readPreference = async (currentUser, preferenceName) => {
                 }
             })
         }
+    
+        
+const deleteLocalStorage = async (userId) => {
+    return new Promise((resolve, reject) =>{
+        try{
+            let query = "SELECT tbl_name FROM sqlite_master s WHERE INSTR(tbl_name,'"+userId+"')>0 ";
+            db.transaction(
+                (tx)=>{
+                    tx.executeSql(
+                        query,
+                        [],
+                        //in caso di successo
+                        (tx,i)=>{console.log("lista tabelle");console.log(i);},
+                        //in caso di errore
+                        (tx,e)=>{console.log("errore durante l'eliminazione del local storage':"+e)}
+                    )
+                },
+                (e)=>{reject(e)},
+                (arg)=>{ console.log("trasazione eseguita con successo:"+arg);}
+            )
+        }catch(e){
+            throw e;
+        }
+    }) 
+
+}
+    
 
 
 export default local_storage = {
@@ -897,5 +924,6 @@ export default local_storage = {
     createNewIndexForTableForNotifications,
     getListOfNotifications,
     storeNewNotification,
-    updateNotificationState
+    updateNotificationState,
+    deleteLocalStorage
 }

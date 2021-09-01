@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React,{ useImperativeHandle, forwardRef, useState, useContext, useEffect} from "react";
+import React,{ useImperativeHandle, forwardRef, useState, useContext, useEffect, useRef} from "react";
 import { Dimensions,TouchableOpacity, View } from "react-native";
 import { Modal, Portal, Text, Button, Provider } from 'react-native-paper';
 import { AutenticazioneUtente } from "../../../../../../../context/firebase/autenticazione";
@@ -14,6 +14,8 @@ const IconaNotifiche = forwardRef((props, ref) => {
     const {user} = useContext(AutenticazioneUtente);
 
     const [notificationNumber, setNotificationNumber] = useState(0);
+
+    const isMounted = useRef(false);
     
      useImperativeHandle(ref, () => ({
        
@@ -35,18 +37,21 @@ const IconaNotifiche = forwardRef((props, ref) => {
          console.log("incremento numero notifiche:"+numeroNotifiche);
          numeroNotifiche = numeroNotifiche + 1;
          await localStorage.savePreference(user,"notification_number",numeroNotifiche.toString());
-         setNotificationNumber(numeroNotifiche);
+         if(isMounted.current==true)
+            setNotificationNumber(numeroNotifiche);
      }
 
      function local_reset_notification_number(){
          numeroNotifiche = 0;
-         setNotificationNumber(0);
+         if(isMounted.current==true)
+            setNotificationNumber(0);
      }
 
      async function local_decrement_notification_number(){
          numeroNotifiche = numeroNotifiche<=1?0:(numeroNotifiche-1); //per evitare (per qualche ragione) notifiche negative
          await localStorage.savePreference(user,"notification_number",numeroNotifiche.toString());
-         setNotificationNumber(numeroNotifiche);
+         if(isMounted.current==true)
+            setNotificationNumber(numeroNotifiche);
      }
 
      function getNumberOfNotifications(){
@@ -66,16 +71,24 @@ const IconaNotifiche = forwardRef((props, ref) => {
             let n = await AsyncStorage.getItem(user+"_notification_number");
             if(n==null){
                 numeroNotifiche = 0;
-                setNotificationNumber(0);
+                if(isMounted.current==true)
+                    setNotificationNumber(0);
             }else {
                 numeroNotifiche = parseInt(n);
-                setNotificationNumber(parseInt(n));
+                if(isMounted.current==true)
+                    setNotificationNumber(parseInt(n));
             }
         }
 
         init();
      },[])
     
+
+     useEffect(()=>{
+         isMounted.current = true;
+
+         return () => isMounted.current = false;
+     })
 
     return (
         <>

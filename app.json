@@ -4,9 +4,9 @@
     "slug": "Mos",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon/tinder.png",
+    "icon": "./assets/resources/images/logoMosaic.png",
     "splash": {
-      "image": "./assets/icon/tinder.png",
+      "image": "./assets/resources/images/logoMosaicSplash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -27,7 +27,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon/tinder.png",
+        "foregroundImage": "./assets/resources/images/logoMosaic.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.giuliofederico.Mos",

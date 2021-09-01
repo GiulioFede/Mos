@@ -17,6 +17,8 @@ import AgeRange from "./components/ageRange";
 import { getAgeFromTimestamp } from "../../context/utilities/functions.utilities";
 import { LocationAccuracy } from "expo-location";
 import ShowMe from "./components/showMeCheckBox";
+import Loading from "../HomeScreen/aroundYou/component/loading";
+import GenericDialog from "./components/genericDialog";
 
 
 let tmpKeywordArray = [];
@@ -24,11 +26,13 @@ let check = false;
 
 export default function InformazioniPersonali({ navigation }) {
 
-    var {user,informazioniProfiloUtente,setInformazioniProfiloUtente, informazioniAutenticazioneUtente, aggiornaEmail, inviaEmailDiVerifica,messaggioAuth, setMessaggioAuth,aggiornaDettagliProfiloUtente,logOut} = useContext(AutenticazioneUtente);
+    var {user,informazioniProfiloUtente,setInformazioniProfiloUtente, informazioniAutenticazioneUtente, aggiornaEmail, inviaEmailDiVerifica,messaggioAuth, setMessaggioAuth,aggiornaDettagliProfiloUtente,logOut,deleteUserAccount} = useContext(AutenticazioneUtente);
 
     const [isLoading, setIsLoading] = useState(false);
     //indica se ci è stato un errore globale 
     var erroreGlobale = false;
+
+    const isMounted = useRef(true);
 
     const scrollView = useRef();
 
@@ -56,6 +60,10 @@ export default function InformazioniPersonali({ navigation }) {
     const rangeEtaRef = useRef();
 
     const showMeRef = useRef();
+
+    const loadingRef = useRef();
+
+    const genericDialogRef = useRef();
 
     const [provaAlternativaGeocode, setProvaAlternativaGeocode] = useState(false);
     const [geocodeResponse, setGeocodeResponse] = useState(null); //3 stati: nullo, false (almeno una tra città, regione o paese non è stata calcolata), <valore> (contiene la stringa città,regione e paese)
@@ -641,34 +649,44 @@ function aggiornaPhoneNumber(){
     }
 
     async function tornaIndietro(){
+        //se sto caricando, non torno indietro
+        if(loadingRef.current.get_state()==true) return;
         await resetta();
         navigation.goBack();
     }
 
-    //all'inizio 
     useEffect(()=>{
-
-        console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        
+        isMounted.current = true;
 
         const backAction = () => {
             tornaIndietro();
             return true;
           };
-      
-          const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+        
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
-          //inizializzo elementi
-          setAuth((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]);
-          setNome(informazioniProfiloUtente.name);
-          setDescrizione(informazioniProfiloUtente.self_description);
-          //let dataDiNascitaTMP = new Date(informazioniProfiloUtente.date_of_birth);
-          console.log("setto data di nascita:"+informazioniProfiloUtente.date_of_birth);
-          setDataDiNascita(informazioniProfiloUtente.date_of_birth);
-          setIsLocationLoading("");
-          setIdentitaDiGenere(informazioniProfiloUtente.gender_identity);
-          setOrientamentoSessuale(informazioniProfiloUtente.gender_preference);
-      
-          return () => backHandler.remove();
+        return () => {
+            isMounted.current = false;
+            backHandler.remove();
+        }
+    },[])
+
+    //all'inizio 
+    useEffect(()=>{
+
+          if(isMounted.current == true){
+            //inizializzo elementi
+            setAuth((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]);
+            setNome(informazioniProfiloUtente.name);
+            setDescrizione(informazioniProfiloUtente.self_description);
+            //let dataDiNascitaTMP = new Date(informazioniProfiloUtente.date_of_birth);
+            console.log("setto data di nascita:"+informazioniProfiloUtente.date_of_birth);
+            setDataDiNascita(informazioniProfiloUtente.date_of_birth);
+            setIsLocationLoading("");
+            setIdentitaDiGenere(informazioniProfiloUtente.gender_identity);
+            setOrientamentoSessuale(informazioniProfiloUtente.gender_preference);
+          }
 
     },[informazioniProfiloUtente, informazioniAutenticazioneUtente]) //metto come dipendenza l'informazione del profilo utente cosi da richiamare useEffect ogni volta che un nuovo utente (o anche il vecchio che riaccede di nuovo) ricarico gli elementi nuovi
 
@@ -677,6 +695,23 @@ function aggiornaPhoneNumber(){
         let dataDiNascitaTMP = new Date(dataDiNascita.seconds*1000);
         console.log("ritorno di "+dataDiNascita+" il valore: "+dataDiNascitaTMP.getDate()+"/"+(dataDiNascitaTMP.getMonth()+1)+"/"+dataDiNascitaTMP.getFullYear());
         return dataDiNascitaTMP.getDate()+"/"+(dataDiNascitaTMP.getMonth()+1)+"/"+dataDiNascitaTMP.getFullYear()
+    }
+
+    async function eliminaAccount(){
+        try{
+            console.log("elimino account...");
+            scrollView.current.scrollTo({y: 0});
+            loadingRef.current.on();
+            loadingRef.current.set_message("Eliminazione account in corso...\n Perfavore attendi il completamento dell'operazione prima di chiudere l'applicazione.");
+            //await deleteUserAccount(informazioniProfiloUtente.name);
+            localStorage.deleteLocalStorage(user);
+            loadingRef.current.off();
+            navigation.goBack();
+            //navigation.navigate("LoginScreen");
+        }catch(e){
+            console.log("errore durante eliminazione account...:"+e);
+            setSnackMessage("Si è verificato un errore durante l'eliminazione dell'account. Riprova più tardi.");
+        }
     }
 
         //carico font
@@ -965,7 +1000,7 @@ function aggiornaPhoneNumber(){
                         <View style={{ alignSelf:"center"}}>
                             <AgeRange ref={rangeEtaRef} uid={user} dateOfBirth={informazioniProfiloUtente.date_of_birth} modificaPreferenzaRangeDiEta={modificaPreferenzaRangeDiEta} />
                         </View>
-                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Nella sezione "Attorno a te" ti mostreremo il genere che qui hai scelto come quello da cui maggiormente sei attratto.</Text>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Il divario tra massimo e minimo deve essere di massimo 10. Nella sezione "Attorno a te" ti mostreremo solo coloro che rintrano in questa fascia d'età.</Text>
 
                         {/*MOSTRAMI SU MOSAIC*/}
                         <Text style={[styles.titoloCampo,{marginTop:20}]}>Mostrami su Mosaic</Text>
@@ -975,7 +1010,16 @@ function aggiornaPhoneNumber(){
                         </View>
                         <Text style={[styles.sottoCampo,{marginVertical:5}]}>Se decidi di non essere mostrato su Mosaic allora la tua scheda non sarà visibile a nessuno nella sezione "Attorno a te". Anche tu non potrai vedere le schede di nessun altro utente.</Text>
 
-
+                        {/*ELIMINA ACCOUNT*/}
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Elimina account</Text>
+                        <View style={{ padding:Dimensions.get("window").height*0.01}}>
+                            <TouchableOpacity onPress={()=>{genericDialogRef.current.open_dialog("Sei sicuro di volere eliminare definitivamente il tuo account?", "Questa azione è irreversibile.")}}>
+                            <View style={{backgroundColor:"red", padding:5, borderRadius:5 }}><Text style={[styles.campo,{color:"white",paddingLeft:0}]}>Elimina</Text></View>
+                            </TouchableOpacity>
+                        </View>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Questa azione è irreversibile.</Text>
+                        <Loading ref={loadingRef} />
+                        <GenericDialog ref={genericDialogRef}  yesAction={eliminaAccount} />
 
                     {/*BOTTONE PER SALVARE*/}
                     <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10,marginTop:20, textAlign:"center"}]} onPress={salvaDettagliUtente}><Text style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>SALVA DETTAGLI</Text></TouchableOpacity>

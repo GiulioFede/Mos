@@ -88,7 +88,7 @@ const AgeRange = forwardRef((props, ref) => {
                             setError1(false);
                             setMassima((parseInt(minima)+5).toString())
                             setError2(false);
-                            if(parseInt(minima)>=18 && parseInt(minima)<100 && parseInt(massima)>=parseInt(minima) && parseInt(massima)<=parseInt(minima)+10 && error1==false && error2==false)
+                            if(parseInt(minima)>=18 && parseInt(minima)<100 && parseInt(massima)>=parseInt(minima) && parseInt(massima)<=parseInt(minima)+9 && error1==false && error2==false)
                                 modificaPreferenzaRangeDiEta(minima, massima);
                         }
                     }}
@@ -99,7 +99,7 @@ const AgeRange = forwardRef((props, ref) => {
                             setError1(false);
                             setMassima((parseInt(minima)+5).toString())
                             setError2(false);
-                            if(parseInt(minima)>=18 && parseInt(minima)<100 && parseInt(massima)>=parseInt(minima) && parseInt(massima)<=parseInt(minima)+10 && error1==false && error2==false)
+                            if(parseInt(minima)>=18 && parseInt(minima)<100 && parseInt(massima)>=parseInt(minima) && parseInt(massima)<=parseInt(minima)+9 && error1==false && error2==false)
                                 modificaPreferenzaRangeDiEta(minima, massima);
                         }
                     }}
@@ -122,19 +122,19 @@ const AgeRange = forwardRef((props, ref) => {
                     style={error2==false?styles.active:styles.error}
                     onFocus={()=>{console.log("focus")}}
                     onBlur={()=>{
-                        if(parseInt(massima)<18 || parseInt(massima)>=100 || (parseInt(massima)<parseInt(minima) || parseInt(massima)>(parseInt(minima)+10))){ //100 per sicurezza anche se la maxLenght=2 lo rende impossibile come evento
+                        if(parseInt(massima)<18 || parseInt(massima)>=100 || (parseInt(massima)<parseInt(minima) || parseInt(massima)>(parseInt(minima)+9))){ //100 per sicurezza anche se la maxLenght=2 lo rende impossibile come evento
                             setError2(true);
                         }else
                             setError2(false);
-                        if(parseInt(minima)>=18 && parseInt(minima)<100 && parseInt(massima)>=parseInt(minima) && parseInt(massima)<=parseInt(minima)+10 && error1==false && error2==false)
+                        if(parseInt(minima)>=18 && parseInt(minima)<100 && parseInt(massima)>=parseInt(minima) && parseInt(massima)<=parseInt(minima)+9 && error1==false && error2==false)
                             modificaPreferenzaRangeDiEta(minima, massima);
                     }}
                     onSubmitEditing={()=>{
-                        if(parseInt(massima)<18 || parseInt(massima)>=100 || (parseInt(massima)<parseInt(minima) || parseInt(massima)>(parseInt(minima)+10))){ //100 per sicurezza anche se la maxLenght=2 lo rende impossibile come evento
+                        if(parseInt(massima)<18 || parseInt(massima)>=100 || (parseInt(massima)<parseInt(minima) || parseInt(massima)>(parseInt(minima)+9))){ //100 per sicurezza anche se la maxLenght=2 lo rende impossibile come evento
                             setError2(true);
                         }else
                             setError2(false);
-                        if(parseInt(minima)>=18 && parseInt(minima)<100 && parseInt(massima)>=parseInt(minima) && parseInt(massima)<=parseInt(minima)+10 && error1==false && error2==false)
+                        if(parseInt(minima)>=18 && parseInt(minima)<100 && parseInt(massima)>=parseInt(minima) && parseInt(massima)<=parseInt(minima)+9 && error1==false && error2==false)
                             modificaPreferenzaRangeDiEta(minima, massima);
                     }}
                     underlineColorAndroid='transparent'

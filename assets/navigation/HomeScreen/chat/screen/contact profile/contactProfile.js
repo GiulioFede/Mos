@@ -1,6 +1,6 @@
 import React, {useState, useContext, useEffect, useRef} from 'react';
-import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions, Platform, FlatList} from 'react-native';
-import {MaterialIcons, Ionicons} from "@expo/vector-icons";
+import {View, Text, StyleSheet,TouchableOpacity, ScrollView, Image, Dimensions, Platform, BackHandler} from 'react-native';
+import {MaterialIcons, Entypo,Ionicons} from "@expo/vector-icons";;
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button } from 'react-native-paper';
@@ -9,7 +9,8 @@ import GalleriaImmagini from './galleriaImmagini';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { AutenticazioneUtente } from '../../../../../context/firebase/autenticazione';
 import { MosCeleste, MosViola } from '../../../../../resources/colors';
-import {navbarHeight, fontSizeTitolo, altezzaBarraScreen, larghezzaDevice, fontSizeTitoloBarra, altezzaMenuNavigazione } from '../../../../../context/variabili_globali/variabiliGlobali';
+import {navbarHeight, fontSizeTitolo, altezzaBarraScreen, larghezzaDevice, fontSizeTitoloBarra, altezzaMenuNavigazione, fontSizeSottoTitolo } from '../../../../../context/variabili_globali/variabiliGlobali';
+import SliderDetails from '../../../profile/screen/component/sliderDetails';
 
 /*
     MISURE
@@ -32,11 +33,56 @@ const dimensioneFotoGalleria = (larghezzaSchermo/2>altezzaSezioneGalleria) ? (al
 */
 export default function ContactProfile({navigation, route}){
 
-    const {mediaProfilo, name} = route.params;
+    const {mediaProfilo, informazioniProfiloUtente} = route.params;
     console.log(mediaProfilo);
-    console.log(name);
+    console.log(informazioniProfiloUtente);
 
     const [uriProfileImage, setUriProfileImage] = useState(mediaProfilo.profileImageUrl=="" ? null : mediaProfilo.profileImageUrl);
+
+    const [dettagli, setDettagli] = useState([]);
+
+    function inizializzaDettagli(){
+        console.log("inizializzo dettali usando");
+        console.log(informazioniProfiloUtente);
+
+        let dettagliTMP = [];
+        //dettagli posizione
+        dettagliTMP.push({
+            section: "location",
+            city: informazioniProfiloUtente.location.city,
+            region: informazioniProfiloUtente.location.region,
+            country: informazioniProfiloUtente.location.country
+        });
+        //dettagli genere
+        dettagliTMP.push({
+            section: "sex and gender",
+            sex: informazioniProfiloUtente.biological_sex,
+            gender_identity: informazioniProfiloUtente.gender_identity,
+            gender_preference: informazioniProfiloUtente.gender_preference
+        });
+        //dettagli occupazione e descrizione
+        dettagliTMP.push({
+            section: "occupation and decription",
+            occupation: informazioniProfiloUtente.current_occupation,
+            description: informazioniProfiloUtente.self_description,
+        });
+        //dettagli hobby interessi e passionioni
+        dettagliTMP.push({
+            section: "hobbies interests and passions",
+            hobbies_interests_and_passions: informazioniProfiloUtente.hobbies_interests_and_passions
+        });
+        
+        setDettagli([...dettagliTMP]);
+    }
+
+    useEffect(()=>{
+        const bh = BackHandler.addEventListener('hardwareBackPress',tornaIndietro);
+
+        inizializzaDettagli();
+        return () => {
+            BackHandler.removeEventListener('hardwareBackPress', tornaIndietro);
+        }
+    },[])
 
     //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
@@ -46,64 +92,69 @@ export default function ContactProfile({navigation, route}){
     
 
     function tornaIndietro(){
+        console.log("torno indietro");
         navigation.navigate("Chat");
     }
    
     return (
-        <>
-            <View style={styles.container}>
-                {/* BARRA SUPERIORE */}
-                <View style={styles.barraSuperiore}>
-                    <TouchableOpacity onPress={tornaIndietro} style={{position:"absolute",left:0,zIndex:10, paddingLeft:Dimensions.get("window").width*0.03}}>
-                            <Ionicons name="chevron-back" size={fontSizeTitoloBarra} color="#52575D" />
-                    </TouchableOpacity>
-                    <Text style={styles.titolo}>{name}</Text>
-                </View>
-        
-                <View style={{ flex: 1, justifyContent: 'flex-start'}}>
-                            
-                            {/* IMMAGINE PROFILO */}
-                            <View style={styles.contenitoreMediaProfilo}>
-                                {/* immagine */}
-                                <View style={styles.contenitoreImmagineProfilo}>
-                                    {uriProfileImage && <Image source={{uri: uriProfileImage}} resizeMode="cover"  style={styles.immagineProfilo}
-                                                            onError={()=>{setUriProfileImage(null)}} />}
-                                    {!uriProfileImage && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
-                                </View>
+            <>
+            {/* BARRA SUPERIORE */}
+            <View style={styles.barraSuperiore}>
+                <TouchableOpacity onPress={tornaIndietro} style={{position:"absolute",left:0,zIndex:10, paddingLeft:Dimensions.get("window").width*0.03}}>
+                    <Ionicons name="chevron-back" size={fontSizeTitoloBarra} color="#52575D" />
+                </TouchableOpacity>
+                <Text style={styles.titolo}>Profilo</Text>
+                
+            </View>
+            <ScrollView horizontal={false} style={{backgroundColor:"#fff"}}>
+
+            <View style={{ flex: 1, justifyContent: 'flex-start', width:larghezzaDevice}}>
+                    <View style={{backgroundColor:"#fff"}}>
+                    {/* IMMAGINE PROFILO */}
+                    <View style={styles.contenitoreMediaProfilo} >
+                        {/* immagine */}
+                        <View style={styles.contenitoreImmagineProfilo}>
+                            <ActivityIndicator animating={mediaProfilo.profileImageUrl!="null"} size={fontSizeTitoloBarra} color={MosCeleste} style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center'}}/>
+                            <Image source={{uri:mediaProfilo.profileImageUrl}} resizeMode="cover"  style={styles.immagineProfilo}/>
                             </View>
-        
-                            { 
-                            <View style = {styles.areaDettagliUtente}>
-                                <Text style={styles.nome}>{name}</Text>
-                            </View>
-                            }
-        
-                        {/*SEZIONE DELLA GALLERIA */}  
-                            <View style={styles.sezioneGalleria}>
-        
-                                {/* GALLERIA 
-                                    - galleria: array contenente i nomi delle immagini di galleria
-                                */}
-        
-                                {<GalleriaImmagini galleryUrls={mediaProfilo.gallery} />}
-                                
-                            </View>
-        
-                </View>
-            </View>     
-        </>
-        )
+                    </View>
+
+                    {/* NOME */}
+                    <View style = {styles.areaDettagliUtente}>
+                        <Text style={styles.nome}>{informazioniProfiloUtente.name.charAt(0).toUpperCase()+informazioniProfiloUtente.name.slice(1)}</Text>
+                        <Entypo name="dot-single" size={24} color="#52575D" />
+                        <Text style={styles.age}>{informazioniProfiloUtente.age}</Text>
+                    </View>
+                    <SliderDetails dettagli={dettagli} />
+
+                    </View>
+                    <View style={{backgroundColor:"#fff"}}>
+                    
+                {/*SEZIONE DELLA GALLERIA */}  
+                    <View style={styles.sezioneGalleria}>
+
+                        {/* GALLERIA */}
+
+                        <GalleriaImmagini galleryUrls={mediaProfilo.gallery} />
+
+                    </View>
+                    </View>
+            </View>
+
+                </ScrollView>
+            </>
+    )
 }
 
 
 const styles = StyleSheet.create({
     container: {
-      backgroundColor:"#fff",
+      //backgroundColor:"#fff",
       height: Dimensions.get("window").height,
       flex:1
     },
     titolo:{
-        fontSize:fontSizeTitoloBarra,
+        fontSize:fontSizeTitoloBarra*0.8,
         position:"absolute",
         fontFamily: "Raleway_400Regular",
         color: "#52575D",
@@ -116,13 +167,37 @@ const styles = StyleSheet.create({
         height:altezzaBarraScreen,
         justifyContent:"center",
         paddingTop:24,
-        borderBottomColor:"#e6e6e6",
-        borderBottomWidth:0.7,
+        backgroundColor:"#fff"
+        //borderBottomColor:"#e6e6e6",
+        //borderBottomWidth:0.7,
     },
     nome:{
         fontFamily: "Raleway_200ExtraLight",
         color: "#52575D",
-        fontSize:fontSizeTitolo
+        fontSize:fontSizeTitolo*0.7
+    },
+    nomeGrassetto:{
+        fontFamily: "Raleway_400Regular",
+        color: "#52575D",
+        fontSize:fontSizeTitolo*0.7
+    },
+    age:{
+        fontFamily: "Raleway_200ExtraLight",
+        color: "#52575D",
+        fontSize:fontSizeTitolo*0.6
+    },
+    areaSessualita:{
+        backgroundColor:"rgba(247, 247, 247,0.5)"
+    },
+    areaDescrizione:{
+        textAlign:"center",
+        marginBottom:20
+    },
+    descrizioneTesto: {
+        fontFamily: "Raleway_200ExtraLight",
+        color: "#52575D",
+        fontSize:fontSizeSottoTitolo*0.7,
+        textAlign:"center"
     },
     immagineProfilo: {
         flex:1,
@@ -148,7 +223,8 @@ const styles = StyleSheet.create({
         height: altezzaSezioneImmagineProfilo,
         borderRadius: altezzaSezioneImmagineProfilo/2,
         overflow: "hidden",
-        backgroundColor: '#52575D',
+        backgroundColor: '#fff',
+        justifyContent:"center",
         ...Platform.select({
             android: {
                 elevation: 4
@@ -196,13 +272,25 @@ const styles = StyleSheet.create({
         width:larghezzaSchermo,
         height: altezzaDettagliUtenti, //area dettagli utenti
         justifyContent:"center",
-        alignItems:"center"
+        alignItems:"center",
+        textAlignVertical:"center",
+        flexDirection:"row"
+    },
+    galleryTitle:{
+        fontSize:fontSizeTitoloBarra,
+        fontFamily: "Raleway_400Regular",
+        color: "#52575D",
+        left:20,
+        top:20
+
     },
     sezioneGalleria: {
         width:larghezzaSchermo,
-        height:altezzaSezioneGalleria,  //sezione galleria
-        justifyContent: 'center',
-        alignItems:"center",
+        backgroundColor:"#fff",
+        marginTop:30
+        //height:altezzaSezioneGalleria,  //sezione galleria
+        //justifyContent: 'center',
+        //alignItems:"center"
     },
     immagineGalleria: {
         flex:1,
@@ -223,8 +311,8 @@ const styles = StyleSheet.create({
     },
     bottoneAggiungiFoto: {
         position: 'absolute',
-        right: larghezzaSchermo*0.05,
-        bottom:altezzaSezioneGalleria*0.05,
+        right: 15,
+        bottom:15,
         backgroundColor:"white",
         ...Platform.select({
             android: {
