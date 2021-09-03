@@ -275,8 +275,9 @@ const DecisionScreen = forwardRef((props, ref) => {
                                 //faccio upgrade
                                 console.log("essendo la riposta true, cosi come la mia, faccio l'upgrade");
                                 upgradeConversation(chatID,true,contactUid, contactName, currentUserName, contactToken, myToken, currentVisibility)
-                                    .then((ris)=>{
+                                    .then(async(ris)=>{
                                         console.log("upgrade riuscito con successo");
+                                        //await notifyUpgrade((currentVisibility==0)?"upgrade_1":"upgrade_2");
                                         //invio due push notification
                                         //console.log("invio push notification a "+contactName+" con token "+contactToken+" e a me,"+currentUserName+", con token "+myToken);
                                         //sendPushNotification(contactToken, "Tu e "+currentUserName+" siete passati al livello successivo!","Congratulazioni, siete al livello "+current_level_of_visibility,{});

@@ -7,8 +7,9 @@ import { MosCeleste } from "../../../../../../resources/colors";
 import MessageModel from "./messageModel";
 import AudioModel from "./audioModel";
 import { RowsOfMessagesToUpdate } from "../../context/chatContext";
+import UpgradeMessageModel from "./upgradeMessageModel";
 
-const ListaMessaggi = ({lista_messaggi, refFlatList, caricaSuccessivi10Messaggi, getUtenteCorrente, setSnackBarMessage, contactUid, ultimaData}) => {
+const ListaMessaggi = ({lista_messaggi, refFlatList, caricaSuccessivi10Messaggi, getUtenteCorrente, setSnackBarMessage, contactUid, ultimaData, contactName}) => {
 
     
     const {updates} = useContext(RowsOfMessagesToUpdate);
@@ -63,6 +64,14 @@ const ListaMessaggi = ({lista_messaggi, refFlatList, caricaSuccessivi10Messaggi,
                             return (
                                     <AudioModel messaggio = {item} utenteCorrente={getUtenteCorrente()} mostraMessaggioErrore={setSnackBarMessage} mostraNuovaData={true}/>
                             )
+                        else if(item.type=="upgrade_1")
+                            return (
+                                    <UpgradeMessageModel contactName={contactName} type="upgrade_1"  mostraNuovaData={true}/>
+                            )
+                        else if(item.type=="upgrade_2")
+                            return (
+                                    <UpgradeMessageModel contactName={contactName} type="upgrade_2"  mostraNuovaData={true}/>
+                            )
                     }
                     else {
                     //console.log("fuori");
@@ -73,6 +82,14 @@ const ListaMessaggi = ({lista_messaggi, refFlatList, caricaSuccessivi10Messaggi,
                         else if(item.type=="audio")
                             return (
                                     <AudioModel messaggio = {item} utenteCorrente={getUtenteCorrente()} mostraMessaggioErrore={setSnackBarMessage} mostraNuovaData={false}/>
+                            )
+                        else if(item.type=="upgrade_1")
+                            return (
+                                    <UpgradeMessageModel contactName={contactName} type="upgrade_1"  mostraNuovaData={false}/>
+                            )
+                        else if(item.type=="upgrade_2")
+                            return (
+                                    <UpgradeMessageModel contactName={contactName} type="upgrade_2"  mostraNuovaData={false}/>
                             )
                     }
                 }}

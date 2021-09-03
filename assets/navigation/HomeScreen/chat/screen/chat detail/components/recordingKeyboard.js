@@ -30,7 +30,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
     const {addNewUpdate} = useContext(RowsOfMessagesToUpdate);
 
     //prelevo metodi
-    const {setOpenRecordingKeyboard,isOpenRecordingKeyboardOpened, setSnackBarMessage, ultimaRow, getUtenteCorrente, chat,setChat, refFlatList,chatId, inviaNuovoMessaggio, lastMessage, contactUid, isMounted, lastStatistic, arrayOfRowsToUpdateState, setRefresh, refresh} = props;
+    const {setOpenRecordingKeyboard,isOpenRecordingKeyboardOpened, setSnackBarMessage, ultimaRow, getUtenteCorrente, chat,setChat, refFlatList,chatId, inviaNuovoMessaggio, lastMessage, contactUid, isMounted, lastStatistic, arrayOfRowsToUpdateState, setRefresh, refresh, getCurrentVisibility} = props;
     //indica la durata attuale dell'audio mentre lo si registra
     const [durataAudio, setDurataAudio] = useState(0);
     //contiene info sul recording
@@ -233,7 +233,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                    ultimaRow.current = ultimaRow.current + 1;
                    const nuovaChiave = ultimaRow.current;
                    //aggiugo alla chat
-                   let local_uri = await local_storage.saveAudioIntoFolder(getUtenteCorrente(),contactUid,nuovaChiave, getUtenteCorrente(),new Date(), uri);
+                   let local_uri = await local_storage.saveAudioIntoFolder(getUtenteCorrente(),contactUid,nuovaChiave, getUtenteCorrente(),new Date(), uri, getCurrentVisibility());
                    //creo nuovo messaggio    
                    let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:new Date().getTime(), type:"audio",content:local_uri, state:"in-progress"}
                    let chatTmp = [newMex,...chat];
@@ -245,7 +245,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                    setOpenRecordingKeyboard(false);
                    isOpenRecordingKeyboardOpened.current = false;
                    //salvo audio in remoto, ma uso approccio asincrono per liberare la UI. Se avviene qualche errore tolgo quello appena inserito
-                   inviaNuovoMessaggio(chatId,contactUid,"audio", uri, lastStatistic.lastMessage.author,
+                   inviaNuovoMessaggio(chatId,contactUid,"audio", uri,(lastStatistic=="MAXIMUM_VISIBILITY_ACHIVED")?"MAXIMUM_VISIBILITY_ACHIVED":lastStatistic.lastMessage.author,
                        async(ris) =>{
                         try{
                            //l'audio è stato salvato con successo, lo lascio cosi com'è

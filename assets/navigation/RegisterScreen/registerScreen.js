@@ -5,9 +5,10 @@ import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { MosCeleste, MosViola } from "../../resources/colors";
 import { Ionicons } from '@expo/vector-icons';
-import { ColoreBarraDiStato, fontSizeTitoloPiccolo,fontSizeSottoTitolo, iconSize, fontSizeCampi, larghezzaDevice } from "../../context/variabili_globali/variabiliGlobali";
+import { ColoreBarraDiStato, fontSizeTitoloPiccolo,fontSizeSottoTitolo, iconSize, fontSizeCampi, larghezzaDevice, altezzaSchermoInterno } from "../../context/variabili_globali/variabiliGlobali";
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 import {LinearGradient} from "expo-linear-gradient";
+import LottieView from 'lottie-react-native';
 
 export default function RegisterScreen({navigation}){
 
@@ -148,6 +149,7 @@ export default function RegisterScreen({navigation}){
                                     {snackmessage}
              </Snackbar>
   
+             <KeyboardAvoidingView style={{ flex: 1, flexDirection: 'column',justifyContent: 'center',}} behavior="padding" enabled   keyboardVerticalOffset={50}>
                  <ScrollView showsVerticalScrollIndicator={false}>
 
                     <View style={{alignItems:"center", justifyContent:"center"}}> 
@@ -158,24 +160,13 @@ export default function RegisterScreen({navigation}){
                                 <View style={styles.contenitoreImmagine}>
                                     <Image source={require("../../resources/images/logoMosaic.png")} style={{width:larghezzaDevice*0.4, height:larghezzaDevice*0.4}} ></Image>
                                 </View>
-
-                                <LinearGradient
-                                colors={['transparent','rgba(27, 99, 253,0.2)',MosCeleste]}
-                                style={{
-                                    width:Dimensions.get("window").width,
-                                    height: Dimensions.get("window").height*0.3,
-                                    position: 'absolute',
-                                    alignSelf:"center",
-                                    bottom:0,
-                                    
-                                }}/>
-                            
+                                <LottieView autoPlay loop={true} source={require('../../resources/lottie/upgradeAnimation.json')} resizeMode="cover" />
                             </View>
 
-                            <View style={{width:Dimensions.get("window").width,flexGrow:1, backgroundColor:MosCeleste}}>
+                            <View style={{width:Dimensions.get("window").width,flexGrow:1, backgroundColor:"#fff"}}>
                                 <View style={{alignItems:"center", justifyContent:"center", paddingBottom:10}}>
-                                    <Text style={styles.titolo}>Benvenuto su Mosaic</Text>
-                                    <Text style={styles.testo}>Prima la mente, poi il corpo</Text>
+                                    <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.titolo}>Benvenuto su Mosaic</Text>
+                                    <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.testo}>Prima la mente, poi il corpo</Text>
                                 </View>
 
                                 {/*EMAIL*/}
@@ -183,36 +174,38 @@ export default function RegisterScreen({navigation}){
                                     <TextInput
                                     label="Email"
                                     value={email}
+                                    placeholder="email"
                                     onChangeText={text => setEmail(text.trim())}
                                     maxLength={30}
                                     style={{width:Dimensions.get("window").width*0.8, backgroundColor:"transparent",fontSize:fontSizeCampi}}
-                                    theme={{ colors: { text: "white", primary:"white" } }}
-                                    selectionColor={"white"} 
-                                    underlineColor={"white"}                  
+                                    theme={{ colors: { text: MosCeleste, primary:MosCeleste } }}
+                                    selectionColor={MosCeleste} 
+                                    underlineColor={MosCeleste}                  
                                     mode="flat"
                                     /> 
                                 {/*PASSWORD*/}
                                 <TextInput
                                     label="Password"
                                     value={password}
+                                    placeholder="password"
                                     secureTextEntry={true} //per la password-->non fa vedere cosa scriviamo
                                     onChangeText={text => setPassword(text.trim())} //elimino gli eventuali spazi inseriti all'inizio, durante e alla fine
                                     style={{width:Dimensions.get("window").width*0.8, backgroundColor:"transparent",fontSize:fontSizeCampi,color:"white"}} //backgroundColor indica lo sfondo dell'area di input
-                                    theme={{ colors: { text: "white", primary:"white" } }} //text indica il colore del valore dentro   primary il colore del titolo (solo quando è a focus)
-                                    underlineColor={"white"} //colore della linea di sotto 
-                                    selectionColor={"white"} //colore della barra che indica il prossimo carattere da inserire 
+                                    theme={{ colors: { text: MosCeleste, primary:MosCeleste } }} //text indica il colore del valore dentro   primary il colore del titolo (solo quando è a focus)
+                                    underlineColor={MosCeleste} //colore della linea di sotto 
+                                    selectionColor={MosCeleste} //colore della barra che indica il prossimo carattere da inserire 
                                     maxLength={30}
                                     mode="flat"
                                     />
                             
                                 {/*ERRORE*/}
                                 <View style={{alignItems:"flex-start", paddingVertical:10, justifyContent:"flex-start", width:"80%"}}>
-                                    <Text style={[styles.errore,{color:"white"}]}>{errore}</Text>
+                                    <Text style={[styles.errore,{color:"red"}]}>{errore}</Text>
                                 </View>
 
                             {/*BOTTONE REGISTRATI CON EMAIL/PASSWORD*/}
                                 <FAB
-                                    style={{backgroundColor:"white", width:Dimensions.get("window").width*0.7}}
+                                    style={{backgroundColor:"white", width:Dimensions.get("window").width*0.7, marginBottom:30}}
                                     small
                                     color={MosCeleste}
                                     icon="email-lock"
@@ -222,10 +215,11 @@ export default function RegisterScreen({navigation}){
                                     label="REGISTRATI"
                                 /> 
                                 </View>                             
-                                </View>
+                            </View>
 
                             </View>
                         </ScrollView>
+                    </KeyboardAvoidingView>
             </View>
 
         )
@@ -233,9 +227,8 @@ export default function RegisterScreen({navigation}){
 
 const styles = StyleSheet.create({
     container: {
-      flex:1,
-      height: Dimensions.get("window").height,
-      backgroundColor:MosCeleste,
+      height: altezzaSchermoInterno,
+      backgroundColor:"#fff"
     },
     barraSuperiore:{
         flexDirection:"row",
@@ -249,12 +242,12 @@ const styles = StyleSheet.create({
     titolo:{
         fontSize:fontSizeTitoloPiccolo,
         fontFamily: "Raleway_400Regular",
-        color: "white",
+        color: MosCeleste,
     },
     testo:{
         fontSize:fontSizeSottoTitolo*0.8,
         fontFamily: "Raleway_200ExtraLight",
-        color: "white",
+        color: "#52575D",
     },
     registrati:{
         fontSize:20,

@@ -127,7 +127,7 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
                                         if(isMounted.current==true){
                                         console.log("ultima visibilità con "+nome+": "+lastMex.level_of_visibility+", corrente visibilità:"+ultimaVisibilità);
                                         //se la visibilità è cambiata rispetto a prima --> fai apparire i fireworks
-                                        if(lastMex.level_of_visibility>ultimaVisibilità && lastMex.level_of_visibility>0)
+                                        if(lastMex.level_of_visibility>ultimaVisibilità && lastMex.level_of_visibility>0 && ultimaVisibilità>=0)
                                             setFireworksVisibility(true);
                                         else
                                             setFireworksVisibility(false);
@@ -140,7 +140,7 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
                                         console.log(lastMex.statistics[contactResponse]);
                                         console.log(lastMex.statistics[myResponse]);
                                         console.log(lastMex.statistics["number_of_messages"]);
-                                        if(lastMex.statistics[contactResponse]!=null && lastMex.statistics[myResponse]==null && lastMex.statistics["number_of_messages"]>=THRESHOLD)
+                                        if(lastMex!=undefined && lastMex.statistics[contactResponse]!=null && lastMex.statistics[myResponse]==null && lastMex.statistics["number_of_messages"]>=THRESHOLD)
                                             setRadarVisibility(true);
                                         else
                                             setRadarVisibility(false);

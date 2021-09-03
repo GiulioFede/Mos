@@ -474,8 +474,8 @@ export default function LoginScreen({navigation}){
                         <ScrollView alignItems="center" justifyContent="center" showsVerticalScrollIndicator={false}>
                             <View style={{alignItems:"center", justifyContent:"center", paddingBottom:20}}>
                                 <Image source={require("../../resources/images/logoMosaic.png")} style={{width:altezzaDevice*0.18,height:altezzaDevice*0.18 , alignSelf:"center"}}/> 
-                                <Text style={styles.titolo}>Accedi a Mosaic</Text>
-                                <Text style={styles.testo}>Prima la mente, poi il corpo</Text>
+                                <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.titolo}>Accedi a Mosaic</Text>
+                                <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.testo}>Prima la mente, poi il corpo</Text>
                                     {/*BOTTONE ACCEDI CON EMAIL/PASSWORD*/}
 
                                     {/*MOSTRO I BOTTONI REGISTRATI,TELEFONO e nella seconda parte I CAMPI EMAIL E PASSWORD DA COMPILARE*/}
@@ -525,13 +525,13 @@ const styles = StyleSheet.create({
       alignItems:"center"
     },
     titolo:{
-        fontSize:fontSizeTitolo, //*0.5 di font size equivale al 40% della vera altezza del device 
+        fontSize:fontSizeTitolo*0.9, //*0.5 di font size equivale al 40% della vera altezza del device 
         fontFamily: "Raleway_400Regular",
         color: MosCeleste,
         alignSelf:"center",
     },
     testo:{
-        fontSize:fontSizeSottoTitolo,
+        fontSize:fontSizeSottoTitolo*0.9,
         fontFamily: "Raleway_200ExtraLight",
         color: "#52575D",
         alignSelf:"center"

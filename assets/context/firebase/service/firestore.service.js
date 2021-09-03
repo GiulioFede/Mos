@@ -697,7 +697,7 @@ export function _isProfiloCompletato(uid){
                 var aggiornaUltimoMessaggio = db.collection("chats")
                      .doc(chatId);
                 
-                if(lastAuthor!="MAXIMUM VISIBILITY ACHIVED"){
+                if(lastAuthor!="MAXIMUM_VISIBILITY_ACHIVED"){
                     batch.update(aggiornaUltimoMessaggio,{
                         lastMessage: {
                             author: firebase.auth().currentUser.uid,
@@ -714,7 +714,7 @@ export function _isProfiloCompletato(uid){
                             timestamp: data,
                             type: type,
                             value: value
-                        },
+                        }
                     }, {merge:true})
                 }
 
@@ -761,6 +761,8 @@ export function _isProfiloCompletato(uid){
                         });
                 var aggiornaUltimoMessaggio = db.collection("chats")
                                                 .doc(chatId);
+                            
+                if(lastAuthor!="MAXIMUM_VISIBILITY_ACHIVED"){
                 batch.update(aggiornaUltimoMessaggio,{
                         lastMessage: {
                             author: firebase.auth().currentUser.uid,
@@ -770,6 +772,16 @@ export function _isProfiloCompletato(uid){
                         },
                         'statistics.number_of_messages': firebase.firestore.FieldValue.increment( (lastAuthor==null || lastAuthor!=firebase.auth().currentUser.uid)?1:0)
                     }, {merge:true})
+                }else {
+                    batch.update(aggiornaUltimoMessaggio,{
+                        lastMessage: {
+                            author: firebase.auth().currentUser.uid,
+                            timestamp: name,
+                            type: type,
+                            value: "" 
+                        }
+                    }, {merge:true})
+                }
 
                 return batch.commit();
             }catch(e){
@@ -883,15 +895,17 @@ export function _isProfiloCompletato(uid){
                 return db.collection("users")
                          .doc(firebase.auth().currentUser.uid)
                          .collection("notifications")
-                         .where("timestamp",">", new Date().getTime()); //perchè? Ogni volta che scarico una notifica la salvo in locale e la elimino in remoto. 
+                         .where("timestamp",">", new Date().getTime()) //perchè? Ogni volta che scarico una notifica la salvo in locale e la elimino in remoto. 
                                                               //Se quest'ultima operazione dovesse fallire allora potrei avere su un device diverso
                                                               //il download della stessa notifica anche se sono passati molti giorni. Ho bisogno quindi
                                                               //di un punto di inizio fermo.
+                         .orderBy("timestamp", "asc")
             else {
                 return db.collection("users")
                          .doc(firebase.auth().currentUser.uid)
                          .collection("notifications")
-                         .where("timestamp",'>',ultimoTimestamp);
+                         .where("timestamp",'>',ultimoTimestamp)
+                         .orderBy("timestamp", "asc")
             }
         }catch(e){
             throw e;
@@ -1170,6 +1184,11 @@ export function _isProfiloCompletato(uid){
             //path documento notifiche contatto
             const pathCurrentContactNotification = db.collection("users").doc(contactUid).collection("notifications").doc();
             
+            //path channel mio
+            const pathMyChatChannel = db.collection("chats").doc(chatID).collection(firebase.auth().currentUser.uid).doc();
+            //path channel contatto
+            const pathContactChatChannel = db.collection("chats").doc(chatID).collection(contactUid).doc();
+            
             let date = new Date().getTime();
             
             //se c'è un upgrade modifico livello di visibilità
@@ -1188,7 +1207,20 @@ export function _isProfiloCompletato(uid){
                     author: myName,
                     type: lastLevelOfVisibility==0?"UPGRADE_VISIBILITY":"TOTAL_DISCLOSURE",
                     timestamp: date
-                })
+                });
+
+                //invio al contatto e a me un messaggio per dirgli e dirmi che l'upgrade è avvenuto
+                batch.set(pathMyChatChannel,{
+                    timestamp: date,
+                    type: lastLevelOfVisibility==0?"upgrade_1":"upgrade_2",
+                    value:""
+                });
+                
+                batch.set(pathContactChatChannel,{
+                    timestamp: date,
+                    type: lastLevelOfVisibility==0?"upgrade_1":"upgrade_2",
+                    value:""
+                });
             }else {
                 //inoltre invio una notifica a entrambi sul mancato successo
                 batch.set(pathCurrentUserNotification,{
@@ -1429,7 +1461,7 @@ export function _isProfiloCompletato(uid){
             });
 
             return await batch.commit().then(async()=>{
-                return await _removeGroupOfAudiosBeforeTimestamp(chatID,date)
+                return await _removeGroupOfAudiosBeforeTimestamp(chatID,dateTime)
             })
         }catch(e){
             try{

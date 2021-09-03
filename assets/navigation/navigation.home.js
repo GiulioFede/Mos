@@ -22,6 +22,7 @@ import Constants from 'expo-constants';
 import { idChatCorrente } from './HomeScreen/chat/screen/chat detail/chat_detail';
 import Loading from './HomeScreen/aroundYou/component/loading';
 import BlockedConversationsScreen from './BlockedConversations/blockedConversations';
+import AboutMosaicScreen from './infoMosaic/aboutMosaic';
 
 /*
   NB: Questa funzione decide solo come comportarsi quando si riceve una notifica MA l'app è in FOREGROUND.
@@ -280,6 +281,7 @@ export default function HomeNavigator({navigation}) {
         <Drawer.Screen name="Home" component={HomeScreen} />
         <Drawer.Screen name="Informazioni Personali" component={InformazioniPersonali} />
         <Drawer.Screen name="Utenti bloccati" component={BlockedConversationsScreen} />
+        <Drawer.Screen name="About Mosaic" component={AboutMosaicScreen} />
       </Drawer.Navigator>
       </>
   );

@@ -1,14 +1,15 @@
-import React, {useContext, useState} from "react";
+import React, {useContext, useRef, useState} from "react";
 import {View,Text, StyleSheet, TouchableOpacity, ActivityIndicator,ScrollView, TextInput, Dimensions} from "react-native";
 import {Button, Snackbar} from "react-native-paper";
-import { Ionicons } from '@expo/vector-icons'; 
+import { Ionicons,MaterialCommunityIcons } from '@expo/vector-icons'; 
 import { MosCeleste, MosPurple } from "../../resources/colors";
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { FirebaseRecaptchaVerifierModal, FirebaseRecaptchaBanner } from 'expo-firebase-recaptcha'; //INSTALLA expo install expo-firebase-recaptcha  e   expo install react-native-webview
 import * as firebase from 'firebase';
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 import {KeyboardAvoidingView} from "react-native";
-import { fontSizeTitolo, iconSize } from "../../context/variabili_globali/variabiliGlobali";
+import { fontSizeTitolo, iconSize, larghezzaDevice } from "../../context/variabili_globali/variabiliGlobali";
+import CountryCodePicker from "./components/countryCodePicker";
 
 export default function PhoneAuthScreen({navigation,route}){
 
@@ -29,16 +30,24 @@ export default function PhoneAuthScreen({navigation,route}){
     const firebaseConfig = firebase.apps.length ? firebase.app().options : undefined;
     const attemptInvisibleVerification = false;
 
-        //invia il codice di verifica
+    //invia il codice di verifica
+    const callingCode = useRef(39);
     const inviaCodiceVerificaNumero = async () => {
         
         if(phoneNumber.length==0){
             setMessaggioVerifica("Inserire un numero di telefono valido.");
             return;
         }
+        if(callingCode.current == null){
+            setMessaggioVerifica("Inserire un prefisso telefonico.");
+            return;
+        }
+
+        let phoneNumberWithPrefix = "+"+callingCode.current+phoneNumber;
+        console.log(phoneNumberWithPrefix);
 
         //se sto richiedendo l'aggiornamento del numero allora controllo che non sia uguale a quello vecchio
-        if(route.params.updatePhoneNumber=="yes" && phoneNumber==route.params.oldNumber){
+        if(route.params.updatePhoneNumber=="yes" && phoneNumberWithPrefix==route.params.oldNumber){
             setMessaggioVerifica("Questo numero è già attivo.");
             return;
         }
@@ -46,11 +55,11 @@ export default function PhoneAuthScreen({navigation,route}){
         try {
                 
               //attendo che il messaggio sia inviato. 
-              inviaCodiceDiVerifica(phoneNumber, recaptchaVerifier.current)
+              inviaCodiceDiVerifica(phoneNumberWithPrefix, recaptchaVerifier.current)
                 .then((verificationID)=>{
                     console.log("il messaggio è stato inviato al tuo numero. VerificatioId="+verificationID);
                     //apro screen per verificare il numero
-                    navigation.navigate("PhoneAuthVerificationCodeScreen", {verificationIdentity:verificationID, phoneNumber: phoneNumber, updatePhoneNumber: route.params.updatePhoneNumber});
+                    navigation.navigate("PhoneAuthVerificationCodeScreen", {verificationIdentity:verificationID, phoneNumber: phoneNumberWithPrefix, updatePhoneNumber: route.params.updatePhoneNumber});
                     setPhoneNumber("");
                 }).catch((e)=>{
                     const codiceErrore = e.code;
@@ -113,7 +122,6 @@ export default function PhoneAuthScreen({navigation,route}){
                 duration = {5000}
                 theme={{ colors: { surface: "white",accent: MosPurple},}}
                 action={{
-                label: 'UNDO',
                 onPress: () => {
                     onDismissSnackBar();
                     },
@@ -121,49 +129,53 @@ export default function PhoneAuthScreen({navigation,route}){
                     {messaggioVerifica}
             </Snackbar>
 
-            <KeyboardAvoidingView
-                keyboardVerticalOffset={20}
-                 behavior= {(Platform.OS === 'ios')? "padding" : null}
-            >
-            <ScrollView>
-                        {/* TITOLO */}
-                        <View>
-                                {/* se la procedura è di login/registrazione.... */}
-                                {route.params.updatePhoneNumber!="yes" && <Text style={styles.titolo}>Inserisci il tuo numero di telefono</Text> }
-                                {/* se la procedura è di aggiornamento numero di telefono... */}
-                                {route.params.updatePhoneNumber=="yes" && <Text style={styles.titolo}>Inserisci il tuo nuovo numero di telefono</Text> }
-                        </View>
+            <KeyboardAvoidingView style={{ flex: 1, flexDirection: 'column',justifyContent: 'center',}} behavior="padding" enabled   keyboardVerticalOffset={20}>
+                <ScrollView>
+                            {/* TITOLO */}
+                            <View>
+                                    {/* se la procedura è di login/registrazione.... */}
+                                    {route.params.updatePhoneNumber!="yes" && <Text style={styles.titolo}>Inserisci il tuo numero di telefono</Text> }
+                                    {/* se la procedura è di aggiornamento numero di telefono... */}
+                                    {route.params.updatePhoneNumber=="yes" && <Text style={styles.titolo}>Inserisci il tuo nuovo numero di telefono</Text> }
+                            </View>
 
-                        {/* CAPTCHA PER VERIFICARE CHE NON SI E' ROBOT */}
-                        <FirebaseRecaptchaVerifierModal
-                                ref={recaptchaVerifier}
-                                title='Completa il test per procedere'
-                                firebaseConfig={firebaseConfig}
-                                attemptInvisibleVerification={attemptInvisibleVerification}
-                        />
+                            {/* CAPTCHA PER VERIFICARE CHE NON SI E' ROBOT */}
+                            <FirebaseRecaptchaVerifierModal
+                                    ref={recaptchaVerifier}
+                                    title='Completa il test per procedere'
+                                    firebaseConfig={firebaseConfig}
+                                    attemptInvisibleVerification={attemptInvisibleVerification}
+                            />
+                            <View style={{flexDirection:"row", alignItems:"center", marginVertical:20}}>
 
-                        {/*AREA DOVE INSERIRE IL NUMERO DI TELEFONO */}
-                        <TextInput
-                        style={{ marginVertical: 10, fontSize: fontSizeTitolo*0.8, width:"80%", marginLeft:20, backgroundColor:"transparent"}}
-                        placeholder="+1 999 999 9999"
-                        autoFocus
-                        paddingBottom={10}
-                        underlineColorAndroid={MosPurple}
-                        autoCompleteType="tel"
-                        keyboardType="phone-pad"
-                        textContentType="telephoneNumber"
-                        onChangeText={phoneNumber => setPhoneNumber(phoneNumber.trim())}
-                        />
+                                <CountryCodePicker callingCode={callingCode} />
 
-                        {/*BOTTONE PER INVIARE IL MESSAGGIO A TALE NUMERO */}
-                        <Button icon="cellphone-message" color={MosPurple} style={styles.bottoneInviaCodiceVerifica} mode="contained" 
-                            onPress={() => { inviaCodiceVerificaNumero() }}>
+                                {/*AREA DOVE INSERIRE IL NUMERO DI TELEFONO */}
+                                <TextInput
+                                style={{fontSize: fontSizeTitolo*0.5, width:"50%", marginLeft:20, backgroundColor:"transparent"}}
+                                placeholder="999 999 9999"
+                                numberOfLines={1}
+                                autoCompleteType="tel"
+                                keyboardType="phone-pad"
+                                textContentType="telephoneNumber"
+                                onChangeText={phoneNumber => setPhoneNumber(phoneNumber.trim())}
+                                />
+                            </View>
 
-                            INVIA CODICE DI VERIFICA
-                        </Button>  
+                            {/*BOTTONE PER INVIARE IL MESSAGGIO A TALE NUMERO */}
+                               
+                                <TouchableOpacity onPress={() => { inviaCodiceVerificaNumero() }}>
+                                    <View style={styles.bottoneInviaCodiceVerifica}>
+                                        <MaterialCommunityIcons name="cellphone-message" size={fontSizeTitolo*0.6} color="white" style={{marginHorizontal:10}} />
+                                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{color:"white", width:larghezzaDevice*0.6, fontSize:fontSizeTitolo*0.45}}>
+                                            INVIA CODICE DI VERIFICA
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
+                            
 
-                        
-                    </ScrollView>
+                            
+                        </ScrollView>
                 </KeyboardAvoidingView>
         </View>
     )
@@ -201,6 +213,9 @@ const styles = StyleSheet.create({
         borderRadius:10,
         borderWidth: 1,
         borderColor: '#fff',
-        width:"80%"
+        width:"80%",
+        flexDirection:"row",
+        overflow:"hidden",
+        alignItems:"center"
     }
 })

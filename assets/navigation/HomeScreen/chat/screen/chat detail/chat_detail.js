@@ -68,6 +68,7 @@ export default function ChatDetail({ navigation,route}){
 
     const progressRequestRef = useRef();
 
+    const currentVisibility = useRef(0);
 
     //uid utente
     const {chatId, contactUid, name, token, urlProfileImageContactUser, creationData, visibilityBeforeOpenChatDetail} = route.params;
@@ -99,7 +100,6 @@ export default function ChatDetail({ navigation,route}){
     var listTmp = useRef();
     listTmp.current = [...chat];
 
-
     async function removeCurrentConversation(){
         try{
             if(recordingKeyboardRef.current!=null || recordingKeyboardRef.current!=undefined)
@@ -112,7 +112,7 @@ export default function ChatDetail({ navigation,route}){
                 navigation.goBack();
             },2000);
         }catch(e){
-            console.log("errore eliminazione conversazione: "+e.code);
+            console.log("errore eliminazione conversazione: "+e);
             if(e.code=="not-found")
                 setSnackBarMessage("L'utente sembra non esistere più. Probabilmente ha cancellato il suo account.")
             else
@@ -173,8 +173,8 @@ export default function ChatDetail({ navigation,route}){
                         setMessaggio("");
                         ultimaRow.current = ultimaRow.current + 1;
                         const nuovaChiave = ultimaRow.current;
-                        await local_storage.storeNewMessage(getUtenteCorrente()+contactUid+"",nuovaChiave, getUtenteCorrente(),new Date().getTime(),"mex",messaggio, "in-progress");
-                        let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:new Date()+"", type:"mex",content:messaggio,state:"in-progress"}
+                        await local_storage.storeNewMessage(getUtenteCorrente()+contactUid+"",nuovaChiave, getUtenteCorrente(),new Date().getTime(),"mex",messaggio,currentVisibility.current, "in-progress");
+                        let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date:new Date()+"", type:"mex",content:messaggio,current_visibility:currentVisibility.current, state:"in-progress"}
                         let chatTmp = [newMex,...chat];
                         setChat(chatTmp);
                         //invio messaggio a firebase
@@ -191,7 +191,7 @@ export default function ChatDetail({ navigation,route}){
                                     console.log("Messaggio salvato in locale");
                                     console.log("Salvo nella chat "+contactUid+" di chiave "+nuovaChiave+" lo stato succeed"); 
                                     addNewUpdate(contactUid,nuovaChiave,"succeed");
-                                    //salvo come ultimo messaggio da ritornare allo schermo di prima
+                                    //salvo come ultimo messaggio da ritornare allo schermo di prima (?) --> forse non serve xkè prelevato direttamente da remoto
                                     lastMessage.current = {code:"UPDATE_LAST_MEX", chatId: chatId, type:"text", value: messaggio, author:getUtenteCorrente(), timestamp:new Date().getTime()};
                                     if(isMounted.current==true)
                                         refFlatList.current.scrollToOffset({animated:true, offset: chat.length-1});
@@ -235,16 +235,16 @@ export default function ChatDetail({ navigation,route}){
    const statistics = useRef();
    const decisionScreenRef = useRef();
 
-    async function ascoltaStatistics(){
+    async function ascoltaStatistics(ultimaVisibilitàSalvata){
         try{
       
             var lastStatisticReceived = null;
             //se l'ultima visibilità, prima di aprire la chat era di 2 allora non "spendo" ad attaccare un listener
-            if(visibilityBeforeOpenChatDetail>=2){
+          /*  if(visibilityBeforeOpenChatDetail>=2){
                 console.log("la visibilità è già massima. Non attacco listener");
                 isVisibilityMaximum.current = true;
                 return;
-            }
+            }*/
 
             ascoltatoreStatistics = ottieniAscoltatoreStatistics(chatId)
                 .onSnapshot(
@@ -285,7 +285,24 @@ export default function ChatDetail({ navigation,route}){
                                     statistics.current = JSON.parse(JSON.stringify(stat));
 
                                     //aggiorno progress bar
-                                    progressRequestRef.current.set_percentage(stat.statistics.number_of_messages);
+                                    console.log("visibilityBeforeOpenChatDetail:"+visibilityBeforeOpenChatDetail);
+                                    if(visibilityBeforeOpenChatDetail<2)
+                                        progressRequestRef.current.set_percentage(stat.statistics.number_of_messages);
+                                    
+                                    console.log("Devo fare la notify locale?");
+                                    let lastVis = 0;
+                                    lastVis = ultimaVisibilitàSalvata;
+                                    ultimaVisibilitàSalvata = stat.level_of_visibility;
+                                    console.log("ultima visibilità salvata:"+lastVis);
+                                    console.log("corrente visibilità giunta:"+stat.level_of_visibility);
+                                    console.log("lunghezza chat:"+chat.length);
+                                    //aggiorno corrente visibilità
+                                    currentVisibility.current = stat.level_of_visibility;
+                                    //controllo se quella nuova è maggiore rispetto la precedente. Se è cosi invio (localmente) un upgrade
+                                    //console.log("NOTIFY UPGRADE?"+lastVis+","+stat.level_of_visibility);
+                                   /* if(lastVis<stat.level_of_visibility)
+                                        await notifyUpgrade((stat.level_of_visibility==1)?"upgrade_1":"upgrade_2");
+                                    */
 
                                     if( stat.statistics.number_of_messages>=THRESHOLD && stat.level_of_visibility<2){ //TODO mettere stat.number_of_messages!=0, per adesso mi serve ==0 ma è errato
                                         /*
@@ -364,8 +381,10 @@ export default function ChatDetail({ navigation,route}){
                                                     await upgradeConversation(chatId,false,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, livelloCorrenteDiVisibilità);
                                                 else if(miaScelta==true && suaScelta==false)
                                                     await upgradeConversation(chatId,false,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, livelloCorrenteDiVisibilità);
-                                                else if(miaScelta==true && suaScelta==true)
+                                                else if(miaScelta==true && suaScelta==true){
                                                     await upgradeConversation(chatId,true,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, livelloCorrenteDiVisibilità);
+                                                    //await notifyUpgrade((livelloCorrenteDiVisibilità==0)?"upgrade_1":"upgrade_2");
+                                                }
 
                                                 if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
                                                     decisionScreenRef.current.hide();
@@ -426,7 +445,8 @@ export default function ChatDetail({ navigation,route}){
                                         if(stat.level_of_visibility>=2){
                                             ascoltatoreStatistics();
                                             isVisibilityMaximum.current = true;
-                                            progressRequestRef.current.make_invisible();
+                                            if(progressRequestRef.current!=null && progressRequestRef.current!=undefined)
+                                                progressRequestRef.current.make_invisible();
                                             return;
                                         }
                                     }
@@ -462,7 +482,7 @@ export default function ChatDetail({ navigation,route}){
         const bh = BackHandler.addEventListener('hardwareBackPress',tornaIndietro);
         //setto l'id della chat come corrente cosi da non mostrarmi notifiche su questa chat
         idChatCorrente = chatId;
-
+        currentVisibility.current = visibilityBeforeOpenChatDetail;
         console.log("Sto prelevando tutti i messaggi scambiati con l'utente corrente...");
         
         async function ottieniPrimi10Messaggi() {
@@ -498,13 +518,13 @@ export default function ChatDetail({ navigation,route}){
                                 ultimaRow.current = 0;
 
                             listTmp.current = lista_iniziale;
-                            //console.log("Lista iniziale di messaggi caricata dallo storage:");
-                            //console.log(lista_iniziale);
+                            console.log("Lista iniziale di messaggi caricata dallo storage:");
+                            console.log(lista_iniziale);
                             setChat(lista_iniziale);
                             setIsChatLoaded(true);
 
                             //inizializzo ascoltatore statistiche e ultimi messaggi
-                            await ascoltaStatistics();
+                            await ascoltaStatistics((lista_iniziale.length==0)?0:lista_iniziale[0].current_visibility);
                             await inizializzaAscoltatoreNuoviMessaggi();
 
                         }catch(e){
@@ -614,19 +634,24 @@ export default function ChatDetail({ navigation,route}){
                                 });
     }
 
+    //viene chiamata solo quando c'è un upgrade. Serve a salvare in locale (niente remoto) un messaggio speciale che indichi ciò
+    async function notifyUpgrade(typeOfUpgrade){ //argomento può essere upgrade_1 oppure upgrade_2
+        console.log("notifico localmente upgrade");
+        ultimaRow.current = ultimaRow.current + 1;
+        const nuovaChiave = ultimaRow.current;
+        await local_storage.storeNewMessage(getUtenteCorrente()+contactUid+"",nuovaChiave, getUtenteCorrente(),new Date().getTime(),typeOfUpgrade,"",currentVisibility.current, "succeed");
+        let newMex = {row:  typeOfUpgrade ,author:getUtenteCorrente(), date:new Date()+"", type:typeOfUpgrade,content:messaggio,current_visibility:currentVisibility.current,state:"succeed"}
+        let chatTmp = [newMex,...chat];
+        setChat(chatTmp);
+    }
+
+    function getCurrentVisibility(){
+        return currentVisibility.current;
+    }
+
     async function addNewReceivedMessage(doc, row){
         console.log("   doc di interesse:"+row);
         console.log("memorizzo doc");
-        //console.log(listTmp);
-        //memorizzo nello storage
-        //se è un audio lo scarico e lo salvo
-
-        //devo però convertire il timestamp globale (dal 1970..) in una data che è corretta nel mio timezone
-        /*console.log("timestamp ricevuto: "+doc.data().timestamp+" che equivale alla data: "+ new Date(doc.data().timestamp));
-        const localOffset = new Date().getTimezoneOffset()*60*1000;
-        console.log("dato che l'offset qui è "+new Date().getTimezoneOffset()+" allora il local offset in millisecondi sarà: "+localOffset)
-        const utcTime = doc.data().timestamp + localOffset;
-        console.log("aggiungo ai ms del timestamp ricevuto ottenendo:"+utcTime+" per una equivalente data di: "+new Date(utcTime));*/
         
         let local_uri = "";
         if(doc.data().type == "audio"){
@@ -635,20 +660,23 @@ export default function ChatDetail({ navigation,route}){
                                                     row,
                                                     contactUid,
                                                     new Date(doc.data().timestamp),
-                                                    doc.data().value
+                                                    doc.data().value,
+                                                    currentVisibility.current
                                                     )
-        }else
+        }
+        else
             await local_storage.storeNewMessage(getUtenteCorrente()+contactUid+"",
                                                 row, 
                                                 contactUid,
                                                 new Date(doc.data().timestamp).getTime(),
                                                 doc.data().type,
                                                 doc.data().value,
+                                                currentVisibility.current,
                                                 "succeed");
         console.log("fine memorizzazione doc "+row);
         //posso procedere ad eliminare l'audio in remoto. Se fallisco, comunque non blocco l'utente in quanto tanto l'eliminazione è per timestamp<ultimoTimestamp (ogni volta), quindi al primo corretto si eliminano TUTTI i precedenti
 
-        let newMex = {row: row ,author:contactUid, date:new Date(doc.data().timestamp).getTime(), type:doc.data().type+"",content: doc.data().type=="audio"?local_uri:(doc.data().value+""),state:"succeed"};
+        let newMex = {row: row ,author:contactUid, date:new Date(doc.data().timestamp).getTime(), type:doc.data().type+"",content: doc.data().type=="audio"?local_uri:(doc.data().value+""),current_visibility:currentVisibility.current,state:"succeed"};
         return newMex;
         /* chatTmp = [newMex,...listTmp.current];
         //if(isMounted.current==true)
@@ -680,185 +708,6 @@ export default function ChatDetail({ navigation,route}){
 
     }
 
-    /*
-     ::::::::::::::::::::::::::::::::::::::AUDIO VOCALE::::::::::::::::::::::::::::::::::::::
-    */
-   //contiene info sul recording
-   const [recordingInfo, setRecordingInfo] = useState();
-   //se true indica che la registrazione è avviata
-    const [isRecording, setIsRecording] = useState(false);
-    //indica la durata attuale dell'audio mentre lo si registra
-    const [durataAudio, setDurataAudio] = useState(0);
-
-    //avvia registrazione vocale
-    function startRecording(){
-         //controllo che ci sia sufficiente spazio libero (nella memoria interna)
-         FileSystem.getFreeDiskStorageAsync()
-         .then(async(bytes)=>{
-             console.log("Spazio libero: "+bytes);
-             //se si hanno a disposizione almeno 100MB di spazio libero...
-             if(bytes>104857600){
-                try{
-                    console.log("Avvio registrazione vocale...");
-                    //chiedo permessi
-                    await Audio.requestPermissionsAsync();
-                    //setto alcune configurazioni personalizzate su Android e IOS
-                    await Audio.setAudioModeAsync({
-                        allowsRecordingIOS: true, //permetto su IOS la registrazione, di default è false
-                        playsInSilentModeIOS: true,
-                        staysActiveInBackground: false, //interrompi la registrazione se si esce dall'app
-                         //interrompi il suono delle altre app mentre si registra
-                        interruptionModeAndroid: INTERRUPTION_MODE_ANDROID_DO_NOT_MIX, //idem come sopra ma per android
-                        shouldDuckAndroid: true, //se arrivo un audio da altre app queste aspetteranno
-                    })
-
-                    //Contiene info sulla registrazione. 
-                    const newRecording = new Audio.Recording();
-                    //creo un suono nuovo
-                    await newRecording.prepareToRecordAsync(
-                        Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY,
-                        Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX
-                    )
-                    
-                    newRecording.setOnRecordingStatusUpdate(aggiornaAnimazioneAudioVocale);
-                    newRecording.setProgressUpdateInterval(100);
-                    await newRecording.startAsync();
-                    //adesso sta registrando...
-                    console.log("Avvio registrazione...");
-                    setRecordingInfo(newRecording);
-                    setIsRecording(true);
-                }catch(err){
-                    console.log("E' avvenuto un errore "+err);
-                }
-            }else
-                setSnackBarMessage("Memoria insufficiente. Prova a liberare lo spazio per poter continuare la conversazione");
-        }).catch((e)=>{
-            setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare il messaggio.");
-        })
-    }
-
-    //stop il recording di sopra
-    async function stopRecording(){
-        console.log("Stopping recording...");
-        try{
-            //prelevo l'uri dove è stata memorizzata
-            await recordingInfo.stopAndUnloadAsync();
-            const uri = recordingInfo.getURI();
-            setRecordingInfo(undefined);
-            console.log('Recording terminata e salvata in '+uri);
-            //salvo audio nel database
-            saveAudio(uri);
-        }catch(e){
-            console.log("Si è verificato un problema:"+e);
-            setRecordingInfo(undefined);
-            setIsRecording(false);
-            setSnackBarMessage("Si è verificato un problema.");
-        }
-    }
-    
-    function saveAudio(uri){
-         //controllo che ci sia sufficiente spazio libero (nella memoria interna)
-         FileSystem.getFreeDiskStorageAsync()
-         .then(async(bytes)=>{
-             console.log("Spazio libero: "+bytes);
-             //se si hanno a disposizione almeno 100MB di spazio libero...
-             if(bytes>104857600){
-                try{
-                    ultimaRow.current = ultimaRow.current + 1;
-                    const nuovaChiave = ultimaRow.current;
-                    //aggiugo alla chat
-                    //creo nuovo messaggio    
-                    let newMex = {row: nuovaChiave ,author:getUtenteCorrente(), date: new Date().getTime(), type:"audio",content:uri, state:"in-progress"}
-                    let chatTmp = [newMex,...chat];
-                    setChat(chatTmp);
-                    //scrollo in basso
-                    refFlatList.current.scrollToOffset({animated:true, offset: chat.length-1});
-                    setIsRecording(false);
-                    console.log("(in-progress)--> invio audio "+nuovaChiave+" in remoto...");
-                    //salvo audio in remoto, ma uso approccio asincrono per liberare la UI. Se avviene qualche errore tolgo quello appena inserito
-                    inviaNuovoMessaggio(chatId,contactUid,"audio", uri,
-                        async(ris) =>{
-                            //l'audio è stato salvato con successo, lo lascio cosi com'è
-                            console.log("salvato in remoto. Salvo in locale...");
-                            //salvo in locale
-                            //mi ritorna il percorso dove ha salvato l'audio. Di default salva l'audio con stato "in-progress" a indicare che non ha ancora ricevuto conferma di salvataggio nel database
-                            let local_uri = await local_storage.saveAudioIntoFolder(getUtenteCorrente(),contactUid,nuovaChiave, getUtenteCorrente(),new Date(),uri);
-                            console.log("percorso salvato nel database e nel file system in uri: "+local_uri);
-                            //aggiorno UI
-                            console.log("Il componente è montato? "+isMounted.current);
-                            //aggiorno database locale
-                            try{
-                                //aggiorno la UI con la spunta cosi da indicare che è stato caricato definitivamente
-                                if(isMounted.current==true){
-                                    //indico alla flat list la row da aggiornare come succeed
-                                    let newarrayOfRowsToUpdateState = {};
-                                    Object.assign(newarrayOfRowsToUpdateState,arrayOfRowsToUpdateState);
-                                    newarrayOfRowsToUpdateState[nuovaChiave] = "succeed"; 
-                                    setarrayOfRowsToUpdateState(newarrayOfRowsToUpdateState);
-                                }
-                            }catch(e){
-                                setSnackBarMessage("E' avvenuto un errore durante il salvataggio dell'audio in locale:");
-                                console.log("errore durante l'aggiornamento dello stato dell'audio:"+e);
-                            }
-                        },
-                        (err) =>{
-                            try{
-                                //l'audio non è stato salvato. Lo elimino dalla lista
-                                console.log("non salvato in remoto. Aggiorno stato come fallito in locale:"+err);
-                                if(isMounted.current==true){
-                                    setSnackBarMessage("E' avvenuto un errore durante l'invio dell'audio vocale.");
-                                    //indico alla flat list la row da aggiornare come succeed
-                                    let newarrayOfRowsToUpdateState = {};
-                                    Object.assign(newarrayOfRowsToUpdateState,arrayOfRowsToUpdateState);
-                                    newarrayOfRowsToUpdateState[nuovaChiave] = "failed"; 
-                                    setarrayOfRowsToUpdateState(newarrayOfRowsToUpdateState);
-                                }
-                            }catch(error1){
-                                console.log("è avvenuto un errore durante l'aggiornamento a 'failed' dell'audio in locale:"+error1);
-                            }
-                        })
-                }catch(error2){
-                    setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare l'audio vocale.");
-                    console.log(error2);
-                }
-            }else
-                setSnackBarMessage("Memoria insufficiente. Prova a liberare lo spazio per poter continuare la conversazione");
-        }).catch((e)=>{
-                setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare il messaggio.");
-        })
-    }
-
-    function annullaRecording(){
-
-    }
-
-    /*
-      Viene richiamata ogni mezzo secondo (grazie a progressUpdateIntervalMillis (500)) e contiene, tra le varie informazioni il metering, 
-      ossia il valore in db della potenza del suono emesso
-    */
-    const [amplitude, setAmplitude] = useState(0.9);
-    
-    function aggiornaAnimazioneAudioVocale(status){
-       // console.log("AGGIORNAMENTO AUDIO VOCALE");
-       // console.log(status);
-
-        //AGGIORNO PROGRESS BAR
-        //prelevo tempo (siccome progress bar ha massimo a 1 allora dato che il massimo consentito è di 1 secondo (60k ms) lo divido per 60k)
-        let secondi = parseInt(status.durationMillis)/60000;
-        setDurataAudio(secondi); 
-        /* 
-        let power = 0;
-        //AGGIORNO LINE WAVES
-        if(parseInt(status.metering)>-120)
-            power = 160 + parseInt(status.metering);
-        else
-            power = (160 + parseInt(status.metering))*0.7
-        let amplitude1 = (power/160)/3;
-        let amplitude2 = (power/160);
-        let amplitude3 = (power/160)/2;
-        setAmplitude(power/160/2);*/
-
-    }
 
     function apriRecordingKeyboard(){
         setOpenRecordingKeyboard(true);
@@ -911,7 +760,8 @@ export default function ChatDetail({ navigation,route}){
                     getUtenteCorrente={getUtenteCorrente} 
                     setSnackBarMessage={setSnackBarMessage}
                     contactUid = {contactUid}
-                    ultimaData = {null} /> }
+                    ultimaData = {null}
+                    contactName = {name} /> }
       {chat.length==0 && 
         <View style={{flex:1}}>
             {isChatLoaded==true &&
@@ -978,13 +828,14 @@ export default function ChatDetail({ navigation,route}){
                              refFlatList = {refFlatList}
                              inviaNuovoMessaggio = {inviaNuovoMessaggio}
                              lastMessage = {lastMessage}
-                             lastStatistic = {statistics.current}
+                             lastStatistic = {(isVisibilityMaximum.current == true)?("MAXIMUM_VISIBILITY_ACHIVED"):(statistics.current)}
                              contactUid = {contactUid}
                              isMounted = {isMounted}
                              arrayOfRowsToUpdateState = {arrayOfRowsToUpdateState}
                              chatId = {chatId}
                              setRefresh = {setRefresh}
-                             refresh = {refresh} />
+                             refresh = {refresh}
+                             getCurrentVisibility = {getCurrentVisibility} />
           </>
           
       }
@@ -1008,6 +859,7 @@ export default function ChatDetail({ navigation,route}){
                       informazioniProfiloUtenteCorrente = {informazioniProfiloUtente}
                       myToken = {informazioniProfiloUtente.push_notification_token}
                       contactToken = {token}
+                     // notifyUpgrade = {notifyUpgrade}
                       />
       <ThreeDotTab ref={threeDotTabRef} optionsDialogRef={optionsDialogRef} contactName={name} />
       <OptionsDialog ref={optionsDialogRef} eliminaConversazione={removeCurrentConversation} bloccaContatto={blockCurrentContact} />
