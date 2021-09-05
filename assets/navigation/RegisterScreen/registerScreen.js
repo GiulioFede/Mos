@@ -133,21 +133,6 @@ export default function RegisterScreen({navigation}){
             {/*QUANDO SI STA ASPETTANDO LA RISPOSTA DEL SERVER isLoading=true (permette anche di non premere altri bottoni)*/}
             {isLoading &&  <View  style={{position:"absolute", zIndex:15, justifyContent:"center",alignItems:"center",width:Dimensions.get("window").width, height:Dimensions.get("window").height}}><ActivityIndicator animating={true} color={MosCeleste}/></View> }
             {isLoading  && <View style={{backgroundColor:"rgba(255, 255, 255,0.8)", position:"absolute", width:Dimensions.get("window").width, height:Dimensions.get("window").height, zIndex:10}}/>} 
-
-            {/*COMPARE SOLO PER DARE UNA RISPOSTA SE L'EMAIL E' STATA INVIATA O MENO */}
-            <Snackbar
-                                    visible={snackmessage ? true : false}
-                                    onDismiss={onDismissSnackBar}
-                                    duration = {5000}
-                                    theme={{ colors: { surface: "white",accent: "white"},}}
-                                    action={{
-                                        label: 'UNDO',
-                                        onPress: () => {
-                                            onDismissSnackBar();
-                                        },
-                                    }}>
-                                    {snackmessage}
-             </Snackbar>
   
              <KeyboardAvoidingView style={{ flex: 1, flexDirection: 'column',justifyContent: 'center',}} behavior="padding" enabled   keyboardVerticalOffset={50}>
                  <ScrollView showsVerticalScrollIndicator={false}>
@@ -220,6 +205,19 @@ export default function RegisterScreen({navigation}){
                             </View>
                         </ScrollView>
                     </KeyboardAvoidingView>
+                    {/*COMPARE SOLO PER DARE UNA RISPOSTA SE L'EMAIL E' STATA INVIATA O MENO */}
+            <Snackbar
+                                    visible={snackmessage ? true : false}
+                                    onDismiss={onDismissSnackBar}
+                                    duration = {5000}
+                                    theme={{ colors: { surface: "white",accent: "white"},}}
+                                    action={{
+                                        onPress: () => {
+                                            onDismissSnackBar();
+                                        },
+                                    }}>
+                                    {snackmessage}
+             </Snackbar>
             </View>
 
         )

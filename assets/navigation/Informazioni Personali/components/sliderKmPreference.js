@@ -69,7 +69,7 @@ const SliderKMPreference = forwardRef((props, ref) => {
                     <Text style={pos==2?styles.active:styles.off}>250Km</Text>
                 </View>
                 <View style={{ justifyContent:"center", flex: pos==3?2/4:2/8}}>
-                    <Text style={pos==3?styles.active:styles.off}>2500Km</Text>
+                    <Text style={pos==3?styles.active:styles.off}>1000Km</Text>
                 </View>
                 
             </View>

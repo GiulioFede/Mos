@@ -56,12 +56,16 @@ export default function ProgressiveButton({percentage, scrollSlide, scrollBack, 
             </Svg>
             { showForwardArrow &&
                 <TouchableOpacity onPress={scrollSlide} style={styles.button} activeOpacity={0.6}>
-                    <MaterialIcons name="arrow-forward-ios" size={altezzaSchermoInterno*0.03} color={MosCeleste} />
+                    <View style={{ height: altezzaSchermoInterno*0.06, width: altezzaSchermoInterno*0.06, justifyContent:"center", alignItems:"center"}}>
+                        <MaterialIcons name="arrow-forward-ios" size={altezzaSchermoInterno*0.03} color={MosCeleste} />
+                    </View>
                 </TouchableOpacity>
             }
             {showLeftArrow &&
             <TouchableOpacity onPress={scrollBack} style={styles.leftButton} activeOpacity={0.6}>
-                <MaterialIcons name="arrow-back-ios" size={altezzaSchermoInterno*0.03} color={MosCeleste} />
+                <View style={{height: altezzaSchermoInterno*0.06, width: altezzaSchermoInterno*0.06, justifyContent:"center", alignItems:"center"}}>
+                    <MaterialIcons name="arrow-back-ios" size={altezzaSchermoInterno*0.03} color={MosCeleste} />
+                </View>
             </TouchableOpacity>
             }
         </View>

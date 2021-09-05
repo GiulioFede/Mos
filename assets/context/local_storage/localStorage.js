@@ -446,10 +446,15 @@ const saveAudioIntoFolder = async(utenteCorrente, folder,key, author,date, uri_c
                 intermediates: true
             });
             
+            //prelevo formato di salvataggio
+            let indexOfFormat = uri_cache.lastIndexOf(".");
+            let formato = uri_cache.substring(indexOfFormat); //es--> .mp4
+
             console.log("cartella creata (se non esisteva già):"+date);
             //creo percorso di destinazione
-            const percorso= FileSystem.documentDirectory + utenteCorrente + "/" + folder+"/"+(author+"_"+date+"").replace(/ /g,"")+".aac";
+            const percorso= FileSystem.documentDirectory + utenteCorrente + "/" + folder+"/"+(author+"_"+date+"").replace(/ /g,"")+formato;
             console.log("salvo nel percorso: "+percorso);
+
             //se l'audio è stato inviato dall'utente corrente
             if(utenteCorrente==author){
                 //scrivo il file che si trova in un uri temporanea (cache) nel database
@@ -459,16 +464,13 @@ const saveAudioIntoFolder = async(utenteCorrente, folder,key, author,date, uri_c
                 console.log("audio stringa letto");
                 //cripto audio stringa prima di salvare
                 console.log("audio stringa criptato");
-                //....(cripare stringa)
+                //....(criptare stringa)
                 /*
                     salvo file criptato
                     NB: non salvo la stringa nel database altrimenti ad ogni apertura di chat deve leggere miliardi di bit, piuttosto salvo
                         il file criptato e salvo nel database solo un riferimento uri per trovarlo. Sarà solo quando richiesto che lo leggerò
                 */
-            //prelevo formato di salvataggio
 
-                //let indexOfFormat = uri_cache.lastIndexOf(".");
-                //let formato = uri_cache.substring(indexOfFormat); //es--> .mp4
                 await FileSystem.writeAsStringAsync((percorso), audio_string, {encoding: FileSystem.EncodingType.Base64 });
                 //salvo nel database
                 await storeNewMessage(utenteCorrente+folder+"",key,author,date.getTime(),"audio",percorso,current_visibility,"in-progress");

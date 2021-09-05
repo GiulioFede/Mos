@@ -129,7 +129,7 @@ export default function PhoneAuthScreen({navigation,route}){
                     {messaggioVerifica}
             </Snackbar>
 
-            <KeyboardAvoidingView style={{ flex: 1, flexDirection: 'column',justifyContent: 'center',}} behavior="padding" enabled   keyboardVerticalOffset={20}>
+            <KeyboardAvoidingView style={{ flex: 1, flexDirection: 'column',justifyContent: 'center'}} behavior="height" enabled   keyboardVerticalOffset={fontSizeTitolo*1.2}>
                 <ScrollView>
                             {/* TITOLO */}
                             <View>
@@ -142,7 +142,7 @@ export default function PhoneAuthScreen({navigation,route}){
                             {/* CAPTCHA PER VERIFICARE CHE NON SI E' ROBOT */}
                             <FirebaseRecaptchaVerifierModal
                                     ref={recaptchaVerifier}
-                                    title='Completa il test per procedere'
+                                    title=''
                                     firebaseConfig={firebaseConfig}
                                     attemptInvisibleVerification={attemptInvisibleVerification}
                             />

@@ -147,6 +147,11 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
                         //ma per riprodurlo ho bisogno di settarlo come false.
                         await Audio.setAudioModeAsync({
                             allowsRecordingIOS: false,
+                            playsInSilentModeIOS: true,
+                            interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+                            shouldDuckAndroid: true,
+                            interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+                            playThroughEarpieceAndroid: false,
                           
                           });
                         //elimino precedente evento di timeout (altrimenti quando occorre mi elimina l'attuale audio che sto caricando)
@@ -321,6 +326,7 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
                                     onValueChange = {(t) =>{setTempoAudio(t)}}
                                     style={{flex:1, height:altezzaDevice*0.15*0.3}}
                                     thumbTintColor="white"
+                                    
                                     //aggiorna l'audio quando l'utente va avanti con lo slider
                                     onSlidingComplete={spostaAudioAvantiIndietro} //NB: questo metodo non significa "quando lo slider arrivato alla fine", ma quando, muovendo lo slider manualmente, lo rilascio
                                     onSlidingStart = {pauseAudio}

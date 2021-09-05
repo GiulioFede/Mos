@@ -31,7 +31,7 @@ const ShowMe = forwardRef((props, ref) => {
 
 
   return (
-    <Checkbox
+    <Checkbox.Android
       status={checked ? 'checked' : 'unchecked'}
       theme={{ colors:{primary:MosCeleste, accent:MosCeleste}}}
       onPress={() => {

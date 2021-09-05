@@ -42,7 +42,7 @@ export default function LoginScreen({navigation}){
     let isRecuperaPasswordClicked = useRef(false);
     //gestiscono il bottone a comparsa quando si richiede di recuperare la password
     const [visible1, setSnackBarVisibility1] = useState(false);
-    const [snackmessage, setSnackBarMessage] = useState(null);
+    const [snackmessage, setSnackBarMessage] = useState(true);
     const onDismissSnackBar1 = () => setSnackBarVisibility1(false);
     const onDismissSnackBar2 = () => setSnackBarMessage(null);
     //tiene il conto del numero dei tentativi errati quando si accede con email e password
@@ -374,9 +374,48 @@ export default function LoginScreen({navigation}){
                         {isLoading &&  <ActivityIndicator animating={true} color={MosCeleste} style={{position:"absolute", zIndex:11}} /> }
                         {isLoading  && <View style={{backgroundColor:"rgba(255,255,255,0.8)", position:"absolute", width:Dimensions.get("window").width, height:Dimensions.get("window").height, zIndex:10}}/>} 
 
-                        
-                        {/*COMPARE SOLO QUANDO IL TENTATIVO DI LOGIN CON EMAIL E PASSWORD HA SUPERATO LE 3 VOLTE */}
-                        <Snackbar
+                        <ScrollView alignItems="center" justifyContent="center" showsVerticalScrollIndicator={false}>
+                            <View style={{alignItems:"center", justifyContent:"center", paddingBottom:20}}>
+                                <Image source={require("../../resources/images/logoMosaic.png")} style={{width:altezzaDevice*0.18,height:altezzaDevice*0.18 , alignSelf:"center"}}/> 
+                                <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.titolo}>Accedi a Mosaic</Text>
+                                <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.testo}>Prima la mente, poi il corpo</Text>
+                                    {/*BOTTONE ACCEDI CON EMAIL/PASSWORD*/}
+
+                                    {/*MOSTRO I BOTTONI REGISTRATI,TELEFONO e nella seconda parte I CAMPI EMAIL E PASSWORD DA COMPILARE*/}
+                                    <FlatList
+                                        data={indici}
+                                        horizontal
+                                        showsHorizontalScrollIndicator={false}
+                                        style={{flex:1, paddingTop:50}}
+                                        scrollEnabled={false}
+                                        removeClippedSubviews={false}
+                                        ref={refFlatList}
+                                        keyExtractor={item => item.id}
+                                        renderItem={({item,index})=>
+                                            index==0?View_Registrati_e_AccediConTelefono():(index==1?ViewEmailEPassword():ViewRecuperoPassword())}
+                                    />
+
+                                    <FAB
+                                    style={{backgroundColor:MosViola, width:"90%"}}
+                                    small
+                                    icon="email-lock"
+                                    onPress={() => {
+                                        if(isEmailEPasswordClicked.current==true)
+                                            accediConEmail();
+                                        else if(isRecuperaPasswordClicked.current==true)
+                                            inviaEmailRecuperoPsw();
+                                        else
+                                            mostraCampiEmailEPassword();
+                                    }}
+                                    label={labelEmailPasswordButton}
+                                    />                             
+                   
+                            </View>
+                        </ScrollView>
+                    </View>
+                </KeyboardAvoidingView>
+                {/*COMPARE SOLO QUANDO IL TENTATIVO DI LOGIN CON EMAIL E PASSWORD HA SUPERATO LE 3 VOLTE */}
+                <Snackbar
                                     visible={visible1}
                                     onDismiss={onDismissSnackBar1}
                                     theme={{ colors: {surface:"white", accent: "white"},}}
@@ -392,13 +431,12 @@ export default function LoginScreen({navigation}){
 
                         {/*COMPARE SOLO PER DARE UNA RISPOSTA SE L'EMAIL E' STATA INVIATA O MENO */}
                         <Snackbar
-                               visible={snackmessage ? true : false}
+                               visible={(snackmessage && snackmessage.length>5) ? true : false}
                                style={{position:"absolute",zIndex:10, elevation:10, bottom:0}}
                                onDismiss={onDismissSnackBar2}
                                duration = {5000}
                                theme={{ colors: { surface: "white",accent: "white"},}}
                                action={{
-                               label: 'UNDO',
                                onPress: () => {
                                      onDismissSnackBar2();
                                 },
@@ -414,18 +452,16 @@ export default function LoginScreen({navigation}){
                                duration = {5000}
                                theme={{ colors: { surface: "white",accent: "white"},}}
                                action={{
-                               label: 'UNDO',
                                onPress: () => {
                                     setMessaggioAuth(null);
                                 },
                             }}>
                                 {messaggioAuth}
-                        </Snackbar>
-
-                        {/*COMPARE SOLO PER DIRE ALL'UTENTE CHE DEVE VERIFICARE L'EMAIL PRIMA DI PROCEDERE E PERMETTE L'INVIO DELL'EMAIL DI VERIFICA NEL CASO NON SIA ARRIVATA IN FASE DI REGISTRAZIONE*/}
-                        <Snackbar
-                                visible={snackmessageEmailVerified ? true : false}
-                                style={{position:"absolute", zIndex:10, elevation:10, bottom:0}}
+                        </Snackbar> 
+                {/*COMPARE SOLO PER DIRE ALL'UTENTE CHE DEVE VERIFICARE L'EMAIL PRIMA DI PROCEDERE E PERMETTE L'INVIO DELL'EMAIL DI VERIFICA NEL CASO NON SIA ARRIVATA IN FASE DI REGISTRAZIONE*/}
+                <Snackbar
+                                visible={(snackmessageEmailVerified && snackmessageEmailVerified!="") ? true : false}
+                                style={{position:"absolute", zIndex:20, elevation:10, bottom:0}}
                                 onDismiss={onSnackmessageEmailVerified}
                                 duration = {5000}
                                 theme={{ colors: { surface: "white",accent: MosCeleste},}}
@@ -469,48 +505,7 @@ export default function LoginScreen({navigation}){
                                 },
                             }}>
                                 Devi verificare l'email per accedere. Non hai ricevuto l'email?
-                            </Snackbar>   
-
-                        <ScrollView alignItems="center" justifyContent="center" showsVerticalScrollIndicator={false}>
-                            <View style={{alignItems:"center", justifyContent:"center", paddingBottom:20}}>
-                                <Image source={require("../../resources/images/logoMosaic.png")} style={{width:altezzaDevice*0.18,height:altezzaDevice*0.18 , alignSelf:"center"}}/> 
-                                <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.titolo}>Accedi a Mosaic</Text>
-                                <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.testo}>Prima la mente, poi il corpo</Text>
-                                    {/*BOTTONE ACCEDI CON EMAIL/PASSWORD*/}
-
-                                    {/*MOSTRO I BOTTONI REGISTRATI,TELEFONO e nella seconda parte I CAMPI EMAIL E PASSWORD DA COMPILARE*/}
-                                    <FlatList
-                                        data={indici}
-                                        horizontal
-                                        showsHorizontalScrollIndicator={false}
-                                        style={{flex:1, paddingTop:50}}
-                                        scrollEnabled={false}
-                                        removeClippedSubviews={false}
-                                        ref={refFlatList}
-                                        keyExtractor={item => item.id}
-                                        renderItem={({item,index})=>
-                                            index==0?View_Registrati_e_AccediConTelefono():(index==1?ViewEmailEPassword():ViewRecuperoPassword())}
-                                    />
-
-                                    <FAB
-                                    style={{backgroundColor:MosViola, width:"90%"}}
-                                    small
-                                    icon="email-lock"
-                                    onPress={() => {
-                                        if(isEmailEPasswordClicked.current==true)
-                                            accediConEmail();
-                                        else if(isRecuperaPasswordClicked.current==true)
-                                            inviaEmailRecuperoPsw();
-                                        else
-                                            mostraCampiEmailEPassword();
-                                    }}
-                                    label={labelEmailPasswordButton}
-                                    />                             
-                   
-                            </View>
-                        </ScrollView>
-                    </View>
-                </KeyboardAvoidingView>
+                            </Snackbar>  
             </View>
 
         )

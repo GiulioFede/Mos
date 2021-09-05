@@ -18,12 +18,14 @@ import {Ionicons, AntDesign, FontAwesome} from "@expo/vector-icons";
 import * as FileSystem from 'expo-file-system';
 import local_storage from "../../../../../../context/local_storage/localStorage";
 import { Audio } from 'expo-av';
-import { INTERRUPTION_MODE_ANDROID_DO_NOT_MIX } from 'expo-av/build/Audio';
+import { INTERRUPTION_MODE_ANDROID_DO_NOT_MIX, INTERRUPTION_MODE_IOS_DO_NOT_MIX } from 'expo-av/build/Audio';
 import { RowsOfMessagesToUpdate } from '../../context/chatContext';
 
 let newRecording = new Audio.Recording();
 let recordingIconAudioSound = new Audio.Sound()
 let isRecordingKeyboardOpened = false;
+
+const { ios, android } = Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
 
 const RecordingKeyboard = forwardRef((props, ref) => {
 
@@ -91,7 +93,9 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                     staysActiveInBackground: false, //interrompi la registrazione se si esce dall'app
                         //interrompi il suono delle altre app mentre si registra
                     interruptionModeAndroid: INTERRUPTION_MODE_ANDROID_DO_NOT_MIX, //idem come sopra ma per android
+                    interruptionModeIOS: INTERRUPTION_MODE_IOS_DO_NOT_MIX,
                     shouldDuckAndroid: true, //se arrivo un audio da altre app queste aspetteranno
+                    playThroughEarpieceAndroid: false
                 })
 
                 //if(!newRecording)
@@ -99,8 +103,15 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                 newRecording = new Audio.Recording();
                 //creo un suono nuovo
                 await newRecording.prepareToRecordAsync(
-                    Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY,
-                    Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX
+                    {
+                    android: android,
+                    ios: {
+                        ...ios,
+                        extension: '.mp4',
+                        outputFormat: Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC
+                    }
+                },
+                Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX
                 )
                 
                 newRecording.setOnRecordingStatusUpdate(aggiornaAnimazioneAudioVocale);

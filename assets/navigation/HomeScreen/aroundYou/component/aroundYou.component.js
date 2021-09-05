@@ -338,7 +338,7 @@ export default function AroundYouComponent(props){
        else
             setShowMe(false);
 
-    },[refresh,informazioniProfiloUtente.action_range_preference, informazioniProfiloUtente.gender_preference,informazioniProfiloUtente.age_range, informazioniProfiloUtente.show_me]);
+    },[refresh,informazioniProfiloUtente.location.geohash, informazioniProfiloUtente.action_range_preference, informazioniProfiloUtente.gender_preference,informazioniProfiloUtente.age_range, informazioniProfiloUtente.show_me]);
 
 
     //resetta dati di ricerca cosi da ricominciare da capo in caso non trova nessuno una volta giunto alla fine
@@ -706,7 +706,7 @@ export default function AroundYouComponent(props){
     <View style={{width:width, height:height,zIndex:0, position:"absolute", justifyContent:"center", alignItems:"center"}}>
         <AntDesign name="frowno" size={height*0.2} color="rgba(68, 68, 68,0.3)" />
         <Text style={{fontSize:fontSizeCampi,fontFamily: "Raleway_200ExtraLight", textAlign:"center", marginTop:10}}>
-            Sembra non ci sia nessun'altro che rispetti le tue preferenze. Prova a cambiare qualche parametro, come il raggio di azione o la fascia di età.
+            Sembra non ci sia nessun'altro vicino a te che rispetti le tue preferenze. Prova a cambiare qualche parametro, come il raggio di azione o la fascia di età.
         </Text>
     </View>
     }

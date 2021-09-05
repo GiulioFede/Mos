@@ -17,6 +17,9 @@ import { FlatList } from "react-native-gesture-handler";
 //variabili di appoggio (li metto qua cosi da evitare di ricrearle ad ogni render)
 let tmpKeywordArray = null;
 let check = false;
+let nomeTmp = "";
+let descrizioneTmp = "";
+let occupazioneTmp = "";
 
 export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizioneUtente,setSessoUtente,setIdentitaDiGenere, setPreferenzaSessoUtente,setDescrizioneUtente, setOccupazioneUtente,setKeywordUtente, setUriImmagine, creaProfilo, setError}){
 
@@ -91,7 +94,6 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                             }else {
                                 console.log("ha accettato. Richiedo posizione");
                                 //ha accettato
-
                                 Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Lowest })
                                     .then((pos)=>{
                                        console.log("posizione ottenuta");
@@ -130,7 +132,13 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                         }).catch((e)=>{
                             console.log("errore posizione:"+e);
                             setIsLocationLoading(false);
-                            setError("Si è verificato un errore. Riprovare più tardi.")
+                            setError("Sembra esserci un problema con il tuo provider di posizione. Prova questa alternativa.");
+                            if(provaAlternativaGeocode==false){
+                                setError("Si è verificato un errore col tuo provider di posizione. Prova questa alternativa.");
+                                setProvaAlternativaGeocode(true);
+                            }
+                            else 
+                                setError("Si è verificato un errore. Riprova più tardi.");
                         })
 
                 }
@@ -304,7 +312,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
             {/*item.id=='9' && <Ionicons name="person-add" size={altezzaSchermoInterno*0.3} color="white" /> */}
 
             <View style={{flex:1, padding:10}}>
-                <View style={{flex:0.5, width:"100%",alignItems:"center", justifyContent:"center", alignSelf:"center"}} >
+                <View style={{flex:0.4, width:"100%",alignItems:"center", justifyContent:"center", alignSelf:"center"}} >
                     <Text style={styles.titolo}>{item.title}</Text>
                     <Text style={[styles.sottoTesto,{textAlign:"center"}]}>{item.subTitle}</Text>
                     {item.id=='3' && provaAlternativaGeocode==true && isLocationLoading && <ActivityIndicator animating={true} color={MosCeleste} />}
@@ -323,16 +331,16 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                         </>
                     }
                 </View>
-                <View style={{flex:0.5,width:"100%", justifyContent:"center", alignItems:"center"}}>
+                <View style={{flex:1,width:"100%", justifyContent:"center", alignItems:"center"}}>
 
                     {/*PAGINA 1 --> NOME */}
                     {item.id=='1' &&
                         <View>
                         <TextInput
                             style={[styles.sottoTesto,{color:MosCeleste,fontFamily:"Raleway_400Regular",borderBottomColor:MosCeleste, borderBottomWidth:1, textAlign:"center", width:width*0.3, margin:25, paddingVertical:3}]}
-                            onChangeText={text => setNome(text.trim())}
-                            onSubmitEditing={()=>setNomeUtente(nome)}
-                            onBlur={()=> setNomeUtente(nome)} //focus perso
+                            onChangeText={text =>{ nomeTmp = text.trim(); nomeTmp = nomeTmp.charAt(0).toUpperCase() + nomeTmp.slice(1);  setNome(nomeTmp)}}
+                            onSubmitEditing={()=>{nomeTmp = nome.trim(); nomeTmp = nome.charAt(0).toUpperCase() + nome.slice(1); setNomeUtente(nomeTmp)}}
+                            onBlur={()=> {nomeTmp = nome.trim(); nomeTmp = nome.charAt(0).toUpperCase() + nome.slice(1); setNomeUtente(nomeTmp)}} //focus perso
                             value={nome}
                             autoCapitalize="words"
                             placeholder="Nome"
@@ -355,7 +363,9 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         <View>
                                             {!isLocationLoading &&
                                                 <TouchableOpacity onPress={ottieniPosizioneUtente}>
-                                                    <Text style={[styles.campiDaCompilare,{color:"white", fontFamily:"Raleway_400Regular", backgroundColor:MosCeleste, padding:10, borderRadius:20}]}> OTTIENI POSIZIONE</Text>
+                                                    <View style={{backgroundColor:MosCeleste, padding:10, borderRadius:20}}>
+                                                        <Text style={[styles.campiDaCompilare,{color:"white", fontFamily:"Raleway_400Regular"}]}> OTTIENI POSIZIONE</Text>
+                                                    </View>
                                                 </TouchableOpacity>
                                             }
                                         </View>
@@ -365,7 +375,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                 </View>    
                         }
                         {item.id=='3' && provaAlternativaGeocode==true &&
-                                <View style={{flex:1}} >
+                                <View >
                                     {<Text style={[styles.info,{paddingTop:20, textAlign:"center"}]}>Inserisci il tuo indirizzo civico seguito dalla città, regione e paese dove vivi. Calcoleremo la tua posizione usando queste informazioni.</Text>}
                                 <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
                                     <Text style={{color:MosPurple,fontFamily:"Raleway_400Regular",fontSize:fontSizeSottoTitolo*0.7,opacity:(keywordArray.length<10?1:0.3) }}>Indirizzo:</Text>
@@ -384,8 +394,8 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     </TouchableOpacity>
                                 </View>
                                 
-                                <Divider />
-                            </View> 
+                               
+                                </View> 
                         }
 
                         {/*PAGINA 4 --> SESSO BIOLOGICO */}
@@ -396,7 +406,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     <TouchableOpacity onPress={() => setSesso('male')}>
                                         <Text style={styles.campiDaCompilare}>MASCHIO</Text>
                                     </TouchableOpacity>
-                                    <RadioButton
+                                    <RadioButton.Android
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
                                         value="maschio"
@@ -407,7 +417,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     <TouchableOpacity onPress={() => setSesso('female')}>
                                         <Text style={[styles.campiDaCompilare,{paddingLeft:larghezzaDevice*0.1}]}>FEMMINA</Text>
                                     </TouchableOpacity>
-                                    <RadioButton
+                                    <RadioButton.Android
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
                                         value="femmina"
@@ -419,7 +429,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     <TouchableOpacity onPress={() => setSesso('intersex')}>
                                         <Text style={[styles.campiDaCompilare]}>INTERSEX</Text>
                                     </TouchableOpacity>
-                                    <RadioButton
+                                    <RadioButton.Android
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
                                         value="intersex"
@@ -438,7 +448,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                             <ScrollView horizontal={true} contentContainerStyle={{justifyContent:"center", }} >
                                
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
-                                    <RadioButton
+                                    <RadioButton.Android
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
                                         value="maschio"
@@ -451,7 +461,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     </TouchableOpacity>
                                 </View>
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
-                                    <RadioButton
+                                    <RadioButton.Android
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
                                         value="femmina"
@@ -463,7 +473,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     </TouchableOpacity>
                                 </View>
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="agender"
@@ -475,7 +485,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="androgino"
@@ -487,7 +497,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="terzo genere"
@@ -499,7 +509,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="intergender"
@@ -511,7 +521,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="bigender"
@@ -523,7 +533,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="trigender"
@@ -535,7 +545,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="pangender"
@@ -547,7 +557,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="genderfluid"
@@ -559,7 +569,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="genderflux"
@@ -571,7 +581,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="transessuale"
@@ -583,7 +593,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi boy"
@@ -595,7 +605,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi girl"
@@ -607,7 +617,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi androgino"
@@ -619,7 +629,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi fluid"
@@ -631,7 +641,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi flux"
@@ -650,7 +660,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                         {item.id=='6' &&
                             <ScrollView horizontal={true} contentContainerStyle={{justifyContent:"center", }}>
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
-                                    <RadioButton
+                                    <RadioButton.Android
                                         value="maschio"
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
@@ -663,7 +673,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     </TouchableOpacity>
                                 </View>
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
-                                    <RadioButton
+                                    <RadioButton.Android
                                         color={MosCeleste}
                                         uncheckedColor={MosCeleste}
                                         value="femmina"
@@ -675,7 +685,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     </TouchableOpacity>
                                      </View>
                                      <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="agender"
@@ -687,7 +697,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="androgino"
@@ -699,7 +709,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="terzo genere"
@@ -711,7 +721,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="intergender"
@@ -723,7 +733,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="bigender"
@@ -735,7 +745,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="trigender"
@@ -747,7 +757,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="pangender"
@@ -759,7 +769,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="genderfluid"
@@ -771,7 +781,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="genderflux"
@@ -783,7 +793,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="transessuale"
@@ -795,7 +805,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi boy"
@@ -807,7 +817,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi girl"
@@ -819,7 +829,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi androgino"
@@ -831,7 +841,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi fluid"
@@ -843,7 +853,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <RadioButton
+                                        <RadioButton.Android
                                             color={MosCeleste}
                                             uncheckedColor={MosCeleste}
                                             value="demi flux"
@@ -863,11 +873,11 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                 <Text style={{fontFamily:"Raleway_400Regular", fontSize:fontSizeCampi, color:MosPurple}}>Descrizione</Text>
                                 <TextInput
                                     style={{backgroundColor:"white",textAlignVertical:"top", color:MosCeleste,fontFamily:"Raleway_400Regular", width:"100%", height:"100%", paddingVertical:3,fontSize:fontSizeSottoTitolo*0.8,fontFamily: "Raleway_200ExtraLight",color: MosCeleste}}
-                                    onChangeText={text => setDescrizione(text)}
+                                    onChangeText={text =>{descrizioneTmp = text; descrizioneTmp = descrizioneTmp.charAt(0).toUpperCase() + descrizioneTmp.slice(1); setDescrizione(descrizioneTmp)}}
                                     onSubmitEditing={()=>setDescrizioneUtente(descrizione)}
                                     onBlur={()=> setDescrizioneUtente(descrizione)} //focus perso
                                     value={descrizione}
-                                    keyboardType="name-phone-pad"
+                                    keyboardType="default"
                                     multiline={true}
                                     placeholder='Parlaci di te...'
                                     underlineColorAndroid='transparent'
@@ -881,13 +891,13 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                             <View>
                             <TextInput
                                 style={[styles.sottoTesto,{color:MosCeleste,fontFamily:"Raleway_400Regular",borderBottomColor:MosCeleste, borderBottomWidth:1, textAlign:"center", width:width*0.7, margin:25, paddingVertical:3}]}
-                                onChangeText={text => setOccupazione(text)}
+                                onChangeText={text =>{occupazioneTmp = text; occupazioneTmp = occupazioneTmp.charAt(0).toUpperCase() + occupazioneTmp.slice(1); setOccupazione(occupazioneTmp)}}
                                 onSubmitEditing={()=>setOccupazioneUtente(occupazione)}
                                 onBlur={()=> setOccupazioneUtente(occupazione)} //focus perso
                                 value={occupazione}
                                 maxLength={50}
                                 placeholder="es. studente, barista,..."
-                                keyboardType="name-phone-pad"
+                                keyboardType="default"
                         />
                         </View> }
  
@@ -915,7 +925,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     onContentSizeChange={()=> flatListKeywordRef.current.scrollToEnd()} 
                                     horizontal={true}
                                     data={keywordArray}
-                                    showsHorizontalScrollIndicator={true}
+                                    showsHorizontalScrollIndicator={false}
                                     keyExtractor={item => item.id.toString()}
                                     renderItem={({ item, index }) =>
                                         <View style={{marginTop:10, marginRight:10}}>
@@ -939,12 +949,15 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         <View style={{backgroundColor:MosCeleste, marginTop:20, borderRadius:20}}><Text style={[styles.campiDaCompilare,{color:"white", fontFamily:"Raleway_400Regular", padding:10}]}> CREA PROFILO</Text></View>
                                     </TouchableOpacity> 
                         }
-
-                     {<Text style={[styles.info,{paddingTop:20, textAlign:"center"}]}>{item.info}</Text>}
+                     
                 </View>
-               
+                <View>
+                        <Divider style={{marginVertical:20}} />
+                        {<Text style={[styles.info,{ textAlign:"center"}]}>{item.info}</Text>}
+                     </View>
 
             </View>
+            
             
         </View>
     )

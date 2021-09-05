@@ -14,7 +14,7 @@ const VisibilityFAB = (props) => {
   return (
       <>
           
-    <Provider >
+    <Provider style={{backgroundColor:"green"}} >
       <Portal >
         <FAB.Group
           style={{paddingBottom:70, }}

@@ -199,7 +199,12 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
 
     return (
         <Animated.View style={{marginVertical:0.5,opacity:opacityAnimation}}>
-            {uriProfileImage && media!=null && (lastContent.lastMessage.value==null) && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={{position:"absolute", width:"100%", height:"100%"}} blurRadius={5} onLoadEnd={()=>{opacityTransition();}} onError={(e)=>{setUriProfileImage(null); opacityTransition();}}></Animated.Image>} 
+            {uriProfileImage && media!=null && (lastContent.lastMessage.value==null) && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={{position:"absolute", width:"100%", height:"100%"}} blurRadius={5} onLoadEnd={()=>{opacityTransition();}} onError={(e)=>{setUriProfileImage(null); opacityTransition();}}></Animated.Image>}
+            {fireworksVisibility==true &&
+                <View style={{width:"100%", height:"100%",position:"absolute"}}>
+                    <LottieView autoPlay loop={true} source={require('../../../../../../resources/lottie/upgradeAnimation.json')} resizeMode="cover" />
+                </View>
+                } 
         <TouchableOpacity activeOpacity={.7} style={[styles.container,{}]} onPress={()=>{apriDettagliChat()}}>
             {/* IMMAGINE PROFILO */}
             {media!=null &&
@@ -220,11 +225,6 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
             }
                     
             <View style={styles.contenitoreInfo}>
-                {fireworksVisibility==true &&
-                <View style={{width:"100%", height:"100%"}}>
-                    <LottieView autoPlay loop={true} source={require('../../../../../../resources/lottie/fireworks.json')} resizeMode="cover" />
-                </View>
-                }
                 {/* nome */}
                 <View style={styles.contenitoreNome}>
                     <View style={{padding:5}}>

@@ -30,7 +30,7 @@ export default [
         id: '5',
         title: "Qual è la tua identità di genere?",
         subTitle: "",
-        info: "*Questa informazione sarà visibile a tutti."
+        info: "Scorri verso destra per vedere tutte le alternative. \n*Questa informazione sarà visibile a tutti."
     },
     {
         id: '6',

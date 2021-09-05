@@ -290,11 +290,14 @@ export default function ProfileComponent(props){
 
     const [daEliminare, setDaEliminare] = useState("");
     const [visibility, setVisibility] = useState("0");
-    console.log("Visibilità attuale:"+ visibility);
+
     //contiene l'uri se non è "null"
     const [urlProfileImage, setUrlProfileImage] = useState("null");
     const [error, setError] = useState(false);
     const isMounted = useRef(false);
+
+    console.log("INFO PROFILO UTENTE CORRENTE");
+    console.log(informazioniProfiloUtente);
 
     function setSnackMessage(message){
         snackMessageRef.current.setta_messaggio_da_mostrare(message);
@@ -342,7 +345,7 @@ export default function ProfileComponent(props){
             setIsUserProfileLoading(false);
         }
 
-    },[informazioniProfiloUtente.urlGalleryImages, informazioniProfiloUtente.age, informazioniProfiloUtente.self_description, visibility])
+    },[informazioniProfiloUtente.urlGalleryImages, informazioniProfiloUtente.location, informazioniProfiloUtente.age, informazioniProfiloUtente.self_description, visibility])
 
 
     //viene usato da uploadImageLoaderScreen per lasciare un messaggio a questo attuale schermo su come è andato l'upload
@@ -556,7 +559,10 @@ export default function ProfileComponent(props){
                 </TouchableOpacity>
                 <ActivityIndicator animating={isLoading} size={fontSizeTitoloBarra} color={MosCeleste} style={{position:"absolute", left:Dimensions.get("window").width*0.03}} />
             </View>
-            <ScrollView horizontal={false}>
+        
+            
+            
+            <ScrollView horizontal={false} showsVerticalScrollIndicator={false}>
 
             <View style={{ flex: 1, justifyContent: 'flex-start', width:larghezzaDevice}}>
                     <View style={{ paddingBottom:30}}>
@@ -606,9 +612,8 @@ export default function ProfileComponent(props){
 
                 </ScrollView>
 
-                <View style={{width:larghezzaDevice, position:"absolute", height:"100%" }}>
-                    {/*Bottone aggiungi foto */}
-                    <FAB
+                 {/*Bottone aggiungi foto */}
+                 <FAB
                                     style={styles.bottoneAggiungiFoto}
                                     //small
                                     icon="image-plus"
@@ -616,7 +621,7 @@ export default function ProfileComponent(props){
                                     onPress={()=>aggiungiNuovaImmagine(false)}/>
                     
                     <VisibilityFAB larghezzaSchermo = {larghezzaSchermo} altezzaSezioneGalleria={altezzaSezioneGalleria} setVisibility={setVisibility} visibility={visibility}/>
-                </View>
+               
                 
                 {/*MOSTRA L'ERRORE */}
                 <SnackMessage ref = {snackMessageRef} />

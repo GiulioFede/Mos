@@ -1,5 +1,5 @@
 import React,{useEffect, useState, useContext, useRef} from "react"
-import {View, Text, StyleSheet, TouchableOpacity,Image, Dimensions, Keyboard,KeyboardAvoidingView, TextInput, FlatList, BackHandler} from "react-native"
+import {View, Text, StyleSheet, TouchableOpacity,Image, Dimensions, Keyboard,KeyboardAvoidingView, TextInput, ScrollView, BackHandler, Platform} from "react-native"
 import {ActivityIndicator, Divider, FAB, ProgressBar, Snackbar} from "react-native-paper"
 import {Octicons, Ionicons, MaterialIcons, FontAwesome} from "@expo/vector-icons";
 import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaSchermoInterno, fontSizeCampi, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../context/variabili_globali/variabiliGlobali"
@@ -46,6 +46,7 @@ var idChatAlreadyOpened = [];
 let ascoltatoreNuoviMessaggi = null;
 let ascoltatoreStatistics = null;
 let THRESHOLD = 3; //NB: cambiare anche l'omonima in chat_preview
+let isIOS = Platform.OS=="ios";
 
 export var idChatCorrente = null;
 
@@ -751,8 +752,8 @@ export default function ChatDetail({ navigation,route}){
           {visibilityBeforeOpenChatDetail<=1 && <ProgressRequest ref={progressRequestRef} initialVisibility={visibilityBeforeOpenChatDetail} threshold={THRESHOLD} />}
       </View>
      
-
-
+    {!isIOS && 
+    <>
      {chat.length>0 &&
      <ListaMessaggi refFlatList={refFlatList} 
                     lista_messaggi={chat} 
@@ -765,13 +766,15 @@ export default function ChatDetail({ navigation,route}){
       {chat.length==0 && 
         <View style={{flex:1}}>
             {isChatLoaded==true &&
-                <View style={{width:larghezzaDevice, height:larghezzaDevice, justifyContent:"center"}}>
-                     <Image source={require('../../../../../resources/images/cloud-background.png')} style={{position:"absolute", width:larghezzaDevice,height:larghezzaDevice , alignSelf:"center"}}/>
+                <ScrollView>
+                <View style={{width:larghezzaDevice, justifyContent:"center"}}>
+                    <Image source={require('../../../../../resources/images/cloud-background.png')} style={{position:"absolute", width:larghezzaDevice,height:larghezzaDevice , alignSelf:"center"}}/>
                     <Text style={[styles.helloTitle,{textAlign:"center", justifyContent:"center", textAlignVertical:"center", marginTop:altezzaBarraScreen}]}>Saluta {name}! </Text>
                     <Text style={[styles.helloContent]}>Su Mosaic esistono 3 livelli di mosaicizzazione del profilo degli utenti, da quello massimo a quello nullo. Tu e {name} partirete con quello massimo. Col tempo, a seconda della conversazione, vi chiederemo di passare al livello successivo e ciò avverrà solo se entrambi sarete daccordo.</Text>
                     <Text style={[styles.helloContent]}>Puoi monitorare quanto manca alla prossima richiesta guardando la percentuale di progresso della barra sopra.</Text>
                     <Text style={[styles.helloContent]}>Dato l'iniziale anonimato, Mosaic invita a conversare con messaggi vocali limitando il numero di messaggi testuali a qualche carattere.</Text>
                 </View>
+            </ScrollView>
             }
         </View>
       }
@@ -839,6 +842,102 @@ export default function ChatDetail({ navigation,route}){
           </>
           
       }
+      </>
+    }
+
+
+
+    {isIOS &&
+    <KeyboardAvoidingView style={{ flex: 1, flexDirection: 'column',justifyContent: 'center'}} behavior="padding"  enabled   keyboardVerticalOffset={fontSizeTitoloBarra}>
+     {chat.length>0 &&
+     <ListaMessaggi refFlatList={refFlatList} 
+                    lista_messaggi={chat} 
+                    caricaSuccessivi10Messaggi={caricaSuccessivi10Messaggi} 
+                    getUtenteCorrente={getUtenteCorrente} 
+                    setSnackBarMessage={setSnackBarMessage}
+                    contactUid = {contactUid}
+                    ultimaData = {null}
+                    contactName = {name} /> }
+      {chat.length==0 && 
+        <View style={{flex:1}}>
+            {isChatLoaded==true &&
+                <ScrollView>
+                <View style={{width:larghezzaDevice, justifyContent:"center"}}>
+                    <Image source={require('../../../../../resources/images/cloud-background.png')} style={{position:"absolute", width:larghezzaDevice,height:larghezzaDevice , alignSelf:"center"}}/>
+                    <Text style={[styles.helloTitle,{textAlign:"center", justifyContent:"center", textAlignVertical:"center"}]}>Saluta {name}! </Text>
+                    <Text style={[styles.helloContent]}>Su Mosaic esistono 3 livelli di mosaicizzazione del profilo degli utenti, da quello massimo a quello nullo. Tu e {name} partirete con quello massimo. Col tempo, a seconda della conversazione, vi chiederemo di passare al livello successivo e ciò avverrà solo se entrambi sarete daccordo.</Text>
+                    <Text style={[styles.helloContent]}>Puoi monitorare quanto manca alla prossima richiesta guardando la percentuale di progresso della barra sopra.</Text>
+                    <Text style={[styles.helloContent]}>Dato l'iniziale anonimato, Mosaic invita a conversare con messaggi vocali limitando il numero di messaggi testuali a qualche carattere.</Text>
+                </View>
+            </ScrollView>
+            }
+        </View>
+      }
+     
+      <LinearGradient
+          // Background Linear Gradient sopra chat
+          colors={["rgba(119, 39, 236,0.1)",'transparent']}
+          style={{position: 'absolute',top:0,width: larghezzaDevice,height: 50}}
+        />
+      
+
+        <LinearGradient
+          // Background Linear Gradient sotto chat
+          colors={['transparent', "rgba(119, 39, 236,0.1)"]}
+          style={{position: 'absolute',bottom:altezzaMenuNavigazione*1.5,width: larghezzaDevice,height: 50}}
+        />
+
+      {//se non sta registrando mostro la classica tastiera 
+        openRecordingKeyboard==false
+        &&
+        <View style={styles.tastiera}>
+            <TouchableOpacity onPress={inviaMessaggio} style={styles.inviaMessaggio} disabled={initialState==true?true:(messaggio==""?true:false)}>
+                    <FontAwesome name = "location-arrow" size={fontSizeTitoloBarra} color={messaggio==""?"rgba(27, 98, 253,0.3)":MosCeleste} />
+            </TouchableOpacity>
+            <TextInput
+                style={styles.input}
+                maxLength={25}
+                disabled={initialState==true?true:!isChatLoaded}
+                onChangeText={(text)=>{setMessaggio(text)}}
+                value={messaggio}
+                placeholder="Scrivi un breve messaggio..."
+                keyboardType="default"
+            />
+            <TouchableOpacity onLongPress={apriRecordingKeyboard} disabled={initialState==true?true:!isChatLoaded} style={styles.pulsanteAudio}>
+                <MaterialIcons name="keyboard-voice" size={fontSizeTitoloBarra} color="white" />
+            </TouchableOpacity>
+        </View>
+      }
+
+      {//se sta registrando mostro la schermata di registrazione
+          openRecordingKeyboard == true
+          &&
+          //schermata nera + tastiera recording
+          <>
+          <View style={styles.backgroundRecording}/>
+          <RecordingKeyboard ref = {recordingKeyboardRef} 
+                             setOpenRecordingKeyboard = {setOpenRecordingKeyboard}
+                             isOpenRecordingKeyboardOpened = {isOpenRecordingKeyboardOpened}
+                             setSnackBarMessage = {setSnackBarMessage}
+                             ultimaRow = {ultimaRow}
+                             getUtenteCorrente = {getUtenteCorrente}
+                             chat = {chat}
+                             setChat = {setChat}
+                             refFlatList = {refFlatList}
+                             inviaNuovoMessaggio = {inviaNuovoMessaggio}
+                             lastMessage = {lastMessage}
+                             lastStatistic = {(isVisibilityMaximum.current == true)?("MAXIMUM_VISIBILITY_ACHIVED"):(statistics.current)}
+                             contactUid = {contactUid}
+                             isMounted = {isMounted}
+                             arrayOfRowsToUpdateState = {arrayOfRowsToUpdateState}
+                             chatId = {chatId}
+                             setRefresh = {setRefresh}
+                             refresh = {refresh}
+                             getCurrentVisibility = {getCurrentVisibility} />
+          </>
+          
+      }
+      </KeyboardAvoidingView> }
       
       {/*schermata caricamento chat */}
       {isChatLoaded==false && <View style={{position:"absolute", width:larghezzaDevice, height:altezzaDevice, justifyContent: 'center', alignItems: 'center'}}>

@@ -1,11 +1,10 @@
 import React, {useState, useEffect, useContext} from "react";
-import {View,StyleSheet, Text,TouchableOpacity, ScrollView} from "react-native";
+import {View,StyleSheet, Text,TouchableOpacity, ScrollView, KeyboardAvoidingView} from "react-native";
 import {Button, Snackbar, ActivityIndicator, TextInput} from "react-native-paper";
 import { MosCeleste, MosPurple } from "../../resources/colors";
 import { Ionicons } from '@expo/vector-icons'; 
 import {useFonts , Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
-import {KeyboardAvoidingView} from "react-native";
 import { fontSizeTitolo, iconSize } from "../../context/variabili_globali/variabiliGlobali";
 import {DrawerActions} from '@react-navigation/native';
 
@@ -187,7 +186,6 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                     duration = {5000}
                     theme={{ colors: { surface: "white",accent: MosPurple},}}
                     action={{
-                    label: 'UNDO',
                     onPress: () => {
                         onDismissSnackBar();
                                             },
@@ -195,12 +193,8 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                     {messaggioVerifica}
                 </Snackbar>
 
-                <KeyboardAvoidingView
-                keyboardVerticalOffset={20}
-                 behavior= {(Platform.OS === 'ios')? "padding" : null}
-                >
-                    <ScrollView>
-
+                <KeyboardAvoidingView style={{ flex: 1, flexDirection: 'column',justifyContent: 'center',}} behavior="padding" enabled   keyboardVerticalOffset={50}>
+                 <ScrollView showsVerticalScrollIndicator={false}>
                 {/* TITOLO */}
                 <View>
                     <Text style={styles.titolo}>Inserisci il codice di verifica ricevuto via SMS</Text>
@@ -226,13 +220,12 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                         }}>
 
                     VERIFICA
-                </Button>  
+                </Button>
+                </ScrollView>
+                </KeyboardAvoidingView>
 
                 {/*Loading */}
                 {isLoading && <ActivityIndicator animating={true} color={MosPurple} style={{paddingTop:20}} /> }
-
-                    </ScrollView>
-                </KeyboardAvoidingView>
             </View>
         )
             }

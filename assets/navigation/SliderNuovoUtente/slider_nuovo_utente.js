@@ -1,7 +1,7 @@
 import React, {useState,useEffect,useContext, useRef} from "react";
 import {View, Text,StyleSheet, FlatList,Animated, KeyboardAvoidingView,ScrollView, useWindowDimensions, BackHandler, Dimensions, TouchableOpacity} from "react-native";
 import {Snackbar, ActivityIndicator} from "react-native-paper";
-import { altezzaDevice, ColoreBarraDiStato, iconSize, larghezzaDevice } from "../../context/variabili_globali/variabiliGlobali";
+import { altezzaBarraScreen, altezzaDevice, altezzaSchermoInterno, ColoreBarraDiStato, iconSize, larghezzaDevice } from "../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste } from "../../resources/colors";
 import IndicatoreSlide from "./component/indicatore_slide";
 import ProgressiveButton from "./component/progressive_button";
@@ -16,7 +16,7 @@ import { getAgeFromDate } from "../../context/utilities/functions.utilities";
 export default function SliderNuovoUtente({route, navigation}){ //NB: route.params.uid contiene l'uid col quale salvare l'utente (e' uguale all'uid di autenticazione)
     console.log("Slider nuovo utente");
     //contesto autenticazione
-    var {creaNuovoProfiloUtente, logOut, setIsUserProfileCompleted} = useContext(AutenticazioneUtente);
+    var {userAuth, setInformazioniAutenticazioneUtente, creaNuovoProfiloUtente, logOut, setIsUserProfileCompleted} = useContext(AutenticazioneUtente);
     //estraggo argomenti dalla funzione
     var {uid} = route.params;
 
@@ -177,6 +177,8 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                                                                  keywordCleaned
                                     );
                                     console.log("CREAZIONE PROFILO RIUSCITA!!!");
+                                    const metodo = [userAuth.email,userAuth.phoneNumber];
+                                    setInformazioniAutenticazioneUtente(metodo);
                                     setIsCreazioneUtenteIsLoading(false);
                                     setIsUserProfileCompleted(true);
                                     navigation.navigate("Home");    
@@ -345,70 +347,75 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
     return (
         <View style={styles.container}>
             <KeyboardAvoidingView
-                keyboardVerticalOffset={20}
+                keyboardVerticalOffset={40}
                 behavior= {(Platform.OS === 'ios')? "padding" : null}
             >
             <View style={{flex:1, justifyContent:"center", alignItems:"center"}} >
-            <ScrollView style={{flex:1}}>
                 {/* BARRA SUPERIORE */}
                 <View style={styles.barraSuperiore}>
                         <TouchableOpacity onPress={() => {navigation.navigate("LoginScreen")}}>
                                 <Ionicons name="chevron-back" size={iconSize} color={MosCeleste} style={{paddingLeft:24}} />
                         </TouchableOpacity>
                 </View>
-                <View style={{flex:0.5}}>
-                    <View style={{flex:0.4, maxHeight:altezzaDevice*0.7}}>
+                <View style={{flex:1}}>
+                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
+
+                    <View style={{flex:1,width:larghezzaDevice}}>
+                        
                         <FlatList
-                            style={{flex:1}}
-                            data = {slider_data}
-                            renderItem = {({item}) => 
-                                                <SlidePage 
-                                                    item={item} 
-                                                    setNomeUtente={setName}
-                                                    setDataUtente={setDataDiNascita}
-                                                    setPosizioneUtente={setPosizione}
-                                                    setSessoUtente = {setSesso}
-                                                    setIdentitaDiGenere = {setIdentitaDiGenere}
-                                                    setPreferenzaSessoUtente = {setPreferenzaSesso}
-                                                    setDescrizioneUtente = {setDescrizioneUtente}
-                                                    setOccupazioneUtente = {setOccupazioneUtente}
-                                                    setKeywordUtente = {setKeywordUtente}
-                                                    setUriImmagine = {setUriImmagineProfilo}
-                                                    creaProfilo = {creaNuovoProfilo}
-                                                    setError = {setSnackError}
-                                                    setCreazioneUtenteLoading = {setIsCreazioneUtenteIsLoading}
-                                                />
-                                                }
-                            horizontal
-                            pagingEnabled
-                            showsHorizontalScrollIndicator={false}
-                            pagingEnabled
-                            scrollEnabled = {false}
-                            keyExtractor={(item) => item.id}
-                            
-                            onScroll = {Animated.event([{nativeEvent: {contentOffset: {x: scrollX}}}],{
-                                useNativeDriver: false
-                            })}
-                            onViewableItemsChanged={viewableItemsChanged}
-                            viewabilityConfig={viewConfig}
-                            ref={slidesRef}
-                        />
+                                data = {slider_data}
+                                renderItem = {({item}) => 
+                                                    <SlidePage 
+                                                        item={item} 
+                                                        setNomeUtente={setName}
+                                                        setDataUtente={setDataDiNascita}
+                                                        setPosizioneUtente={setPosizione}
+                                                        setSessoUtente = {setSesso}
+                                                        setIdentitaDiGenere = {setIdentitaDiGenere}
+                                                        setPreferenzaSessoUtente = {setPreferenzaSesso}
+                                                        setDescrizioneUtente = {setDescrizioneUtente}
+                                                        setOccupazioneUtente = {setOccupazioneUtente}
+                                                        setKeywordUtente = {setKeywordUtente}
+                                                        setUriImmagine = {setUriImmagineProfilo}
+                                                        creaProfilo = {creaNuovoProfilo}
+                                                        setError = {setSnackError}
+                                                        setCreazioneUtenteLoading = {setIsCreazioneUtenteIsLoading}
+                                                    />
+                                                    }
+                                horizontal
+                                pagingEnabled
+                                showsHorizontalScrollIndicator={false}
+                                pagingEnabled
+                                scrollEnabled = {false}
+                                keyExtractor={(item) => item.id}
+                                
+                                onScroll = {Animated.event([{nativeEvent: {contentOffset: {x: scrollX}}}],{
+                                    useNativeDriver: false
+                                })}
+                                onViewableItemsChanged={viewableItemsChanged}
+                                viewabilityConfig={viewConfig}
+                                ref={slidesRef}
+                            />
                     </View>
-                    <View style={{flexGrow:1}}>
-                        <IndicatoreSlide data={slider_data} scrollX={scrollX}/> 
-                        <ProgressiveButton  percentage={(currentIndex+1)*(100/slider_data.length)} 
-                                            scrollSlide={scrollSlider}
-                                            scrollBack={scrollBack}
-                                            showLeftArrow={showLeftArrow}
-                                            showForwardArrow={showForwardArrow}/>
+
+                    <View style={{justifyContent:"flex-end", width:larghezzaDevice}} >
+                        
+                            <IndicatoreSlide data={slider_data} scrollX={scrollX}/> 
+                            <ProgressiveButton  percentage={(currentIndex+1)*(100/slider_data.length)} 
+                                                scrollSlide={scrollSlider}
+                                                scrollBack={scrollBack}
+                                                showLeftArrow={showLeftArrow}
+                                                showForwardArrow={showForwardArrow}/>
+
                     </View>
+                    </ScrollView>
+                </View>
                     {/*MOSTRA L'ERRORE SE SI RIEMPIE UN CAMPO IN MODO ERRATO */}
                     <Snackbar
                         visible={snackError ? true : false}
                         onDismiss={hideSnackError}
-                        duration= {5000}
+                        duration= {4000}
                         action={{
-                        label: 'Undo',
                         onPress: () => {
                             // Do something
                             hideSnackError();
@@ -416,9 +423,6 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                         }}>
                         {snackError}
                     </Snackbar>
-                 
-               </View>
-               </ScrollView>
             </View>
             </KeyboardAvoidingView>
             

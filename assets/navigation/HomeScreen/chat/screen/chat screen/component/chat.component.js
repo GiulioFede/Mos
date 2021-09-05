@@ -318,6 +318,7 @@ export default function ChatListComponent({navigation, route}){
 
         async function ascoltaNuoveConversazioni(){
             try{
+                console.log("ottengo ascoltatore nuove conversazioni...");
                 newChatListener = ottieniAscoltatoreNuoveConversazioni()
                     .onSnapshot(
                         { includeMetadataChanges: true },

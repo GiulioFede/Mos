@@ -13,38 +13,30 @@ const SliderDetails = ({dettagli}) => {
 
         if(item.section=="location"){
             return (
-                <View style={{width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, flexDirection:"row", padding:10, margin:10, justifyContent:"center"}}>
-                    
-                    <Ionicons name="location-sharp" size={fontSizeTitoloPiccolo} color={MosCeleste} style={{alignSelf:"center"}} />
-                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}>{item.city}</Text>
-                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}>,{item.region}</Text>
-                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}>,{item.country}</Text>
+                <View style={{width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, flexDirection:"row", padding:10, margin:10, justifyContent:"center", alignItems:"center"}}>
+                    <View style={{width:larghezzaDevice-40, flexDirection:"column", justifyContent:"center", }}>
+                        <Ionicons name="location-sharp" size={fontSizeTitoloPiccolo} color={MosCeleste} style={{alignSelf:"center", alignContent:"center", alignItems:"center"}} />
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", textAlign:"center"}]}>{item.city}</Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1}  style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",textAlign:"center"}]}>{item.region}</Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1}  style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",textAlign:"center"}]}>{item.country}</Text>
+                    </View>
                 </View>
             )
         }
         else if(item.section=="sex and gender"){
             return (
-                <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center"}}>
-                    <View style={{flexDirection:"row"}}>
-                        <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>Sesso:</Text>
-                        <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.sex}</Text>
-                    </View>
-                    <View style={{flexDirection:"row"}}>
-                        <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Identità di genere:</Text>
-                        <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_identity}</Text>
-                    </View>
-                    <View style={{flexDirection:"row"}}>
-                        <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Genere di preferenza:</Text>
-                        <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_preference}</Text>
-                    </View>
+                <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center",alignItems:"center"}}>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>Sesso:<Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.sex}</Text></Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Identità di genere:<Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_identity}</Text></Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Genere di preferenza:<Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_preference}</Text></Text>
                     </View>
             )
         }
         else if(item.section=="occupation and decription"){
             return (
-                <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center"}}>
+                <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center",alignItems:"center"}}>
                     <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>Occupazione corrente</Text>
-                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.occupation}</Text>
+                    <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.occupation}</Text>
 
                     <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Descrizione personale</Text>
                     <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.description}</Text>

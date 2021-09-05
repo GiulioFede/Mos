@@ -1,6 +1,6 @@
 import React, {useState, useRef, useContext, useEffect} from "react";
 import {View, Text,Dimensions,StyleSheet, TouchableOpacity, TextInput, ScrollView,KeyboardAvoidingView, Button, Platform,BackHandler, FlatList} from "react-native"
-import { FAB, Snackbar, ActivityIndicator, Divider, Checkbox } from 'react-native-paper';
+import { FAB, Snackbar, ActivityIndicator, Divider} from 'react-native-paper';
 import { altezzaDevice, fontSizeCampi, fontSizeSottoTitolo, fontSizeTitoloBarra, fontSizeTitoloCampo, iconSize, larghezzaDevice } from "../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste, MosPurple, MosViola } from "../../resources/colors";
 import {Ionicons, AntDesign,MaterialIcons, Entypo} from "@expo/vector-icons";
@@ -124,6 +124,8 @@ export default function InformazioniPersonali({ navigation }) {
                         setIsLoading(false);
                         var code = e.code;
                         var mex = "*si è verificato un errore. Riprova più tardi";
+                        if(code=="auth/email-already-in-use")
+                            mex="* questa email è già in uso da un altro account."
                         if(code=="auth/requires-recent-login")
                             mex= "*per motivi di sicurezza ti chiediamo di accedere nuovamente per poter aggiornare l'email.";
                         else if(code=="auth/too-many-requests")
@@ -253,6 +255,7 @@ function aggiornaPhoneNumber(){
                                         }
                                         console.log(pos);
                                         setIsLocationLoading("aggiornata");
+                                        throw "err";
                                         //ottieni la posizione
                                         const user_position = [pos.coords.latitude,pos.coords.longitude];
                                         console.log(pos);
@@ -288,14 +291,23 @@ function aggiornaPhoneNumber(){
                         }).catch((e)=>{
                             console.log("errore in informazioni personali:"+e);
                             setIsLocationLoading("");
-                            setSnackMessage("Si è verificato un errore. Riprovare più tardi.")
+                            if(provaAlternativaGeocode==false){
+                                setSnackMessage("Si è verificato un errore col tuo provider di posizione. Prova questa alternativa.");
+                                setProvaAlternativaGeocode(true);
+                            }
+                            else 
+                                setSnackMessage("Si è verificato un errore. Riprova più tardi.");
                         })
 
                 }
             }).catch((e)=>{
                 setIsLocationLoading("");
-                setSnackMessage("Si è verificato un errore. Riprovare più tardi.")
-                console.log("si è verificato un problema:"+e);
+                if(provaAlternativaGeocode==false){
+                    setSnackMessage("Si è verificato un errore col tuo provider di posizione. Prova questa alternativa.");
+                    setProvaAlternativaGeocode(true);
+                }
+                else 
+                    setSnackMessage("Si è verificato un errore. Riprova più tardi.");
             })
         }catch(e){
             setIsLocationLoading("");
@@ -498,7 +510,15 @@ function aggiornaPhoneNumber(){
                                 if(i==0) informazioniProfiloUtente.date_of_birth = {nanoseconds: 0, seconds: dataDiNascita.seconds};
                                 if(i==0) informazioniProfiloUtente.age = getAgeFromTimestamp(dataDiNascita);
                                 else if(i==1) informazioniProfiloUtente.self_description = descrizione;
-                                else if(i==2) informazioniProfiloUtente.position = posizioneUtente.current;
+                                else if(i==2) {
+                                    informazioniProfiloUtente.location.lat = posizioneUtente.current[0];
+                                    informazioniProfiloUtente.location.lng = posizioneUtente.current[1];
+                                    informazioniProfiloUtente.location.city = posizioneUtente.current[2];
+                                    informazioniProfiloUtente.location.region = posizioneUtente.current[3];
+                                    informazioniProfiloUtente.location.country = posizioneUtente.current[4];
+                                    let hash = geohashForLocation([posizioneUtente.current[0], posizioneUtente.current[1]]);
+                                    informazioniProfiloUtente.location.geohash = hash.substring(0,5);
+                                }
                                 else if(i==3) informazioniProfiloUtente.gender_identity = identitaDiGenere;
                                 else if(i==4) informazioniProfiloUtente.gender_preference = orientamentoSessuale;
                                 else if(i==5) informazioniProfiloUtente.current_occupation = occupazione;
@@ -572,7 +592,8 @@ function aggiornaPhoneNumber(){
 
     async function resetta(){
         //prima resetto tutti i campi con l'ultima modifica salvata
-        setAuth((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]);
+        if(informazioniAutenticazioneUtente!=null)
+            setAuth((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]);
         //setDataDiNascita(informazioniProfiloUtente.dateOfBirth);
         setIsLocationLoading("");
         setDataDiNascita(informazioniProfiloUtente.date_of_birth);
@@ -677,13 +698,15 @@ function aggiornaPhoneNumber(){
 
           if(isMounted.current == true){
             //inizializzo elementi
-            setAuth((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]);
+            if(informazioniAutenticazioneUtente!=null)
+                setAuth((informazioniAutenticazioneUtente[0]!=null)?informazioniAutenticazioneUtente[0]:informazioniAutenticazioneUtente[1]);
             setNome(informazioniProfiloUtente.name);
             setDescrizione(informazioniProfiloUtente.self_description);
             //let dataDiNascitaTMP = new Date(informazioniProfiloUtente.date_of_birth);
             console.log("setto data di nascita:"+informazioniProfiloUtente.date_of_birth);
             setDataDiNascita(informazioniProfiloUtente.date_of_birth);
             setIsLocationLoading("");
+            setProvaAlternativaGeocode(false);
             setIdentitaDiGenere(informazioniProfiloUtente.gender_identity);
             setOrientamentoSessuale(informazioniProfiloUtente.gender_preference);
           }
@@ -713,6 +736,9 @@ function aggiornaPhoneNumber(){
             setSnackMessage("Si è verificato un errore durante l'eliminazione dell'account. Riprova più tardi.");
         }
     }
+
+    console.log("info auth:")
+    console.log(informazioniAutenticazioneUtente);
 
         //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
@@ -753,26 +779,26 @@ function aggiornaPhoneNumber(){
                         <Divider />
                         <Text style={[styles.campo,{marginTop: 25, color:MosPurple, textAlign:"center"}]}>Autenticazione</Text>
                         {/*EMAIL oppure TELEFONO*/}
-                        {informazioniAutenticazioneUtente[0]!=null && <Text style={[styles.titoloCampo,{marginTop:20}]}>Email</Text>}
-                        {informazioniAutenticazioneUtente[0]==null && <Text style={[styles.titoloCampo,{marginTop:20}]}>Telefono</Text>}
+                        {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]!=null && <Text style={[styles.titoloCampo,{marginTop:20}]}>Email</Text>}
+                        {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]==null && <Text style={[styles.titoloCampo,{marginTop:20}]}>Telefono</Text>}
                         <View>
                         <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
                             <TextInput autoCapitalize="none"
                                    style={styles.campo}
-                                   editable={informazioniAutenticazioneUtente[0]!=null}
+                                   editable={(informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]!=null)}
                                    onChangeText={text => setAuth(text.trim())}
                                    onSubmitEditing={()=>setAuth(auth)}
                                    onBlur={()=> setAuth(auth)} //focus perso
                                    value={auth}
-                                   placeholder={(informazioniAutenticazioneUtente[0]!=null)?"email":"telefono"}
+                                   placeholder={(informazioniAutenticazioneUtente==null)?"":(informazioniAutenticazioneUtente[0]!=null)?"email":"telefono"}
                                    defaultValue = {auth}
                                    keyboardType="name-phone-pad"
                                     />
                             {erroreAuth && <Text style={[styles.errore,{marginVertical:10}]}>{erroreAuth}</Text>}
-                            {informazioniAutenticazioneUtente[0]!=null && <Text style={[styles.errore,{marginVertical:10, color:MosCeleste}]}>Inserisci la tua nuova email e premi sul pulsante sotto. La password rimarrà la stessa con la quale accedevi prima. Ricorda che una volta cambiata, la vecchia email non sarà più abilitata agli accessi futuri, ma sarà comunque possibile ritornare ad usarla eseguendo la stessa procedura. </Text>}
-                            {informazioniAutenticazioneUtente[0]==null && <Text style={[styles.errore,{marginVertical:10, color:MosCeleste}]}>Questo è il tuo attuale numero di telefono. Per cambiarlo premi il pulsante sotto. Per motivi di sicurezza ti chiediamo di autenticarti nuovamente prima di procedere. </Text>}
+                            {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]!=null && <Text style={[styles.errore,{marginVertical:10, color:MosCeleste}]}>Inserisci la tua nuova email e premi sul pulsante sotto. La password rimarrà la stessa con la quale accedevi prima. Ricorda che una volta cambiata, la vecchia email non sarà più abilitata agli accessi futuri, ma sarà comunque possibile ritornare ad usarla eseguendo la stessa procedura. </Text>}
+                            {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]==null && <Text style={[styles.errore,{marginVertical:10, color:MosCeleste}]}>Questo è il tuo attuale numero di telefono. Per cambiarlo premi il pulsante sotto. Per motivi di sicurezza ti chiediamo di autenticarti nuovamente prima di procedere. </Text>}
                         </View>
-                        <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10, textAlign:"center"}]} onPress={(informazioniAutenticazioneUtente[0]!=null)?aggiornaEmailUtente:aggiornaPhoneNumber}><Text style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>{(informazioniAutenticazioneUtente[0]!=null)?"AGGIORNA EMAIL":"AGGIORNA NUMERO DI TELEFONO"}</Text></TouchableOpacity>
+                        <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10, textAlign:"center"}]} onPress={(informazioniAutenticazioneUtente==null)?{}:(informazioniAutenticazioneUtente[0]!=null)?aggiornaEmailUtente:aggiornaPhoneNumber}><Text style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>{(informazioniAutenticazioneUtente==null)?"...":(informazioniAutenticazioneUtente[0]!=null)?"AGGIORNA EMAIL":"AGGIORNA NUMERO DI TELEFONO"}</Text></TouchableOpacity>
                         
                         </View>
                         <Divider />
@@ -793,14 +819,18 @@ function aggiornaPhoneNumber(){
                         <Text style={[styles.titoloCampo,{marginTop:20}]}>Data di nascita</Text>
                         <TouchableOpacity onPress={apriDatePicker}>
                             <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
+                                {Platform.OS === 'android' &&
+                                <>
                                 <Text
                                         style={[styles.campo,{color:MosViola}]}
                                         defaultValue={"..."}> {getFormattedData()} </Text>
                                 {erroreData && <Text style={[styles.errore,{marginTop:10}]}>{erroreData}</Text>}
+                                </>
+                            }
                             </View>
                         </TouchableOpacity>
                         <DatePicker setData={modificaDataDiNascita} isVisible={isDatePickerOpened} setIsVisible={setIsDatePickerOpened} />
-                        <Divider />
+                        <Divider style={{marginTop:10}} />
 
                         {/*DESCRIZIONE*/}
                         <View style={{ flex:0.8, width:"100%",marginBottom:10}}>
@@ -855,7 +885,7 @@ function aggiornaPhoneNumber(){
                                         placeholder="es. dipingere"
                                         keyboardType="name-phone-pad"
                                     />
-                                    <TouchableOpacity onPress={()=>{inserisciKeyword()}}>
+                                    <TouchableOpacity disabled={keywordArray.length>=10} onPress={()=>{inserisciKeyword()}}>
                                         <AntDesign name="plus" size={fontSizeCampi*1.5} color={MosViola} style={{opacity:(keywordArray.length<10?1:0.3)}} />
                                     </TouchableOpacity>
                                 </View>
@@ -869,10 +899,14 @@ function aggiornaPhoneNumber(){
                                             keyExtractor={item => item.id.toString()}
                                             renderItem={({ item, index }) =>
                                                 <View style={{marginTop:10}}>
-                                                    <Text style={{color:"white",backgroundColor:MosViola, borderRadius:10, margin:10, height:50, textAlign:"center", textAlignVertical:"center", padding:10}}>{item.keyword}</Text>
+                                                    <View style={{backgroundColor:MosViola, borderRadius:10, margin:10}}>
+                                                        <Text style={{color:"white",textAlign:"center", textAlignVertical:"center", padding:10}}>{item.keyword}</Text>
+                                                    </View>
+                                                    {keywordArray.length>5 &&
                                                     <TouchableOpacity style={{position:"absolute"}} onPress={()=>{eliminaKeyword(index)}}>
-                                                        <Entypo name="cross" size={20} color="white" style={{backgroundColor:"red", borderRadius:5}} /> 
+                                                        <Entypo name="cross" size={20} color="white" style={{backgroundColor:"red"}} /> 
                                                     </TouchableOpacity>
+                                                    }
                                                 </View>
                                                 }
                                         />
@@ -910,10 +944,15 @@ function aggiornaPhoneNumber(){
                                         value={indirizzo}
                                         maxLength={100}
                                         placeholder="<indirizzo civico> <città> <regione> <paese>"
-                                        keyboardType="name-phone-pad"
+                                        keyboardType="default"
                                     />
                                     <TouchableOpacity disabled={isLocationLoading} onPress={()=>{setUltimoIndirizzo(""); setGeocodeResponse(null); calcolaGeocode();}}>
-                                        <MaterialIcons name="gps-fixed" size={fontSizeCampi*1.5} color={MosViola} />
+                                        {isLocationLoading==false &&
+                                            <MaterialIcons name="gps-fixed" size={fontSizeCampi*1.5} color={MosViola} />
+                                        }
+                                        {isLocationLoading==true &&
+                                            <ActivityIndicator animating={true} color={MosCeleste} style={{width:fontSizeCampi*1.5, height:fontSizeCampi*1.5}}/>
+                                        }
                                     </TouchableOpacity>
                                     </View>
                                     {geocodeResponse==false && isLocationLoading==false &&
