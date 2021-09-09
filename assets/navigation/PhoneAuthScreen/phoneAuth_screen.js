@@ -10,6 +10,7 @@ import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 import {KeyboardAvoidingView} from "react-native";
 import { fontSizeTitolo, iconSize, larghezzaDevice } from "../../context/variabili_globali/variabiliGlobali";
 import CountryCodePicker from "./components/countryCodePicker";
+import i18n from 'i18n-js'
 
 export default function PhoneAuthScreen({navigation,route}){
 
@@ -35,11 +36,11 @@ export default function PhoneAuthScreen({navigation,route}){
     const inviaCodiceVerificaNumero = async () => {
         
         if(phoneNumber.length==0){
-            setMessaggioVerifica("Inserire un numero di telefono valido.");
+            setMessaggioVerifica(i18n.t('inserValidPhoneNumber'));
             return;
         }
         if(callingCode.current == null){
-            setMessaggioVerifica("Inserire un prefisso telefonico.");
+            setMessaggioVerifica(i18n.t('insertPrefix'));
             return;
         }
 
@@ -48,7 +49,7 @@ export default function PhoneAuthScreen({navigation,route}){
 
         //se sto richiedendo l'aggiornamento del numero allora controllo che non sia uguale a quello vecchio
         if(route.params.updatePhoneNumber=="yes" && phoneNumberWithPrefix==route.params.oldNumber){
-            setMessaggioVerifica("Questo numero è già attivo.");
+            setMessaggioVerifica(i18n.t('phoneAlreadyActive'));
             return;
         }
 
@@ -68,13 +69,13 @@ export default function PhoneAuthScreen({navigation,route}){
                         return;
                     }
                     else if(codiceErrore=="auth/captcha-check-failed")
-                        setMessaggioVerifica("Captcha invalido.");
+                        setMessaggioVerifica(i18n.t('invalidCaptcha'));
                     else if(codiceErrore=="auth/invalid-phone-number" || codiceErrore=="auth/missing-phone-number")
-                        setMessaggioVerifica("Inserire un numero di telefono valido.");
+                        setMessaggioVerifica(i18n.t('inserValidPhoneNumber'));
                     else if(codiceErrore=="auth/too-many-requests")
-                        setMessaggioVerifica("Hai effettuato troppe richieste. Riprova più tardi");
+                        setMessaggioVerifica(i18n.t('err_youHaveMadeTooManyRequests'));
                     else
-                        setMessaggioVerifica("Si è verificato un problema. Riprova più tardi.");
+                        setMessaggioVerifica(i18n.t('err_generic'));
                     
                     console.log("il messaggio non è stato inviato al tuo numero:"+e.code);
                 })
@@ -84,13 +85,13 @@ export default function PhoneAuthScreen({navigation,route}){
                 var messaggioDiErrore;
                 //errori generali
                 if(codiceErrore=="auth/argument-error")
-                    messaggioDiErrore ="Inserire un numero di telefono valido.";
+                    messaggioDiErrore = i18n.t('inserValidPhoneNumber');
                 else if(codiceErrore=="auth/network-request-failed")
-                    messaggioDiErrore ="Problemi di rete. Riprovare più tardi.";
+                    messaggioDiErrore = i18n.t('err_networkProblem');
                 else if(codiceErrore=="auth/too-many-requests")
-                    messaggioDiErrore ="Hai effettuato troppe richieste. Riprovare più tardi.";
+                    messaggioDiErrore = i18n.t('err_youHaveMadeTooManyRequests')
                 else
-                    messaggioDiErrore ="Si è verificato un problema. Riprovare più tardi.";
+                    messaggioDiErrore = i18n.t('err_generic')
                 
                 setMessaggioVerifica(messaggioDiErrore);
                 
@@ -134,9 +135,9 @@ export default function PhoneAuthScreen({navigation,route}){
                             {/* TITOLO */}
                             <View>
                                     {/* se la procedura è di login/registrazione.... */}
-                                    {route.params.updatePhoneNumber!="yes" && <Text style={styles.titolo}>Inserisci il tuo numero di telefono</Text> }
+                                    {route.params.updatePhoneNumber!="yes" && <Text style={styles.titolo}>{i18n.t('phoneScreenTitle')}</Text> }
                                     {/* se la procedura è di aggiornamento numero di telefono... */}
-                                    {route.params.updatePhoneNumber=="yes" && <Text style={styles.titolo}>Inserisci il tuo nuovo numero di telefono</Text> }
+                                    {route.params.updatePhoneNumber=="yes" && <Text style={styles.titolo}>{i18n.t('phoneScreenTitle2')}</Text> }
                             </View>
 
                             {/* CAPTCHA PER VERIFICARE CHE NON SI E' ROBOT */}
@@ -168,7 +169,7 @@ export default function PhoneAuthScreen({navigation,route}){
                                     <View style={styles.bottoneInviaCodiceVerifica}>
                                         <MaterialCommunityIcons name="cellphone-message" size={fontSizeTitolo*0.6} color="white" style={{marginHorizontal:10}} />
                                         <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{color:"white", width:larghezzaDevice*0.6, fontSize:fontSizeTitolo*0.45}}>
-                                            INVIA CODICE DI VERIFICA
+                                            {i18n.t('sendVerificationCode')}
                                         </Text>
                                     </View>
                                 </TouchableOpacity>

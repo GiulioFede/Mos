@@ -12,8 +12,7 @@ import localStorage from '../../../../../../../context/local_storage/localStorag
 import { fromDateToGGMMYYYYHHMM } from '../../../../../../../context/utilities/functions.utilities';
 import { fontSizeSottoTitolo, larghezzaDevice } from '../../../../../../../context/variabili_globali/variabiliGlobali';
 import { MosPurple, MosViola } from '../../../../../../../resources/colors';
-
-
+import i18n from 'i18n-js'
 
 /*
 Questa funzione ritorna, dato un item json del genere:
@@ -28,28 +27,28 @@ un messaggio (es. Teresa ha avviato una conversazione con te).
 */
 function getNotificationStringFromJSON(item){
     if(item.type=="JOIN"){
-        return " ha avviato una nuova conversazione con te.";
+        return i18n.t('join');
     }
     else if(item.type=="UPGRADE_VISIBILITY"){
-        return " siete entrambi daccordo per passare al livello successivo!.";
+        return i18n.t('upgradeVisibility');
     }
     else if(item.type=="NO_UPGRADE_VISIBILITY"){
-        return ". Continuate a conoscervi un altro pò."
+        return  i18n.t('noUpgradeVisibility');
     }
     else if(item.type=="TOTAL_DISCLOSURE"){
-        return " avete raggiunto il massimo della visibilità!."
+        return i18n.t('totalDisclosure');
     }
     else if(item.type=="YOUR_CHAT_REMOVAL"){
-        return "Hai rimosso la conversazione con "
+        return i18n.t('yourChatRemoval');
     }
     else if(item.type=="CHAT_REMOVAL"){
-        return " ha rimosso la conversazione."
+        return i18n.t('chatRemoval');
     }
     else if(item.type=="YOUR_CHAT_BLOCKER"){
-        return "Hai bloccato "
+        return i18n.t('yourChatBlocked');
     }
     else if(item.type=="CHAT_BLOCKED"){
-        return " ti ha bloccato. Non potrai più conversare con "+item.author+" fino a quando non ti avrà sbloccato."
+        return i18n.t('chatBlocked_pt1')+item.author+i18n.t('chatBlocked_pt2')
     }
 }
 
@@ -98,9 +97,9 @@ export default function NotificationMessageModel({user, item, decrementaNumeroNo
                 </View>
                 <View style={{borderLeftColor:MosViola, borderLeftWidth:3, margin:1, padding:5}} >
                     {item.type=="JOIN" && <Text style={styles.author}>{item.author}<Text style={styles.type}>{getNotificationStringFromJSON(item)}</Text></Text> }
-                    {item.type=="UPGRADE_VISIBILITY" && <Text style={styles.type}>Congratulazioni! Tu e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
-                    {item.type=="NO_UPGRADE_VISIBILITY" && <Text style={styles.type}>Forse è troppo presto per te e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
-                    {item.type=="TOTAL_DISCLOSURE" && <Text style={styles.type}>Congratulazioni! Tu e <Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
+                    {item.type=="UPGRADE_VISIBILITY" && <Text style={styles.type}>{i18n.t('congratulations')}<Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
+                    {item.type=="NO_UPGRADE_VISIBILITY" && <Text style={styles.type}>{i18n.t('maybeIsToEarly')}<Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
+                    {item.type=="TOTAL_DISCLOSURE" && <Text style={styles.type}>{i18n.t('congratulations')}<Text style={styles.author}>{item.author}</Text>{getNotificationStringFromJSON(item)}</Text>}
                     {item.type=="YOUR_CHAT_REMOVAL" && <Text style={styles.type}>{getNotificationStringFromJSON(item)}<Text style={styles.author}>{item.author}</Text>.</Text>}
                     {item.type=="CHAT_REMOVAL" && <Text style={styles.author}>{item.author}<Text style={styles.type}>{getNotificationStringFromJSON(item)}</Text></Text> }
                     {item.type=="YOUR_CHAT_BLOCKER" && <Text style={styles.type}>{getNotificationStringFromJSON(item)}<Text style={styles.author}>{item.author}</Text>.</Text>}

@@ -10,16 +10,17 @@ import { MosCeleste, MosPurple, MosViola } from "../../../../../../resources/col
 import { AutenticazioneUtente } from "../../../../../../context/firebase/autenticazione";
 import { fromDateToHHMM } from "../../../../../../context/utilities/functions.utilities";
 import LottieView from 'lottie-react-native';
+import i18n from 'i18n-js'
 
 function getVisibilityString(num){
     if(num==0){
-        return "Visibilità: 33%";
+        return i18n.t('minimumVisibility2');
     }
     else if(num==1){
-        return "Visibilità: 66%"
+        return i18n.t('mediumVisibility2')
     }
     else if(num==2){
-        return "Visibilità: 100%"
+        return i18n.t('maximumVisibility2')
     }
 }
 
@@ -136,11 +137,7 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
                                         //se manca solo la mia risposta, setto il radar
                                         let contactResponse = contactUid+"_response";
                                         let myResponse = user+"_response";
-                                        console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAA");
-                                        console.log(lastMex.statistics[contactResponse]);
-                                        console.log(lastMex.statistics[myResponse]);
-                                        console.log(lastMex.statistics["number_of_messages"]);
-                                        if(lastMex!=undefined && lastMex.statistics[contactResponse]!=null && lastMex.statistics[myResponse]==null && lastMex.statistics["number_of_messages"]>=THRESHOLD)
+                                        if(lastMex!=undefined && lastMex.statistics!=undefined && lastMex.statistics[contactResponse]!=undefined && lastMex.statistics[contactResponse]!=null && lastMex.statistics[myResponse]==null && lastMex.statistics["number_of_messages"]>=THRESHOLD)
                                             setRadarVisibility(true);
                                         else
                                             setRadarVisibility(false);
@@ -216,7 +213,7 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
                 }
                 <TouchableOpacity onPress={()=>{apriDettagliProfilo()}} style={[styles.contenitoreImmagineProfilo,{borderColor:"white", borderTopWidth:1, borderBottomWidth:1, borderLeftWidth:1, borderRightWidth:1 }]}  >
                         {uriProfileImage && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={[styles.immagineProfilo,{}]} onLoadEnd={()=>{if(isMounted.current==true){transitionProfileImage(); opacityTransition();}}} onError={(e)=>{if(isMounted.current==true){ setUriProfileImage(null); transitionProfileImage();opacityTransition();}}}></Animated.Image>}
-                        {!uriProfileImage && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
+                        {!uriProfileImage && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>{i18n.t('failedToGetImage')}</Text>}
                 </TouchableOpacity>
                 <View style={[styles.ultimoMessaggio,{opacity:1}]}>
                     <MessageBubble messaggio={lastContent.lastMessage.value} type={lastContent.lastMessage.type} author = {lastContent.lastMessage.author} currentUser={user}/>
@@ -247,7 +244,7 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
                 {/* NEW se la chat è inviolata */}
                {(lastContent.lastMessage.timestamp==null || lastContent.lastMessage.timestamp==undefined) &&
                 <View style={styles.contenitoreDataUltimoMessaggio}>
-                    <Text style={[styles.dataUltimoMessaggio,{color:"orange", textAlign:"right", textShadowColor:(lastContent.lastMessage.value==null)?'#444':'transparent',textShadowOffset:(lastContent.lastMessage.value==null)?{width: 1, height: 1}:{width:0, height:0},textShadowRadius:(lastContent.lastMessage.value==null)?1:0}]}>NEW</Text>
+                    <Text style={[styles.dataUltimoMessaggio,{color:"orange", textAlign:"right", textShadowColor:(lastContent.lastMessage.value==null)?'#444':'transparent',textShadowOffset:(lastContent.lastMessage.value==null)?{width: 1, height: 1}:{width:0, height:0},textShadowRadius:(lastContent.lastMessage.value==null)?1:0}]}>{i18n.t('newChatLabel')}</Text>
                 </View>
                 }    
         </View>

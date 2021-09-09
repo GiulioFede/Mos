@@ -5,83 +5,8 @@ import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import { AutenticazioneUtente } from '../../../context/firebase/autenticazione';
 import { fontSizeSottoTitolo, larghezzaDevice } from '../../../context/variabili_globali/variabiliGlobali';
 import { MosCeleste } from '../../../resources/colors';
-/*
-export const DatePicker = ({setData, isVisible, setIsVisible}) => {
+import i18n from 'i18n-js';
 
-  var {informazioniProfiloUtente} = useContext(AutenticazioneUtente);
-
-  const [date, setDataPickerDate] = useState(new Date()); //inizializzo sempre ad oggi
-  const [stringData, setStringData] = useState("GG / MM / AAAA")
-  const [mode, setMode] = useState('date');
-
-  useEffect(()=>{
-
-    console.log("Data di nascita:"+informazioniProfiloUtente.date_of_birth);
-    setDataPickerDate(new Date(informazioniProfiloUtente.date_of_birth.seconds*1000));
-
-  },[informazioniProfiloUtente.date_of_birth])
-
-  console.log("apro datepicker"+isVisible);
-
-  const onChange = (event, selectedDate) => {
-
-    const currentDate = selectedDate || date;
-    setIsVisible(Platform.OS === 'ios');
-    //se ha premuto su ok
-    if(event.type=="set"){
-      //setDate(currentDate);
-      const dataDiNascita = new Date(currentDate);
-      setDataPickerDate(dataDiNascita);
-      const str_dataDiNascita = dataDiNascita.getDate()+"/"+(dataDiNascita.getMonth()+1)+"/"+dataDiNascita.getFullYear();
-      setStringData(str_dataDiNascita);
-      console.log("set data to:"+dataDiNascita);
-      setData(dataDiNascita);
-
-    }
-    
-    setIsVisible(false);
-   
-    
-  };
-
-  const showMode = (currentMode) => {
-   setIsVisible(true);
-    setMode(currentMode);
-  };
-
-  const showDatepicker = () => {
-    showMode('date');
-  };
-
-  //carico font
-  let [Raleway] = useFonts({Raleway_200ExtraLight});
-  if(!Raleway)
-    return <View></View>
-
-  return (
-    <View>
-      {isVisible==true && (
-        <DateTimePicker
-          testID="dateTimePicker"
-          value={date}
-          mode={mode}
-          maximumDate={new Date()}
-          is24Hour={true}
-          display="default"
-          onChange={onChange}
-        />
-      )}
-    </View>
-  );
-};
-
-import React, {useEffect, useState} from 'react';
-import {View,Text, Platform, Button, StyleSheet, TouchableOpacity} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { fontSizeCampi, fontSizeSottoTitolo, fontSizeTitoloPiccolo, larghezzaDevice } from '../../../../context/variabili_globali/variabiliGlobali';
-import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
-import { MosCeleste } from '../../../../resources/colors';
-*/
 
 export const DatePicker = ({setData, isVisible, setIsVisible}) => {
  
@@ -90,7 +15,7 @@ export const DatePicker = ({setData, isVisible, setIsVisible}) => {
   const [date, setDate] = useState(new Date(1598051730000));
   const [mode, setMode] = useState('date');
   const [show, setShow] = useState(false);
-  const [stringData, setStringData] = useState("modifica data di nascita"); //valido solo per android
+  const [stringData, setStringData] = useState(i18n.t('modifyDateOfBirth')); //valido solo per android
 
 
   useEffect(()=>{

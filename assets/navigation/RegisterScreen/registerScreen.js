@@ -9,6 +9,7 @@ import { ColoreBarraDiStato, fontSizeTitoloPiccolo,fontSizeSottoTitolo, iconSize
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 import {LinearGradient} from "expo-linear-gradient";
 import LottieView from 'lottie-react-native';
+import i18n from 'i18n-js';
 
 export default function RegisterScreen({navigation}){
 
@@ -36,15 +37,15 @@ export default function RegisterScreen({navigation}){
     function registraUtente(){
         console.log("registra nuovo utente");
         if(email.length==0 && password.length==0){
-            setErrore("*Inserisci email e password.")
+            setErrore(i18n.t('enterYourEmailAndPassword'));
             return;
         }
         else if(email.length==0){
-            setErrore("*Inserisci una email.");
+            setErrore(i18n.t('enterYourEmail'));
             return;
         }
         else if(password.length==0){
-            setErrore("*Inserisci una password.");
+            setErrore(i18n.t('enterYourPassword'));
             return;
         }
 
@@ -64,48 +65,50 @@ export default function RegisterScreen({navigation}){
                         setIsLoading(false);
                         // Verification email sent.
                         console.log("email di verifica inviata");
-                        setSnackBarMessage("Abbiamo inviato un email di verifica. Autorizza il tuo account prima di procedere al login.");
+                        setSnackBarMessage(i18n.t('weHaveSentAVerificationEmail'));
 
                     })
                     .catch(function(error) {
                         setIsLoading(false);
                         // Error occurred. Inspect error.code.
-                        console.log("errore: email di verifica non inviata");
+                        console.log(i18n.t('verificationEmailNotSent'));
+                        setSnackBarMessage(i18n.t('verificationEmailNotSent'));
                     });
                 }catch(e){
                     setIsLoading(false);
                     console.log("errore: email di verifica non inviata");
+                    setSnackBarMessage(i18n.t('verificationEmailNotSent'));
                 }
             })
             .catch((error) => {
                 console.log("registrazione fallita");
                 setIsLoading(false);
                 var errorCode = error.code;
-                var messaggioDiErrore = "Si è verificato un problema. Riprova più tardi.";
+                var messaggioDiErrore = i18n.t('err_generic');
 
                 //errori specifici
                 if(errorCode=="auth/email-already-in-use")
-                    messaggioDiErrore = "*L'indirizzo email è già in uso.";
+                    messaggioDiErrore = i18n.t('emailAddressIsAlreadyInUse');
                 else if(errorCode=="auth/invalid-email")
-                    messaggioDiErrore = "*L'indirizzo email non è valido."; 
+                    messaggioDiErrore = i18n.t('err_invalidEmail'); 
                 else if(errorCode=="auth/weak-password")
-                    messaggioDiErrore = "*Inserire una password meno vulnerabile.";
+                    messaggioDiErrore = i18n.t('enterALessVulnerablePassword');
 
                 //errori generali
                 else if(codiceErrore=="auth/argument-error")
-                    messaggioDiErrore ="*L'indirizzo email non è valido.";
+                    messaggioDiErrore =i18n.t('err_invalidEmail');
                 else if(codiceErrore=="auth/network-request-failed")
-                    messaggioDiErrore ="*Problemi di rete. Riprovare più tardi.";
+                    messaggioDiErrore =i18n.t('err_networkProblem');
                 else if(codiceErrore=="auth/too-many-requests")
-                    messaggioDiErrore ="*Hai effettuato troppe richieste. Riprova più tardi.";
+                    messaggioDiErrore =i18n.t('err_youHaveMadeTooManyRequests');
                 else
-                    messaggioDiErrore ="*Si è verificato un problema. Riprova più tardi.";
+                    messaggioDiErrore =i18n.t('err_generic');
 
                 setErrore(messaggioDiErrore);
             });
         }catch(e){
             setIsLoading(false);
-            messaggioDiErrore ="*Si è verificato un problema. Riprova più tardi.";
+            messaggioDiErrore = i18n.t('err_generic');
             setErrore(messaggioDiErrore); 
         }
     }
@@ -150,8 +153,8 @@ export default function RegisterScreen({navigation}){
 
                             <View style={{width:Dimensions.get("window").width,flexGrow:1, backgroundColor:"#fff"}}>
                                 <View style={{alignItems:"center", justifyContent:"center", paddingBottom:10}}>
-                                    <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.titolo}>Benvenuto su Mosaic</Text>
-                                    <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.testo}>Prima la mente, poi il corpo</Text>
+                                    <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.titolo}>{i18n.t('welcomeToMosaic')}</Text>
+                                    <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.testo}>{i18n.t('welcomeSubTitle')}</Text>
                                 </View>
 
                                 {/*EMAIL*/}
@@ -197,7 +200,7 @@ export default function RegisterScreen({navigation}){
                                     onPress={() => {
                                         registraUtente();
                                     }}
-                                    label="REGISTRATI"
+                                    label={i18n.t('register')}
                                 /> 
                                 </View>                             
                             </View>

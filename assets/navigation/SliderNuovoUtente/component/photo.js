@@ -4,6 +4,7 @@ import { fontSizeCampi } from "../../../context/variabili_globali/variabiliGloba
 import { MosCeleste } from "../../../resources/colors";
 import * as ImagePicker from 'expo-image-picker'; //installa expo install expo-image-picker
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
+import i18n from 'i18n-js'
 
 export default function PhotoManager({setErrore, setUriUtente}){
 
@@ -20,12 +21,12 @@ export default function PhotoManager({setErrore, setUriUtente}){
                 console.log(ris);
                 //se ha bloccato la possibilità di chiedere i permessi
                 if(ris.canAskAgain==false){
-                    setErrore("Vai in impostazioni e consenti a Mosaic di chiedere i permessi per accedere alla galleria.")
+                    setErrore(i18n.t('galleryPermissions1'));
                     return;
                 }
                 //se non ha bloccato, ma ha rifiutato di concedere i permessi
                 if(ris.status!="granted"){
-                    setErrore("Mosaic ha bisogno del tuo permesso per aprire la galleria.")
+                    setErrore(i18n.t('galleryPermissions2'));
                     return;
                 }
                 //se sono qui i permessi sono stati dati
@@ -46,16 +47,16 @@ export default function PhotoManager({setErrore, setUriUtente}){
                             setUriUtente(ris.uri);
                         }
                     }).catch((e)=>{
-                        setErrore("Si è verificato un problema. Riprova più tardi.");
+                        setErrore(i18n.t('err_generic'));
                         console.log("photo.js errore1:"+e);
                     })
 
             }).catch((e)=>{
-                setErrore("Si è verificato un problema. Riprova più tardi.");
+                setErrore(i18n.t('err_generic'));
                 console.log("photo.js errore1:"+e);
             });
         }catch(e){
-            setErrore("Si è verificato un problema. Riprova più tardi.");
+            setErrore(i18n.t('err_generic'));
             console.log("photo.js errore1:"+e);
         }
     }
@@ -75,12 +76,12 @@ export default function PhotoManager({setErrore, setUriUtente}){
                 //se non è stato concesso il permesso
                 //se ha bloccato la possibilità di chiedere i permessi
                 if(ris.canAskAgain==false){
-                    setErrore("Vai in impostazioni e consenti a Mosaic di chiedere i permessi per aprire la fotocamera.")
+                    setErrore(i18n.t('galleryPermissions1'));
                     return;
                 }
                 //se non ha bloccato, ma ha rifiutato di concedere i permessi
                 if(ris.status!="granted"){
-                    setErrore("Mosaic ha bisogno del tuo permesso per aprire la fotocamera.")
+                    setErrore(i18n.t('galleryPermissions2'));
                     return;
                 }
                 //chiedi anche permessi per l'archivio
@@ -90,12 +91,12 @@ export default function PhotoManager({setErrore, setUriUtente}){
                     console.log(ris);
                     //se ha bloccato la possibilità di chiedere i permessi
                     if(ris.canAskAgain==false){
-                        setErrore("Vai in impostazioni e consenti a Mosaic di chiedere i permessi per accedere alla galleria.")
+                        setErrore(i18n.t('galleryPermissions1'));
                         return;
                     }
                     //se non ha bloccato, ma ha rifiutato di concedere i permessi
                     if(ris.status!="granted"){
-                        setErrore("Mosaic ha bisogno del tuo permesso per aprire la galleria.")
+                        setErrore(i18n.t('galleryPermissions2'));
                         return;
                     }
                     //se sono qui allora i permessi sono stati dati
@@ -112,15 +113,15 @@ export default function PhotoManager({setErrore, setUriUtente}){
                                 }
 
                             }).catch((e)=>{
-                                setErrore("Si è verificato un problema. Riprova più tardi.");
+                                setErrore(i18n.t('err_generic'));
                                 console.log("photo.js errore1:"+e);
                             })
                         }).catch((e)=>{
-                            setErrore("Si è verificato un problema. Riprova più tardi.");
+                            setErrore(i18n.t('err_generic'));
                             console.log("photo.js errore1:"+e);
                         })
             }).catch((e)=>{
-                setErrore("Si è verificato un problema. Riprova più tardi.");
+                setErrore(i18n.t('err_generic'));
                 console.log("photo.js errore1:"+e);
             })
     }
@@ -128,12 +129,12 @@ export default function PhotoManager({setErrore, setUriUtente}){
     return (
         <View>
             <TouchableOpacity onPress={apriCamera}>
-                <View style={{backgroundColor:MosCeleste, borderRadius:20,marginBottom:10}}><Text style={[styles.campiDaCompilare,{color:"white", padding:10,textAlign:"center"}]}>SCATTA UNA FOTO</Text></View>
+                <View style={{backgroundColor:MosCeleste, borderRadius:20,marginBottom:10}}><Text style={[styles.campiDaCompilare,{color:"white", padding:10,textAlign:"center"}]}>{i18n.t('takeAPhoto')}</Text></View>
             </TouchableOpacity>
 
 
             <TouchableOpacity onPress={apriGalleria} >
-                <View style={{backgroundColor:MosCeleste, borderRadius:20}}><Text style={[styles.campiDaCompilare,{color:"white", padding:10, borderRadius:20, textAlign:"center"}]}>SCEGLI DA GALLERIA</Text></View>
+                <View style={{backgroundColor:MosCeleste, borderRadius:20}}><Text style={[styles.campiDaCompilare,{color:"white", padding:10, borderRadius:20, textAlign:"center"}]}>{i18n.t('chooseFromGallery')}</Text></View>
             </TouchableOpacity>
     </View>
     )

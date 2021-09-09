@@ -19,18 +19,16 @@ import { LocationAccuracy } from "expo-location";
 import ShowMe from "./components/showMeCheckBox";
 import Loading from "../HomeScreen/aroundYou/component/loading";
 import GenericDialog from "./components/genericDialog";
-
+import i18n from 'i18n-js';
 
 let tmpKeywordArray = [];
 let check = false;
 
 export default function InformazioniPersonali({ navigation }) {
 
-    var {user,informazioniProfiloUtente,setInformazioniProfiloUtente, informazioniAutenticazioneUtente, aggiornaEmail, inviaEmailDiVerifica,messaggioAuth, setMessaggioAuth,aggiornaDettagliProfiloUtente,logOut,deleteUserAccount} = useContext(AutenticazioneUtente);
+    var {user,informazioniProfiloUtente,setInformazioniProfiloUtente, informazioniAutenticazioneUtente, aggiornaEmail, inviaEmailDiVerifica, setMessaggioAuth,aggiornaDettagliProfiloUtente,logOut} = useContext(AutenticazioneUtente);
 
     const [isLoading, setIsLoading] = useState(false);
-    //indica se ci è stato un errore globale 
-    var erroreGlobale = false;
 
     const isMounted = useRef(true);
 
@@ -85,7 +83,7 @@ export default function InformazioniPersonali({ navigation }) {
         console.log("controllo email...");
         setErroreAuth(null);
         if(auth==informazioniAutenticazioneUtente[0]){
-            setErroreAuth("*questo indirizzo email è già attivo.");
+            setErroreAuth(i18n.t('emailAddressIsAlreadyInUse'));
             return false;
         }
         if (/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(auth))
@@ -97,7 +95,7 @@ export default function InformazioniPersonali({ navigation }) {
             return true;
         }
         
-        setErroreAuth("*errore: inserisci una email valida.");
+        setErroreAuth(i18n.t('err_invalidEmail'));
         return false;
     }
 
@@ -112,7 +110,7 @@ export default function InformazioniPersonali({ navigation }) {
                         console.log("email cambiata:"+ris);
                         //invia email di verifica
                         inviaEmailDiVerifica(user).then((ris)=>{
-                            setMessaggioAuth("Una email di verifica è stata inviata al nuovo indirizzo email "+auth+". Verifica l'email prima di procedere al login.");
+                            setMessaggioAuth(i18n.t('verificationNewEmail_pt1')+auth+i18n.t('verificationNewEmail_pt2'));
                         }).catch((e)=>{
                             
                         });
@@ -123,17 +121,17 @@ export default function InformazioniPersonali({ navigation }) {
                     }).catch((e)=>{
                         setIsLoading(false);
                         var code = e.code;
-                        var mex = "*si è verificato un errore. Riprova più tardi";
+                        var mex = i18n.t('err_generic');
                         if(code=="auth/email-already-in-use")
-                            mex="* questa email è già in uso da un altro account."
+                            mex = i18n.t('emailAddressIsAlreadyInUse');
                         if(code=="auth/requires-recent-login")
-                            mex= "*per motivi di sicurezza ti chiediamo di accedere nuovamente per poter aggiornare l'email.";
+                            mex= i18n.t('forSecurityReasonLoginAgain');
                         else if(code=="auth/too-many-requests")
-                            mex = "*hai effettuato troppe richieste. Riprova più tardi.";
+                            mex =  i18n.t('err_youHaveMadeTooManyRequests');
                         else if(code=="auth/network-request-failed")
-                            mex = "*si è verificato un problema di rete. Riprova più tardi.";
+                            mex = i18n.t('err_networkProblem');
                         else if(code=="auth/invalid-email")
-                            mex = "*l'email non è formattata correttamente.";
+                            mex = i18n.t('err_invalidEmail');
 
                         setErroreAuth(mex);
                         console.log("errore interno nell'aggiornare l'email: "+e.code+","+e);
@@ -141,7 +139,7 @@ export default function InformazioniPersonali({ navigation }) {
             }catch(e){
                 setIsLoading(false);
                 console.log("errore nell'aggiornare l'email: "+e.code+","+e);
-                setErroreAuth("*si è verificato un errore. Riprova più tardi");
+                setErroreAuth(i18n.t('err_generic'));
             }
         }
 }
@@ -170,7 +168,7 @@ function aggiornaPhoneNumber(){
         //l'oggetto data è di tipo Date
         const today = new Date();
         if (Math.abs(today.getFullYear()- data.getFullYear()<14)){
-            setErroreData("*errore: devi avere almeno 14 anni per usare Mosaic.");
+            setErroreData(i18n.t('ageConstraint'));
         }
         else {
             setErroreData(null);
@@ -181,10 +179,8 @@ function aggiornaPhoneNumber(){
             //avverto che è avvenuta una modifica se questa è diversa dalla precedente
             if(informazioniProfiloUtente.date_of_birth!=data_str){
                 indiciModifiche.current[0]=true;
-                notificaModifiche();
             }else {
                 indiciModifiche.current[0]=false;
-                notificaModifiche();
             }
         }
     }
@@ -195,9 +191,6 @@ function aggiornaPhoneNumber(){
 
     const [apriArea, setApriArea] = useState(false);
     const [apriArea2, setApriArea2] = useState(false);
-    function apriAreaSceltaGenere(){
-
-    }
 
     //LOCATION::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     function ottieniPosizioneUtente(){
@@ -211,7 +204,7 @@ function aggiornaPhoneNumber(){
                 //se la locazione non è attiva
                 if(ris==false){
                     console.log("provider non acceso:"+ris);
-                    setSnackMessage("Per conoscere la tua posizione devi attivare la geolocalizzazione.");
+                    setSnackMessage(i18n.t('activateGeolocation'));
                     setIsLocationLoading("");
                 }
                 //altrimenti se è attiva...
@@ -224,7 +217,7 @@ function aggiornaPhoneNumber(){
                             if(ris.status != "granted"){
                                 console.log("permessi negati:"+ris);
                                 setIsLocationLoading("");
-                                setSnackMessage("Vai in impostazioni e consenti a Mosaic di chiedere di nuovo la posizione.");
+                                setSnackMessage(i18n.t('goToSettingsAndAllowMosaicToAskAgain'));
                                 return;
                             }
                             console.log("permessi concessi:");
@@ -239,7 +232,7 @@ function aggiornaPhoneNumber(){
                                 //non ha accettato
                                 console.log("isAccepted è none!")
                                 setIsLocationLoading("");
-                                setSnackMessage("Non è possibile aggiornare la tua posizione se non consenti a Mosaic di accedervi.");
+                                setSnackMessage(i18n.t('impossibleToUpdatePosition'));
                                 return;
                             }else {
                                 console.log("ha accettato. Ottengo posizione...");
@@ -250,12 +243,11 @@ function aggiornaPhoneNumber(){
                                         if(pos==null) {
                                             console.log("errore in informazioni personali:"+e);
                                             setIsLocationLoading("");
-                                            setSnackMessage("Si è verificato un errore. Riprovare più tardi.");
+                                            setSnackMessage(i18n.t('err_generic'));
                                             return;
                                         }
                                         console.log(pos);
                                         setIsLocationLoading("aggiornata");
-                                        throw "err";
                                         //ottieni la posizione
                                         const user_position = [pos.coords.latitude,pos.coords.longitude];
                                         console.log(pos);
@@ -275,54 +267,44 @@ function aggiornaPhoneNumber(){
                                                 console.log(posizioneUtente.current);
                                             }).catch((e)=>{
                                                 console.log("errore aggiornamento posizione:"+e);
-                                                setSnackMessage("Si è verificato un problema. Riprova a riottenere la posizione.")
+                                                setSnackMessage(i18n.t('retryToGetPosition'))
                                             });
                                     }).catch((e)=>{
                                         console.log("errore in informazioni personali:"+e);
                                         setIsLocationLoading("");
                                         if(provaAlternativaGeocode==false){
-                                            setSnackMessage("Si è verificato un errore col tuo provider di posizione. Prova questa alternativa.");
+                                            setSnackMessage(i18n.t('tryThisAlternative'));
                                             setProvaAlternativaGeocode(true);
                                         }
                                         else 
-                                            setSnackMessage("Si è verificato un errore. Riprova più tardi.");
+                                            setSnackMessage(i18n.t('err_generic'));
                                     });
                             } 
                         }).catch((e)=>{
                             console.log("errore in informazioni personali:"+e);
                             setIsLocationLoading("");
                             if(provaAlternativaGeocode==false){
-                                setSnackMessage("Si è verificato un errore col tuo provider di posizione. Prova questa alternativa.");
+                                setSnackMessage(i18n.t('tryThisAlternative'));
                                 setProvaAlternativaGeocode(true);
                             }
                             else 
-                                setSnackMessage("Si è verificato un errore. Riprova più tardi.");
+                                setSnackMessage(i18n.t('err_generic'));
                         })
 
                 }
             }).catch((e)=>{
                 setIsLocationLoading("");
                 if(provaAlternativaGeocode==false){
-                    setSnackMessage("Si è verificato un errore col tuo provider di posizione. Prova questa alternativa.");
+                    setSnackMessage(i18n.t('tryThisAlternative'));
                     setProvaAlternativaGeocode(true);
                 }
                 else 
-                    setSnackMessage("Si è verificato un errore. Riprova più tardi.");
+                    setSnackMessage(i18n.t('err_generic'));
             })
         }catch(e){
             setIsLocationLoading("");
-            setSnackMessage("Si è verificato un errore. Riprovare più tardi.")
+            setSnackMessage(i18n.t('err_generic'))
         }
-    }
-
-    function modificaSesso(tipo){
-        console.log(tipo+","+informazioniProfiloUtente.sex);
-        if(tipo==informazioniProfiloUtente.sex)
-            indiciModifiche.current[2]=false;
-        else
-            indiciModifiche.current[2]=true;
-
-        notificaModifiche();
     }
 
     function modificaDescrizione(){
@@ -362,7 +344,7 @@ function aggiornaPhoneNumber(){
             }
             //se è stato trovato un doppione esco e avviso
             if(check==true){
-                setSnackMessage("La keyword "+keyword.toUpperCase()+" esiste già.");
+                setSnackMessage(i18n.t('keywordAlreadyExists_pt1')+keyword.toUpperCase()+i18n.t('keywordAlreadyExists_pt2'));
                 return;
             }
             //inserisco nella flatlist
@@ -438,6 +420,16 @@ function aggiornaPhoneNumber(){
             indiciModifiche.current[9]=true;
 
         notificaModifiche();
+    }
+
+    function getTranslatedGender(genId){
+        if(genId=="male") return i18n.t('male2').toLowerCase();
+        else if(genId=="female") return i18n.t('female2').toLowerCase();
+        else if(genId=="androgynous") return i18n.t('androgynous2').toLowerCase();
+        else if(genId=="third gender") return i18n.t('thirdGender2').toLowerCase();
+        else if(genId=="transexual") return i18n.t('transexual2').toLowerCase();
+        else if(genId=="demi androgynous") return i18n.t('demiAndrogynous2').toLowerCase();
+        else return genId;
     }
 
 
@@ -549,17 +541,17 @@ function aggiornaPhoneNumber(){
 
                         //resetto
                         resetta();
-                        setSnackMessage("Profilo aggiornato con successo.");
+                        setSnackMessage(i18n.t('profileUpdateSuccesfully'));
                         setIsLoading(false);
                     }).catch((e)=>{
                         console.log("errore:"+e.code+","+e);
                         setIsLoading(false);
-                        setSnackMessage("Si è verificato un problema. Riprova più tardi.");
+                        setSnackMessage(i18n.t('err_generic'));
                     })
             }catch(e){
                 console.log("errore:"+e);
                 setIsLoading(false);
-                setSnackMessage("Si è verificato un problema. Riprova più tardi.");
+                setSnackMessage(i18n.t('err_generic'));
             }
         }
         //altrimenti se nessuna modifica riguarda il remoto ma solo il locale
@@ -581,10 +573,10 @@ function aggiornaPhoneNumber(){
 
                 setInformazioniProfiloUtente(informazioniProfiloUtenteTMP);
                 await resetta();
-                setSnackMessage("Profilo aggiornato con successo.");
+                setSnackMessage(i18n.t('profileUpdateSuccesfully'));
                 setIsLoading(false);
             }catch(e){
-                setSnackMessage("Non è stato possibile salvare la preferenza sul raggio di azione. Riprovare.");
+                setSnackMessage(i18n.t('savingPreferenceFailed'));
             }
         }
 
@@ -642,29 +634,29 @@ function aggiornaPhoneNumber(){
                     user_position.push(ris[0].region==null?"null":(ris[0].region));
                     user_position.push(ris[0].country==null?"null":(ris[0].country));
                     posizioneUtente.current=user_position;
-                    if(ris[0].city==null){ setSnackMessage("Non siamo riusciti a trovare la città."); setIsLocationLoading(false); return;}
-                    else if(ris[0].region==null) { setSnackMessage("Non siamo riusciti a trovare la regione."); setIsLocationLoading(false); return;}
-                    else if(ris[0].country==null) {setSnackMessage("Non siamo riusciti a trovare il paese."); setIsLocationLoading(false); return;}
+                    if(ris[0].city==null){ setSnackMessage(i18n.t('noCityWasFound')); setIsLocationLoading(false); return;}
+                    else if(ris[0].region==null) { setSnackMessage(i18n.t('noRegionWasFound')); setIsLocationLoading(false); return;}
+                    else if(ris[0].country==null) {setSnackMessage(i18n.t('noStateWasFound')); setIsLocationLoading(false); return;}
                     //altrimenti tutto ok
                     setGeocodeResponse(ris[0].city+","+ris[0].region+","+ris[0].country);
                     setIsLocationLoading(false);
                 }catch(e){
                     console.log("errore geocode 2:"+e);
-                    setSnackMessage("Si è verificato un problema. Riprova più tardi.");
+                    setSnackMessage(i18n.t('err_generic'));
                     setIsLocationLoading(false);
                 }
             }else {
-                setSnackMessage("Inserisci un indirizzo valido.");
+                setSnackMessage(i18n.t('enterValidAddress'));
                 setIsLocationLoading(false);
             }
             console.log(ind);
         }else {
-            setSnackMessage("Inserisci un indirizzo valido.");
+            setSnackMessage(i18n.t('enterValidAddress'));
             setIsLocationLoading(false);
         }
         }catch(e){
             console.log("errore geocode:"+e);
-            setSnackMessage("Si è verificato un errore durante il calcolo della tua posizione.");
+            setSnackMessage(i18n.t('errorDuringComputingPosition'));
             setIsLocationLoading(false);
         }
     }
@@ -725,7 +717,7 @@ function aggiornaPhoneNumber(){
             console.log("elimino account...");
             scrollView.current.scrollTo({y: 0});
             loadingRef.current.on();
-            loadingRef.current.set_message("Eliminazione account in corso...\n Perfavore attendi il completamento dell'operazione prima di chiudere l'applicazione.");
+            loadingRef.current.set_message(i18n.t('removingAccountInProgress'));
             //await deleteUserAccount(informazioniProfiloUtente.name);
             localStorage.deleteLocalStorage(user);
             loadingRef.current.off();
@@ -733,7 +725,7 @@ function aggiornaPhoneNumber(){
             //navigation.navigate("LoginScreen");
         }catch(e){
             console.log("errore durante eliminazione account...:"+e);
-            setSnackMessage("Si è verificato un errore durante l'eliminazione dell'account. Riprova più tardi.");
+            setSnackMessage(i18n.t('removingAccountFailed'));
         }
     }
 
@@ -761,7 +753,7 @@ function aggiornaPhoneNumber(){
                     <Ionicons name="chevron-back" size={iconSize} color="#52575D" />
                 </TouchableOpacity>
                 <ActivityIndicator animating={isLoading} color={MosCeleste} style={{position:"absolute",right:0, paddingRight:Dimensions.get("window").width*0.03}} />
-                <Text style={styles.titolo}>Informazioni personali</Text>
+                <Text style={styles.titolo}>{i18n.t('personalInformation')}</Text>
             </View>
 
             <KeyboardAvoidingView
@@ -774,13 +766,13 @@ function aggiornaPhoneNumber(){
                         ref={scrollView}>
 
                         {/*DESCRIZIONE*/}
-                        <Text style={[styles.titoloCampo,{marginBottom:20,marginTop: 25, color:MosPurple}]}>Questa sezione ospita le tue informazioni personali. Sentiti libero di cambiarle come e quando vuoi.</Text>
+                        <Text style={[styles.titoloCampo,{marginBottom:20,marginTop: 25, color:MosPurple}]}>{i18n.t('personaInformationDescriptionSection')}</Text>
                         
                         <Divider />
-                        <Text style={[styles.campo,{marginTop: 25, color:MosPurple, textAlign:"center"}]}>Autenticazione</Text>
+                        <Text style={[styles.campo,{marginTop: 25, color:MosPurple, textAlign:"center"}]}>{i18n.t('auth')}</Text>
                         {/*EMAIL oppure TELEFONO*/}
-                        {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]!=null && <Text style={[styles.titoloCampo,{marginTop:20}]}>Email</Text>}
-                        {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]==null && <Text style={[styles.titoloCampo,{marginTop:20}]}>Telefono</Text>}
+                        {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]!=null && <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('email')}</Text>}
+                        {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]==null && <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('phone')}</Text>}
                         <View>
                         <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
                             <TextInput autoCapitalize="none"
@@ -790,33 +782,33 @@ function aggiornaPhoneNumber(){
                                    onSubmitEditing={()=>setAuth(auth)}
                                    onBlur={()=> setAuth(auth)} //focus perso
                                    value={auth}
-                                   placeholder={(informazioniAutenticazioneUtente==null)?"":(informazioniAutenticazioneUtente[0]!=null)?"email":"telefono"}
+                                   placeholder={(informazioniAutenticazioneUtente==null)?"":(informazioniAutenticazioneUtente[0]!=null)?i18n.t('email'):i18n.t('phone')}
                                    defaultValue = {auth}
-                                   keyboardType="name-phone-pad"
+                                   keyboardType="default"
                                     />
                             {erroreAuth && <Text style={[styles.errore,{marginVertical:10}]}>{erroreAuth}</Text>}
-                            {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]!=null && <Text style={[styles.errore,{marginVertical:10, color:MosCeleste}]}>Inserisci la tua nuova email e premi sul pulsante sotto. La password rimarrà la stessa con la quale accedevi prima. Ricorda che una volta cambiata, la vecchia email non sarà più abilitata agli accessi futuri, ma sarà comunque possibile ritornare ad usarla eseguendo la stessa procedura. </Text>}
-                            {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]==null && <Text style={[styles.errore,{marginVertical:10, color:MosCeleste}]}>Questo è il tuo attuale numero di telefono. Per cambiarlo premi il pulsante sotto. Per motivi di sicurezza ti chiediamo di autenticarti nuovamente prima di procedere. </Text>}
+                            {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]!=null && <Text style={[styles.errore,{marginVertical:10, color:MosCeleste}]}>{i18n.t('authEmailSubTitle')}</Text>}
+                            {informazioniAutenticazioneUtente!=null && informazioniAutenticazioneUtente[0]==null && <Text style={[styles.errore,{marginVertical:10, color:MosCeleste}]}>{i18n.t('authPhoneSubTitle')}</Text>}
                         </View>
-                        <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10, textAlign:"center"}]} onPress={(informazioniAutenticazioneUtente==null)?{}:(informazioniAutenticazioneUtente[0]!=null)?aggiornaEmailUtente:aggiornaPhoneNumber}><Text style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>{(informazioniAutenticazioneUtente==null)?"...":(informazioniAutenticazioneUtente[0]!=null)?"AGGIORNA EMAIL":"AGGIORNA NUMERO DI TELEFONO"}</Text></TouchableOpacity>
+                        <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10, textAlign:"center"}]} onPress={(informazioniAutenticazioneUtente==null)?{}:(informazioniAutenticazioneUtente[0]!=null)?aggiornaEmailUtente:aggiornaPhoneNumber}><Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>{(informazioniAutenticazioneUtente==null)?"...":(informazioniAutenticazioneUtente[0]!=null)?i18n.t('updateEmailButton'):i18n.t('updatePhoneButton')}</Text></TouchableOpacity>
                         
                         </View>
                         <Divider />
 
-                        <Text style={[styles.campo,{marginTop: 25, color:MosPurple, textAlign:"center"}]}>Dettagli personali</Text>
+                        <Text style={[styles.campo,{marginTop: 25, color:MosPurple, textAlign:"center"}]}>{i18n.t('personalDetails')}</Text>
                         {/*NOME*/}
-                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Nome</Text>
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('placeholder_name')}</Text>
                         <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
                             <TextInput autoCapitalize="none"
                                     editable={false}
                                     style={styles.campo}
                                     defaultValue={nome} />
-                            <Text style={styles.sottoCampo}>(non modificabile)</Text>
+                            <Text style={styles.sottoCampo}>{i18n.t('notModificable')}</Text>
                         </View>
                         <Divider />
                         
                         {/*DATA DI NASCITA*/}
-                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Data di nascita</Text>
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('dateOfBirth')}</Text>
                         <TouchableOpacity onPress={apriDatePicker}>
                             <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
                                 {Platform.OS === 'android' &&
@@ -834,7 +826,7 @@ function aggiornaPhoneNumber(){
 
                         {/*DESCRIZIONE*/}
                         <View style={{ flex:0.8, width:"100%",marginBottom:10}}>
-                                <Text style={[styles.titoloCampo,{marginTop:20}]}>Descrizione</Text>
+                                <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('personalDescription')}</Text>
                                 <View style={{paddingLeft:Dimensions.get("window").width*0.03}}>
                                     <TextInput
                                         style={styles.campo}
@@ -854,7 +846,7 @@ function aggiornaPhoneNumber(){
                         
                         {/*OCCUPAZIONE*/}
                         <View style={{ flex:0.8, width:"100%",marginBottom:10}}>
-                                <Text style={[styles.titoloCampo,{marginTop:20}]}>Occupazione</Text>
+                                <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('currentOccupation')}</Text>
                                 <View style={{paddingLeft:Dimensions.get("window").width*0.03}}>
                                     <TextInput
                                         style={styles.campo}
@@ -874,7 +866,7 @@ function aggiornaPhoneNumber(){
                         
                         {/*KEYWORDS*/}
                         <View style={{ flex:0.8, width:"100%",marginBottom:10}}>
-                                <Text style={[styles.titoloCampo,{marginTop:20}]}>Hobby, interessi e passioni</Text>
+                                <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('hobbiesInterestsAndPassions')}</Text>
                                 <View style={{paddingLeft:Dimensions.get("window").width*0.03, flexDirection:"row",alignItems:"center"}}>
                                     <TextInput
                                         style={[styles.campo,{width:Dimensions.get("window").width*0.4,margin:10, padding:10, borderBottomColor:MosViola,borderBottomWidth:1, color:MosCeleste,opacity:(keywordArray.length<10?1:0.3)}]}
@@ -882,8 +874,8 @@ function aggiornaPhoneNumber(){
                                         value={keyword}
                                         editable = {keywordArray.length<10}
                                         maxLength={15}
-                                        placeholder="es. dipingere"
-                                        keyboardType="name-phone-pad"
+                                        placeholder={i18n.t('placeHolderHobby')}
+                                        keyboardType="default"
                                     />
                                     <TouchableOpacity disabled={keywordArray.length>=10} onPress={()=>{inserisciKeyword()}}>
                                         <AntDesign name="plus" size={fontSizeCampi*1.5} color={MosViola} style={{opacity:(keywordArray.length<10?1:0.3)}} />
@@ -915,7 +907,7 @@ function aggiornaPhoneNumber(){
                             <Divider />
 
                         {/*AGGIORNA LA TUA POSIZIONE*/}
-                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Aggiorna la tua posizione</Text>
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('updatePosition')}</Text>
                         {provaAlternativaGeocode==false &&
                             <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10,flexDirection:"row", }}>
                                 <TouchableOpacity 
@@ -927,8 +919,8 @@ function aggiornaPhoneNumber(){
                                         }}
                                         onPress = { () => ottieniPosizioneUtente()}
                                         > 
-                                    { (isLocationLoading!="aggiornata")  && <Text style={[styles.campo,{color:MosViola}]}>AGGIORNA</Text>}
-                                    { (isLocationLoading=="aggiornata")  && <Text style={[styles.campo,{color:"#15e302"}]}>AGGIORNATA</Text>}
+                                    { (isLocationLoading!="aggiornata")  && <Text style={[styles.campo,{color:MosViola}]}>{i18n.t('updateButton')}</Text>}
+                                    { (isLocationLoading=="aggiornata")  && <Text style={[styles.campo,{color:"#15e302"}]}>{i18n.t('updateDone')}</Text>}
                                 </TouchableOpacity>
                                 { isLocationLoading=="loading" && <ActivityIndicator animating={true} color={MosCeleste}/>}
                             </View>
@@ -936,14 +928,14 @@ function aggiornaPhoneNumber(){
 
                         {provaAlternativaGeocode==true &&
                         <>
-                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Inserisci il tuo indirizzo civico seguito dalla città, regione e paese dove vivi. Calcoleremo la tua posizione usando queste informazioni.</Text>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>{i18n.t('alternativeTitle')}</Text>
                         <View style={{paddingLeft:Dimensions.get("window").width*0.03, flexDirection:"row",alignItems:"center"}}>
                                     <TextInput
                                         style={[styles.campo,{fontSize:fontSizeCampi*0.8, width:Dimensions.get("window").width*0.8,margin:10, padding:10, borderBottomColor:MosViola,borderBottomWidth:1, color:MosCeleste}]}
                                         onChangeText={ind => setUltimoIndirizzo(ind)}
                                         value={indirizzo}
                                         maxLength={100}
-                                        placeholder="<indirizzo civico> <città> <regione> <paese>"
+                                        placeholder={i18n.t('placeholder_address')}
                                         keyboardType="default"
                                     />
                                     <TouchableOpacity disabled={isLocationLoading} onPress={()=>{setUltimoIndirizzo(""); setGeocodeResponse(null); calcolaGeocode();}}>
@@ -956,12 +948,12 @@ function aggiornaPhoneNumber(){
                                     </TouchableOpacity>
                                     </View>
                                     {geocodeResponse==false && isLocationLoading==false &&
-                                     <Text style={[styles.sottoCampo,{marginVertical:5}]}>Non siamo riusciti a localizzarti. Prova con un indirizzo più conosciuto, non per forza molto vicino a dove stai. Infatti Mosaic utilizzerà una macroarea per mostrare gli utenti vicini.</Text>}
+                                     <Text style={[styles.sottoCampo,{marginVertical:5}]}>{i18n.t('tryMoreGenericAddress')}</Text>}
                                     {geocodeResponse!=null && geocodeResponse!=false && isLocationLoading==false &&
                                         <>
                                         <View style={{flexDirection:"row",padding:Dimensions.get("window").height*0.01}}>
                                             <Entypo name="location-pin" size={fontSizeCampi*1.5} color="#52575D" />
-                                            <Text style={[styles.sottoCampo,{marginVertical:5}]}>{geocodeResponse}. E' corretto?</Text>
+                                            <Text style={[styles.sottoCampo,{marginVertical:5}]}>{geocodeResponse}.{i18n.t('isCorrectQuestion')}</Text>
                                         </View>
                                         <View style={{flexDirection:"row",margin:Dimensions.get("window").height*0.02 }}>
                                             <TouchableOpacity onPress={()=>{
@@ -971,10 +963,10 @@ function aggiornaPhoneNumber(){
                                                 //console.log("nuove modifiche alla posizione:");
 
                                             }} style={{flex:1}}>
-                                                <Text style={[styles.sottoCampo,{marginVertical:5, color:"white",textAlignVertical:"center", textAlign:"center", backgroundColor:MosCeleste}]}> Si </Text>
+                                                <Text style={[styles.sottoCampo,{marginVertical:5, color:"white",textAlignVertical:"center", textAlign:"center", backgroundColor:MosCeleste}]}>{i18n.t('yes')}</Text>
                                             </TouchableOpacity>
-                                            <TouchableOpacity onPress={()=>{setGeocodeResponse(null); setSnackMessage("Prova ad essere più preciso oppure utilizza un indirizzo maggiormente conosciuto ma vicino a dove abiti.")}} style={{flex:1}}>
-                                                <Text style={[styles.sottoCampo,{marginVertical:5, flex:1, color:"white", textAlignVertical:"center", textAlign:"center", backgroundColor:MosViola}]}> No </Text>
+                                            <TouchableOpacity onPress={()=>{setGeocodeResponse(null); setSnackMessage(i18n.t('tryToBeMorePrecise'))}} style={{flex:1}}>
+                                                <Text style={[styles.sottoCampo,{marginVertical:5, flex:1, color:"white", textAlignVertical:"center", textAlign:"center", backgroundColor:MosViola}]}>{i18n.t('no')}</Text>
                                             </TouchableOpacity>
                                         </View>
                                         </>
@@ -988,23 +980,23 @@ function aggiornaPhoneNumber(){
                         <Divider />
 
                         {/*SESSO*/}
-                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Sesso</Text>
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('sex')}</Text>
                         <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
                             <TextInput autoCapitalize="none"
                                     editable={false}
                                     style={styles.campo}
                                     defaultValue={informazioniProfiloUtente.biological_sex} />
                         </View>
-                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>(Non modificabile)</Text>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>{i18n.t('notModificable')}</Text>
                         <Divider />
                         
                         {/* IDENTITA' DI GENERE */}
-                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Identità di genere</Text>
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('genderIdentity')}</Text>
                         <TouchableOpacity onPress={()=>{setApriArea(true)}}>
                             <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
                                 <Text
                                         style={[styles.campo,{color:MosViola}]}
-                                        defaultValue={"..."}> {identitaDiGenere} </Text>
+                                        defaultValue={"..."}> {getTranslatedGender(identitaDiGenere)} </Text>
                             </View>
                         </TouchableOpacity>
                         <AreaSceltaGenere apriArea={apriArea} setApriArea={setApriArea} setIdentitaDiGenere={modificaIdentitaDiGenere} />
@@ -1012,56 +1004,56 @@ function aggiornaPhoneNumber(){
                         <Divider/>
 
                         {/* ORIENTAMENTO SESSUALE */}
-                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Da chi sei più attratto?</Text>
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('genderPreference')}</Text>
                         <TouchableOpacity onPress={()=>{setApriArea2(true)}}>
                             <View style={{ padding:Dimensions.get("window").height*0.01, marginBottom:10}}>
                                 <Text
                                         style={[styles.campo,{color:MosViola}]}
-                                        defaultValue={"..."}> {orientamentoSessuale} 
+                                        defaultValue={"..."}> {getTranslatedGender(orientamentoSessuale)} 
                                 </Text>
                             </View>
                         </TouchableOpacity>
-                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Nella sezione "Attorno a te" ti mostreremo il genere che qui hai scelto come quello da cui maggiormente sei attratto.</Text>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>{i18n.t('aroundYouFirstHint')}</Text>
                         <AreaSceltaGenere apriArea={apriArea2} setApriArea={setApriArea2} setIdentitaDiGenere={modificaOrientamentoSessuale} />
 
                         <Divider/>
 
                         {/* SLIDER KM PREFERENCE */}
-                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Raggio di azione</Text>
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('actionRange')}</Text>
                         <View style={{ alignSelf:"center"}}>
                             <SliderKMPreference ref={sliderKMRef} currentUser = {user} modificaPreferenzaRaggioDiAzione = {modificaPreferenzaRaggioDiAzione} />
                         </View>
-                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Nella sezione "Attorno a te" ti mostreremo gli utenti entro il raggio di azione che qui hai scelto.</Text>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>{i18n.t('aroundYouSecondHint')}</Text>
                         <Divider />
 
                         {/* RANGE ETA' */}
-                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Fasce d'età</Text>
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('ageRange')}</Text>
                         <View style={{ alignSelf:"center"}}>
                             <AgeRange ref={rangeEtaRef} uid={user} dateOfBirth={informazioniProfiloUtente.date_of_birth} modificaPreferenzaRangeDiEta={modificaPreferenzaRangeDiEta} />
                         </View>
-                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Il divario tra massimo e minimo deve essere di massimo 9 anni. Nella sezione "Attorno a te" ti mostreremo solo coloro che rintrano in questa fascia d'età.</Text>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>{i18n.t('aroundYouThirdHint')}</Text>
 
                         {/*MOSTRAMI SU MOSAIC*/}
-                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Mostrami su Mosaic</Text>
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('showMe')}</Text>
                         <View style={{ padding:Dimensions.get("window").height*0.01,flexDirection:"row", alignItems:"center"}}>
-                            <Text style={[styles.campo,{color:MosViola}]}>Mostrami:</Text>
+                            <Text style={[styles.campo,{color:MosViola}]}>{i18n.t('showMeContent')}</Text>
                             <ShowMe ref={showMeRef} modificaShowMe={modificaShowMe} initialValue={informazioniProfiloUtente.show_me} />
                         </View>
-                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Se decidi di non essere mostrato su Mosaic allora la tua scheda non sarà visibile a nessuno nella sezione "Attorno a te". Anche tu non potrai vedere le schede di nessun altro utente.</Text>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>{i18n.t('showMeDescription')}</Text>
 
                         {/*ELIMINA ACCOUNT*/}
-                        <Text style={[styles.titoloCampo,{marginTop:20}]}>Elimina account</Text>
+                        <Text style={[styles.titoloCampo,{marginTop:20}]}>{i18n.t('removeAccount')}</Text>
                         <View style={{ padding:Dimensions.get("window").height*0.01}}>
-                            <TouchableOpacity onPress={()=>{genericDialogRef.current.open_dialog("Sei sicuro di volere eliminare definitivamente il tuo account?", "Questa azione è irreversibile.")}}>
-                            <View style={{backgroundColor:"red", padding:5, borderRadius:5 }}><Text style={[styles.campo,{color:"white",paddingLeft:0}]}>Elimina</Text></View>
+                            <TouchableOpacity onPress={()=>{genericDialogRef.current.open_dialog(i18n.t('removeAccountQuestion'), i18n.t('removeAccountQuestionHint'))}}>
+                            <View style={{backgroundColor:"red", padding:5, borderRadius:5 }}><Text style={[styles.campo,{color:"white",paddingLeft:0}]}>{i18n.t('remove')}</Text></View>
                             </TouchableOpacity>
                         </View>
-                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>Questa azione è irreversibile.</Text>
+                        <Text style={[styles.sottoCampo,{marginVertical:5}]}>{i18n.t('removeAccountQuestionHint')}</Text>
                         <Loading ref={loadingRef} />
                         <GenericDialog ref={genericDialogRef}  yesAction={eliminaAccount} />
 
                     {/*BOTTONE PER SALVARE*/}
-                    <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10,marginTop:20, textAlign:"center"}]} onPress={salvaDettagliUtente}><Text style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>SALVA DETTAGLI</Text></TouchableOpacity>
+                    <TouchableOpacity color={MosPurple} style={[styles.saveButton,{backgroundColor:MosPurple, padding:10,marginTop:20, textAlign:"center"}]} onPress={salvaDettagliUtente}><Text style={[styles.sottoCampo,{textAlign:"center", color:"white"}]}>{i18n.t('saveDetails')}</Text></TouchableOpacity>
 
                     </ScrollView>
                     
@@ -1073,7 +1065,6 @@ function aggiornaPhoneNumber(){
                 visible={snackMessage}
                 onDismiss={()=>{setSnackMessage(null)}}
                 action={{
-                label: 'Chiudi',
                 onPress: () => {
                     // Do something
                 },

@@ -6,7 +6,7 @@ import { FAB, Snackbar, ActivityIndicator, Divider } from 'react-native-paper';
 import { MosCeleste, MosViola } from '../../../../../resources/colors';
 import { AutenticazioneUtente } from '../../../../../context/firebase/autenticazione';
 import local_storage from "../../../../../context/local_storage/localStorage";
-
+import i18n from 'i18n-js';
 
 const larghezzaSchermo = Dimensions.get("window").width;
 const altezzaSezioneGalleria = Dimensions.get("window").height*0.47-navbarHeight;
@@ -92,7 +92,7 @@ function GalleriaImmagini({galleria, openDialog, getUtenteCorrente, visibility})
                     {isImageLoaded==true && error == false && <Image source={{uri:localUri}} style={styles.immagineGalleria} 
                                                 onLoad={()=>{setIsImageLoaded(true)}} resizeMode="cover" 
                                                 onError={(e) => {setError(true); setIsImageLoaded(true)}}/>}
-                    {error==true && <Text style={{position:"absolute", textAlign:"center", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
+                    {error==true && <Text style={{position:"absolute", textAlign:"center", textAlignVertical:"center", top:"40%"}}>{i18n.t('failedToGetImage')}</Text>}
                  </View>
             )
             

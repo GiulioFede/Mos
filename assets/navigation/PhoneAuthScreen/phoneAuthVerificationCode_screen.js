@@ -7,6 +7,7 @@ import {useFonts , Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 import { fontSizeTitolo, iconSize } from "../../context/variabili_globali/variabiliGlobali";
 import {DrawerActions} from '@react-navigation/native';
+import i18n from 'i18n-js'
 
 export default function PhoneAuthVerificationCodeScreen({route,navigation}){
 
@@ -29,9 +30,9 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
     //quando il componente viene montato si inizializza il messaggio con il numero di telefono passato
     useEffect(() => {
         if(updatePhoneNumber=="yes")
-            setMessaggioVerifica("Un messaggio col codice di verifica è stato inviato al nuovo numero "+route.params.phoneNumber);
+            setMessaggioVerifica(i18n.t('mexToNumberSend')+route.params.phoneNumber);
         else
-            setMessaggioVerifica("Un messaggio col codice di verifica è stato inviato al numero "+route.params.phoneNumber);
+            setMessaggioVerifica(i18n.t('mexToNumberSend')+route.params.phoneNumber);
       }, [route]);
     
 
@@ -48,7 +49,7 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                         console.log("numero aggiornato:"+ris);
                         //aggiorno numero anche nell'oggetto 
                         setInformazioniAutenticazioneUtente([null,route.params.phoneNumber]);
-                        setMessaggioAuth("Numero di telefono aggiornato.");
+                        setMessaggioAuth(i18n.t('numberUpdated'));
                         const jumpToAction = DrawerActions.jumpTo('Home');
                         navigation.dispatch(jumpToAction);
                         navigation.navigate("Home");
@@ -57,19 +58,19 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                         console.log("errore:numero non aggiornato "+e.code+","+e)
                         setIsLoading(false);
                         var code = e.code;
-                        var mex = "Si è verificato un errore. Riprova più tardi";
+                        var mex = i18n.t('err_generic');
                         if(code=="auth/requires-recent-login"){
-                            mex= "Per motivi di sicurezza ti chiediamo di accedere nuovamente prima di aggiornare il numero di telefono e di ripetere la procedura.";
+                            mex= i18n.t('securityMex');
                             setErroreAuth(mex);
                             navigation.navigate("LoginScreen");
                             return;
                         }
                         else if(code=="auth/too-many-requests")
-                            mex = "Hai effettuato troppe richieste. Riprova più tardi.";
+                            mex = i18n.t('err_youHaveMadeTooManyRequests');
                         else if(code=="auth/network-request-failed")
-                            mex = "Si è verificato un problema di rete. Riprova più tardi.";
+                            mex = i18n.t('err_networkProblem');
                         else if(code=="auth/invalid-verification-code"){
-                            mex = "Il codice di verifica è errato.";
+                            mex = i18n.t('wrongVerificationCode');
                             setMessaggioVerifica(mex);
                             return;
                         }
@@ -86,13 +87,13 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                 var messaggioDiErrore;
                 //errori generali
                 if(codiceErrore=="auth/argument-error" || codiceErrore=="auth/missing-verification-code")
-                    messaggioDiErrore ="Inserire un codice valido.";
+                    messaggioDiErrore = i18n.t('enterValidCode');
                 else if(codiceErrore=="auth/network-request-failed")
-                    messaggioDiErrore ="Problemi di rete. Riprovare più tardi.";
+                    messaggioDiErrore = i18n.t('err_networkProblem');
                 else if(codiceErrore=="auth/too-many-requests")
-                    messaggioDiErrore ="Hai effettuato troppe richieste. Riprovare più tardi.";
+                    messaggioDiErrore = i18n.t('err_youHaveMadeTooManyRequests');
                 else
-                    messaggioDiErrore ="Si è verificato un problema. Riprovare più tardi.";
+                    messaggioDiErrore = i18n.t('err_generic');
                 
                 console.log("errore...:"+codiceErrore+"-->"+err);
 
@@ -123,7 +124,7 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                         }).catch((e)=>{
                             setIsLoading(false);
                             console.log("Si è verificato un errore:"+e);
-                            setMessaggioVerifica("Si è verificato un problema. Riprova più tardi.");
+                            setMessaggioVerifica(i18n.t('err_generic'));
                         })
                     
                     }).catch((e)=>{
@@ -131,11 +132,11 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                         const codiceErrore = e.code;
                         //errori specifici
                         if(codiceErrore=="auth/invalid-verification-code")
-                            setMessaggioVerifica("Codice errato.");
+                            setMessaggioVerifica(i18n.t('wrongVerificationCode'));
                         else if(codiceErrore=="auth/code-expired")
-                            setMessaggioVerifica("Codice non più valido.")
+                            setMessaggioVerifica(i18n.t('expiredCode'));
                         else
-                            setMessaggioVerifica("Si è verificato un problema. Riprova più tardi.");
+                            setMessaggioVerifica(i18n.t('err_generic'));
                         
                         console.log("errore x:"+e.code+":"+e);
 
@@ -146,13 +147,13 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                     var messaggioDiErrore;
                     //errori generali
                     if(codiceErrore=="auth/argument-error" || codiceErrore=="auth/missing-verification-code")
-                        messaggioDiErrore ="Inserire un codice valido.";
+                        messaggioDiErrore =i18n.t('enterValidCode');
                     else if(codiceErrore=="auth/network-request-failed")
-                        messaggioDiErrore ="Problemi di rete. Riprovare più tardi.";
+                        messaggioDiErrore =i18n.t('err_networkProblem');
                     else if(codiceErrore=="auth/too-many-requests")
-                        messaggioDiErrore ="Hai effettuato troppe richieste. Riprovare più tardi.";
+                        messaggioDiErrore = i18n.t('err_youHaveMadeTooManyRequests');
                     else
-                        messaggioDiErrore ="Si è verificato un problema. Riprovare più tardi.";
+                        messaggioDiErrore =i18n.t('err_generic');
                     
                     console.log("errore...:"+codiceErrore+"-->"+err);
 
@@ -197,7 +198,7 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                  <ScrollView showsVerticalScrollIndicator={false}>
                 {/* TITOLO */}
                 <View>
-                    <Text style={styles.titolo}>Inserisci il codice di verifica ricevuto via SMS</Text>
+                    <Text style={styles.titolo}>{i18n.t('verificationCodeScreenTitle')}</Text>
                 </View>
 
                 {/* AREA DOVE INSERIRE IL CODICE DI VERIFICA RICEVUTO */}
@@ -219,7 +220,7 @@ export default function PhoneAuthVerificationCodeScreen({route,navigation}){
                             controllaCodiceVerifica()     
                         }}>
 
-                    VERIFICA
+                   {i18n.t('verifyVerificationCode')}
                 </Button>
                 </ScrollView>
                 </KeyboardAvoidingView>

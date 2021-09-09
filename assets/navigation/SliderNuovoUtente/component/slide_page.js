@@ -11,6 +11,7 @@ import { AntDesign, Entypo,MaterialIcons  } from '@expo/vector-icons';
 import PhotoManager from "./photo";
 import { LocationAccuracy } from "expo-location";
 import { FlatList } from "react-native-gesture-handler";
+import i18n from 'i18n-js'
 //installa expo install @react-native-community/datetimepicker
 
 
@@ -60,7 +61,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                 //se la locazione non è attiva
                 if(ris==false){
                     console.log("servizio non attivo");
-                    setError("Per conoscere la tua posizione devi attivare la geolocalizzazione.");
+                    setError(i18n.t('activateGeolocation'));
                     setIsLocationLoading(false);
                     return;
                 }
@@ -75,7 +76,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                             //se l'utente non ha permesso più di chiedere la posizione ancora una volta...
                             if(ris.status != "granted"){
                                 setIsLocationLoading(false);
-                                setError("Vai in impostazioni e consenti a Mosaic di chiedere di nuovo la posizione");
+                                setError(i18n.t('goToSettingsAndAllowMosaicToAskAgain'));
                                 return;
                             }
                             var isAccepted= "none";                            
@@ -89,7 +90,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                 console.log("none");
                                 //non ha accettato
                                 setIsLocationLoading(false);
-                                setError("Non è possibile usare Mosaic se non consenti di conoscere la tua posizione.");
+                                setError(i18n.t('isNotPossibleToUseMosaic'));
                                 return;
                             }else {
                                 console.log("ha accettato. Richiedo posizione");
@@ -113,43 +114,41 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                                 setIsLocationSet(true);
                                             }).catch((e)=>{
                                                 console.log("errore posizione:"+e);
-                                                setError("Si è verificato un problema. Riprova a riottenere la posizione.")
+                                                setError(i18n.t('retryToGetPosition'));
                                             }).finally(()=>{
                                                 setIsLocationLoading(false);
                                             })
                                     }).catch((e)=>{
                                         console.log("errore posizione:"+e);
                                         setIsLocationLoading(false);
-                                        setError("Sembra esserci un problema con il tuo provider di posizione. Prova questa alternativa.");
                                         if(provaAlternativaGeocode==false){
-                                            setError("Si è verificato un errore col tuo provider di posizione. Prova questa alternativa.");
+                                            setError(i18n.t('tryThisAlternative'));
                                             setProvaAlternativaGeocode(true);
                                         }
                                         else 
-                                            setError("Si è verificato un errore. Riprova più tardi.");
+                                            setError(i18n.t('err_generic'));
                                     });
                             } 
                         }).catch((e)=>{
                             console.log("errore posizione:"+e);
                             setIsLocationLoading(false);
-                            setError("Sembra esserci un problema con il tuo provider di posizione. Prova questa alternativa.");
                             if(provaAlternativaGeocode==false){
-                                setError("Si è verificato un errore col tuo provider di posizione. Prova questa alternativa.");
+                                setError(i18n.t('tryThisAlternative'));
                                 setProvaAlternativaGeocode(true);
                             }
                             else 
-                                setError("Si è verificato un errore. Riprova più tardi.");
+                                setError(i18n.t('err_generic'));
                         })
 
                 }
             }).catch((e)=>{
                 setIsLocationLoading(false);
-                setError("Si è verificato un errore. Riprovare più tardi.")
+                setError(i18n.t('err_generic'));
                 console.log("si è verificato un problema:"+e);
             })
         }catch(e){
             setIsLocationLoading(false);
-            setError("Si è verificato un errore. Riprovare più tardi.")
+            setError(i18n.t('err_generic'));
         }
     }
 
@@ -172,38 +171,38 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                     user_position.push(ris[0].city==null?"null":(ris[0].city) );
                     user_position.push(ris[0].region==null?"null":(ris[0].region));
                     user_position.push(ris[0].country==null?"null":(ris[0].country));
-                    if(ris[0].city==null){ setError("Non siamo riusciti a trovare la città."); setIsLocationLoading(false); return;}
-                    else if(ris[0].region==null) { setError("Non siamo riusciti a trovare la regione."); setIsLocationLoading(false); return;}
-                    else if(ris[0].country==null) {setError("Non siamo riusciti a trovare il paese."); setIsLocationLoading(false); return;}
+                    if(ris[0].city==null){ setError(i18n.t('noCityWasFound')); setIsLocationLoading(false); return;}
+                    else if(ris[0].region==null) { setError(i18n.t('noRegionWasFound')); setIsLocationLoading(false); return;}
+                    else if(ris[0].country==null) {setError(i18n.t('noStateWasFound')); setIsLocationLoading(false); return;}
                     //altrimenti tutto ok
                     setGeocodeResponse(ris[0].city+","+ris[0].region+","+ris[0].country);
                     setIsLocationLoading(false);
                     setPosizioneUtente(user_position);
                     setIsLocationSet(true);
-                    setError("Se non è quello il luogo dove vivi puoi riprovare con un nuovo indirizzo invece di procedere.");
+                    setError(i18n.t('retryGeocodeIfFailed'));
                 }catch(e){
                     console.log("errore geocode 2:"+e);
-                    setError("Si è verificato un problema. Riprova più tardi.");
+                    setError(i18n.t('err_generic'));
                     setIsLocationLoading(false);
                     setPosizioneUtente([]);
                     setIsLocationSet(false);
                 }
             }else {
-                setError("Inserisci un indirizzo valido.");
+                setError(i18n.t('enterValidAddress'));
                 setIsLocationLoading(false);
                 setPosizioneUtente([]);
                 setIsLocationSet(false);
             }
             console.log(ind);
         }else {
-            setError("Inserisci un indirizzo valido.");
+            setError(i18n.t('enterValidAddress'));
             setIsLocationLoading(false);
             setPosizioneUtente([]);
             setIsLocationSet(false);
         }
         }catch(e){
             console.log("errore geocode:"+e);
-            setError("Si è verificato un errore durante il calcolo della tua posizione.");
+            setError(i18n.t('errorDuringComputingPosition'));
             setIsLocationLoading(false);
             setPosizioneUtente([]);
             setIsLocationSet(false);
@@ -254,7 +253,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
             }
             //se è stato trovato un doppione esco e avviso
             if(check==true){
-                setError("La keyword "+keyword.toUpperCase()+" esiste già.");
+                setError(i18n.t('keywordAlreadyExists_pt1')+keyword.toUpperCase()+i18n.t('keywordAlreadyExists_pt2'));
                 return;
             }
             //inserisco nella flatlist
@@ -313,13 +312,13 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
 
             <View style={{flex:1, padding:10}}>
                 <View style={{flex:0.4, width:"100%",alignItems:"center", justifyContent:"center", alignSelf:"center"}} >
-                    <Text style={styles.titolo}>{item.title}</Text>
-                    <Text style={[styles.sottoTesto,{textAlign:"center"}]}>{item.subTitle}</Text>
+                    <Text adjustsFontSizeToFit={true} numberOfLines={2} style={styles.titolo}>{i18n.t(item["title"])}</Text>
+                    <Text adjustsFontSizeToFit={true} numberOfLines={2} style={[styles.sottoTesto,{textAlign:"center"}]}>{i18n.t(item["subTitle"])}</Text>
                     {item.id=='3' && provaAlternativaGeocode==true && isLocationLoading && <ActivityIndicator animating={true} color={MosCeleste} />}
                     {item.id=='3' && provaAlternativaGeocode==true && 
                         <>
                         {geocodeResponse==false && isLocationLoading==false &&
-                                     <Text style={[styles.sottoTesto,{paddingTop:20, textAlign:"center"}]}>Non siamo riusciti a localizzarti. Prova con un indirizzo più conosciuto, non per forza molto vicino a dove stai. Infatti Mosaic utilizzerà una macroarea per mostrare gli utenti vicini.</Text>}
+                                     <Text style={[styles.sottoTesto,{paddingTop:20, textAlign:"center"}]}>{i18n.t('tryMoreGenericAddress')}</Text>}
                                     {geocodeResponse!=null && geocodeResponse!=false && isLocationLoading==false &&
                                         <>
                                         <View style={{flexDirection:"row",padding:Dimensions.get("window").height*0.01, justifyContent:"center", alignItems:"center"}}>
@@ -343,8 +342,8 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                             onBlur={()=> {nomeTmp = nome.trim(); nomeTmp = nome.charAt(0).toUpperCase() + nome.slice(1); setNomeUtente(nomeTmp)}} //focus perso
                             value={nome}
                             autoCapitalize="words"
-                            placeholder="Nome"
-                            keyboardType="name-phone-pad"
+                            placeholder={i18n.t('placeholder_name')}
+                            keyboardType="default"
                       />
                       </View>
                          }
@@ -364,7 +363,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             {!isLocationLoading &&
                                                 <TouchableOpacity onPress={ottieniPosizioneUtente}>
                                                     <View style={{backgroundColor:MosCeleste, padding:10, borderRadius:20}}>
-                                                        <Text style={[styles.campiDaCompilare,{color:"white", fontFamily:"Raleway_400Regular"}]}> OTTIENI POSIZIONE</Text>
+                                                        <Text style={[styles.campiDaCompilare,{color:"white", fontFamily:"Raleway_400Regular"}]}>{i18n.t('getPosition')}</Text>
                                                     </View>
                                                 </TouchableOpacity>
                                             }
@@ -376,17 +375,17 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                         }
                         {item.id=='3' && provaAlternativaGeocode==true &&
                                 <View >
-                                    {<Text style={[styles.info,{paddingTop:20, textAlign:"center"}]}>Inserisci il tuo indirizzo civico seguito dalla città, regione e paese dove vivi. Calcoleremo la tua posizione usando queste informazioni.</Text>}
+                                    {<Text style={[styles.info,{paddingTop:20, textAlign:"center"}]}>{i18n.t('alternativeTitle')}</Text>}
                                 <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
-                                    <Text style={{color:MosPurple,fontFamily:"Raleway_400Regular",fontSize:fontSizeSottoTitolo*0.7,opacity:(keywordArray.length<10?1:0.3) }}>Indirizzo:</Text>
+                                    <Text style={{color:MosPurple,fontFamily:"Raleway_400Regular",fontSize:fontSizeSottoTitolo*0.7,opacity:(keywordArray.length<10?1:0.3) }}>{i18n.t('address')}:</Text>
                                     
                                     <TextInput
                                         style={[styles.sottoTesto,{flex:1, color:MosCeleste, fontFamily:"Raleway_400Regular",fontSize:fontSizeSottoTitolo*0.5,borderBottomColor:MosCeleste, borderBottomWidth:1, textAlign:"center", margin:25, paddingVertical:3}]}
                                         onChangeText={ind => setUltimoIndirizzo(ind)}    
                                         value={indirizzo}
                                         maxLength={100}
-                                        placeholder="<indirizzo civico> <città> <regione> <paese>"
-                                        keyboardType="name-phone-pad"
+                                        placeholder={i18n.t('placeholder_address')}
+                                        keyboardType="default"
                                 />
                                
                                     <TouchableOpacity disabled={isLocationLoading} onPress={()=>{setUltimoIndirizzo(""); setGeocodeResponse(null); calcolaGeocode();}}>
@@ -404,7 +403,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                             <View style={{flexDirection:"column", justifyContent:"center", alignItems:"center", width:"100%"}}>
                                 <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center" }}>
                                     <TouchableOpacity onPress={() => setSesso('male')}>
-                                        <Text style={styles.campiDaCompilare}>MASCHIO</Text>
+                                        <Text style={styles.campiDaCompilare}>{i18n.t('male')}</Text>
                                     </TouchableOpacity>
                                     <RadioButton.Android
                                         color={MosCeleste}
@@ -415,7 +414,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         onPress={() => setSesso('male')}
                                     />
                                     <TouchableOpacity onPress={() => setSesso('female')}>
-                                        <Text style={[styles.campiDaCompilare,{paddingLeft:larghezzaDevice*0.1}]}>FEMMINA</Text>
+                                        <Text style={[styles.campiDaCompilare,{paddingLeft:larghezzaDevice*0.1}]}>{i18n.t('female')}</Text>
                                     </TouchableOpacity>
                                     <RadioButton.Android
                                         color={MosCeleste}
@@ -457,7 +456,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         onPress={() => setGenere('male')}
                                     />
                                     <TouchableOpacity onPress={() => setGenere('male')}>
-                                        <Text style={styles.campiDaCompilare}>MASCHIO</Text>
+                                        <Text style={styles.campiDaCompilare}>{i18n.t('male')}</Text>
                                     </TouchableOpacity>
                                 </View>
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -469,7 +468,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         onPress={() => setGenere('female')}
                                     />
                                      <TouchableOpacity onPress={() => setGenere('female')}>
-                                        <Text style={styles.campiDaCompilare}>FEMMINA</Text>
+                                        <Text style={styles.campiDaCompilare}>{i18n.t('female')}</Text>
                                     </TouchableOpacity>
                                 </View>
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -493,7 +492,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             onPress={() => setGenere('androgynous')}
                                         />
                                        <TouchableOpacity onPress={() => setGenere('androgynous')}>
-                                            <Text style={styles.campiDaCompilare}>ANDROGINO</Text>
+                                            <Text style={styles.campiDaCompilare}>{i18n.t('androgynous')}</Text>
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -505,7 +504,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             onPress={() => setGenere('third gender')}
                                         />
                                         <TouchableOpacity onPress={() => setGenere('third gender')}>
-                                            <Text style={styles.campiDaCompilare}>TERZO GENERE</Text>
+                                            <Text style={styles.campiDaCompilare}>{i18n.t('thirdGender')}</Text>
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -553,7 +552,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             onPress={() => setGenere('pangender')}
                                         />
                                         <TouchableOpacity onPress={() => setGenere('pangender')}>
-                                            <Text style={styles.campiDaCompilare}>PANGEDER</Text>
+                                            <Text style={styles.campiDaCompilare}>PANGENDER</Text>
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -589,7 +588,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             onPress={() => setGenere('transexual')}
                                         />
                                         <TouchableOpacity onPress={() => setGenere('transexual')}>
-                                            <Text style={styles.campiDaCompilare}>TRANSESSUALE</Text>
+                                            <Text style={styles.campiDaCompilare}>{i18n.t('transexual')}</Text>
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -625,7 +624,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             onPress={() => setGenere('demi androgynous')}
                                         />
                                         <TouchableOpacity onPress={() => setGenere('demi androgynous')}>
-                                            <Text style={styles.campiDaCompilare}>DEMI-ANDROGINO</Text>
+                                            <Text style={styles.campiDaCompilare}>{i18n.t('demiAndrogynous')}</Text>
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -669,7 +668,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         onPress={() => setPreferenzaSesso('male')}
                                     />
                                      <TouchableOpacity onPress={() => setPreferenzaSesso('male')}>
-                                        <Text style={styles.campiDaCompilare}>MASCHIO</Text>
+                                        <Text style={styles.campiDaCompilare}>{i18n.t('male')}</Text>
                                     </TouchableOpacity>
                                 </View>
                                 <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -681,7 +680,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         onPress={() => setPreferenzaSesso('female')}
                                     />
                                     <TouchableOpacity onPress={() => setPreferenzaSesso('female')}>
-                                        <Text style={styles.campiDaCompilare}>FEMMINA</Text>
+                                        <Text style={styles.campiDaCompilare}>{i18n.t('female')}</Text>
                                     </TouchableOpacity>
                                      </View>
                                      <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -705,7 +704,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             onPress={() => setPreferenzaSesso('androgynous')}
                                         />
                                         <TouchableOpacity onPress={() => setPreferenzaSesso('androgynous')}>
-                                            <Text style={styles.campiDaCompilare}>ANDROGINO</Text>
+                                            <Text style={styles.campiDaCompilare}>{i18n.t('androgynous')}</Text>
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -717,7 +716,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             onPress={() => setPreferenzaSesso('third gender')}
                                         />
                                         <TouchableOpacity onPress={() => setPreferenzaSesso('third gender')}>
-                                            <Text style={styles.campiDaCompilare}>TERZO GENERE</Text>
+                                            <Text style={styles.campiDaCompilare}>{i18n.t('thirdGender')}</Text>
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -801,7 +800,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             onPress={() => setPreferenzaSesso('transexual')}
                                         />
                                         <TouchableOpacity onPress={() => setPreferenzaSesso('transexual')}>
-                                            <Text style={styles.campiDaCompilare}>TRANSESSUALE</Text>
+                                            <Text style={styles.campiDaCompilare}>{i18n.t('transexual')}</Text>
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -837,7 +836,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                             onPress={() => setPreferenzaSesso('demi androgynous')}
                                         />
                                         <TouchableOpacity onPress={() => setPreferenzaSesso('demi androgynous')}>
-                                            <Text style={styles.campiDaCompilare}>DEMI-ANDROGINO</Text>
+                                            <Text style={styles.campiDaCompilare}>{i18n.t('demiAndrogynous')}</Text>
                                         </TouchableOpacity>
                                     </View>
                                     <View style={{flexDirection:"row", alignItems:"center"}}>
@@ -870,7 +869,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                         {/*PAGINA 7 --> DESCRIZIONE */}
                         {item.id=='7' &&
                             <View style={{ flex:0.8, width:"100%"}}>
-                                <Text style={{fontFamily:"Raleway_400Regular", fontSize:fontSizeCampi, color:MosPurple}}>Descrizione</Text>
+                                <Text style={{fontFamily:"Raleway_400Regular", fontSize:fontSizeCampi, color:MosPurple}}>{i18n.t('description')}</Text>
                                 <TextInput
                                     style={{backgroundColor:"white",textAlignVertical:"top", color:MosCeleste,fontFamily:"Raleway_400Regular", width:"100%", height:"100%", paddingVertical:3,fontSize:fontSizeSottoTitolo*0.8,fontFamily: "Raleway_200ExtraLight",color: MosCeleste}}
                                     onChangeText={text =>{descrizioneTmp = text; descrizioneTmp = descrizioneTmp.charAt(0).toUpperCase() + descrizioneTmp.slice(1); setDescrizione(descrizioneTmp)}}
@@ -879,7 +878,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                     value={descrizione}
                                     keyboardType="default"
                                     multiline={true}
-                                    placeholder='Parlaci di te...'
+                                    placeholder={i18n.t('aboutYou')}
                                     underlineColorAndroid='transparent'
                                     maxLength={150}
                                 />
@@ -896,7 +895,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                 onBlur={()=> setOccupazioneUtente(occupazione)} //focus perso
                                 value={occupazione}
                                 maxLength={50}
-                                placeholder="es. studente, barista,..."
+                                placeholder={i18n.t('placeholderOccupation')}
                                 keyboardType="default"
                         />
                         </View> }
@@ -906,7 +905,7 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                             &&
                             <View style={{flex:1}} >
                                 <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
-                                    <Text style={{color:MosPurple,fontFamily:"Raleway_400Regular",fontSize:fontSizeSottoTitolo*0.7,opacity:(keywordArray.length<10?1:0.3) }}>Inserisci parola chiave:</Text>
+                                    <Text style={{color:MosPurple,fontFamily:"Raleway_400Regular",fontSize:fontSizeSottoTitolo*0.7,opacity:(keywordArray.length<10?1:0.3) }}>{i18n.t('insertKeyword')}</Text>
                                     <TextInput
                                         style={[styles.sottoTesto,{color:MosCeleste,opacity:(keywordArray.length<10?1:0.3), fontFamily:"Raleway_400Regular",fontSize:fontSizeSottoTitolo*0.7,borderBottomColor:MosCeleste, borderBottomWidth:1, textAlign:"center", width:width*0.3, margin:25, paddingVertical:3}]}
                                         onChangeText={key => setUltimaKeyword(key.trim())}
@@ -914,8 +913,8 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                                         value={keyword}
                                         editable = {keywordArray.length<10}
                                         maxLength={15}
-                                        placeholder="es. dipingere"
-                                        keyboardType="name-phone-pad"
+                                        placeholder={i18n.t('placeHolderHobby')}
+                                        keyboardType="default"
                                 />
                                 </View>
                                 <Divider />
@@ -946,14 +945,14 @@ export default function SlidePage({item,setNomeUtente, setDataUtente,setPosizion
                         {/*PAGINA 11 --> CREAZIONE PROFILO */}
                         {item.id=='11' && 
                                     <TouchableOpacity onPress={()=>{creaNuovoUser()}}>
-                                        <View style={{backgroundColor:MosCeleste, marginTop:20, borderRadius:20}}><Text style={[styles.campiDaCompilare,{color:"white", fontFamily:"Raleway_400Regular", padding:10}]}> CREA PROFILO</Text></View>
+                                        <View style={{backgroundColor:MosCeleste, marginTop:20, borderRadius:20}}><Text style={[styles.campiDaCompilare,{color:"white", fontFamily:"Raleway_400Regular", padding:10}]}>{i18n.t('createProfile')}</Text></View>
                                     </TouchableOpacity> 
                         }
                      
                 </View>
                 <View>
                         <Divider style={{marginVertical:20}} />
-                        {<Text style={[styles.info,{ textAlign:"center"}]}>{item.info}</Text>}
+                        {<Text style={[styles.info,{ textAlign:"center"}]}>{i18n.t(item["info"])}</Text>}
                      </View>
 
             </View>

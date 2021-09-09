@@ -14,7 +14,6 @@ import TabNotifiche from "./component/notification/tabNotifiche";
 import ChatListComponent from "./component/chat.component";
 import SnackMessage from "../../../profile/screen/component/snackMessage";
 
-
 //qui è dove simulo l'array contenente le preview delle chat NB: ci deve essere anche l'urlImmagineProfilo che però
 //non posso dare in quanto il componente ChatPreview vuole l'url statico se usa require.
 //noi in ChatPreview invece useremo (forse) fetch e allora potremmo passaglierlo

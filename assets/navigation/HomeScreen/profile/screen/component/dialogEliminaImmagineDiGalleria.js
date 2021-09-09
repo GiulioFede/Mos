@@ -2,7 +2,7 @@ import React,{ useImperativeHandle, forwardRef, useState } from "react";
 import { Text } from "react-native";
 import { Dialog, Portal, Button } from "react-native-paper";
 import { MosCeleste, MosViola } from "../../../../../resources/colors";
-
+import i18n from 'i18n-js';
 
 
 const DialogEliminaImmagineDiGalleria = forwardRef((props, ref) => {
@@ -37,13 +37,13 @@ const DialogEliminaImmagineDiGalleria = forwardRef((props, ref) => {
     return (
         <Portal>
             <Dialog visible={isDialogVisible} onDismiss={closeDialog}>
-                <Dialog.Title>Rimozione foto</Dialog.Title>
+                <Dialog.Title>{i18n.t('removePhoto')}</Dialog.Title>
                 <Dialog.Content>
-                    <Text>Sei sicuro di volere eliminare la foto?</Text>
+                    <Text>{i18n.t('areYouSureToRemovePhoto')}</Text>
                 </Dialog.Content>
                 <Dialog.Actions>
-                    <Button onPress={closeDialog} color={MosCeleste} ><Text>Annulla</Text></Button>
-                    <Button onPress={eliminaImmagineDallaGalleria} color={MosViola} ><Text>Elimina</Text></Button>
+                    <Button onPress={closeDialog} color={MosCeleste} ><Text>{i18n.t('cancel')}</Text></Button>
+                    <Button onPress={eliminaImmagineDallaGalleria} color={MosViola} ><Text>{i18n.t('remove')}</Text></Button>
                 </Dialog.Actions>
             </Dialog>
         </Portal>

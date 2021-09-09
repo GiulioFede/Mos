@@ -42,6 +42,7 @@
     "expo-task-manager": "~9.1.0",
     "firebase": "8.2.3",
     "geofire-common": "^5.2.0",
+    "i18n-js": "^3.8.0",
     "lottie-react-native": "3.5.0",
     "node-forge": "^0.10.0",
     "react": "16.13.1",

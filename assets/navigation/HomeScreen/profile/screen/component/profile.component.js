@@ -19,6 +19,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Loading from '../../../aroundYou/component/loading';
 import SliderDetails from './sliderDetails';
 import { createFakeUser } from '../../../../../context/firebase/service/firestore.service';
+import i18n from 'i18n-js';
 
 /*
     MISURE
@@ -92,7 +93,7 @@ export default function ProfileComponent(props){
     const [isUserProfileLoading, setIsUserProfileLoading] = useState(true);
 
     //contesto autenticazione
-    const {caricaNuovaImmagineDiGalleria,messaggioAuth, user,eliminaImmagineDiGalleria,cambiaImmagineDiProfilo,scaricaUrlImmagine, informazioniProfiloUtente, setInformazioniProfiloUtente, getNomeImmagineDaUrl, getUtenteCorrente} = useContext(AutenticazioneUtente);
+    const {eliminaImmagineDiGalleria, informazioniProfiloUtente, setInformazioniProfiloUtente, getUtenteCorrente} = useContext(AutenticazioneUtente);
 
     //dati utente
     var {navigation, route} = props;
@@ -149,19 +150,7 @@ export default function ProfileComponent(props){
         //DA ELIMINARE (insieme all'async di sopra)
        //await createFakeUser();
 
-        console.log("reinizializzo galleria");
-        //console.log(galleria);
-        /*
-//*        console.log(informazioniProfiloUtente.gallery);
-        console.log(informazioniProfiloUtente.urlGalleryImages);
-        var tmp = [];
-        if(informazioniProfiloUtente.urlGalleryImages){
-            let i = 0;
-            for(var key of Object.keys(informazioniProfiloUtente.urlGalleryImages).sort()){
-                    tmp.push({key: i, name: key, urls: informazioniProfiloUtente.urlGalleryImages[key]});
-                    i++;
-            }
-        } */  
+        console.log("reinizializzo galleria"); 
 
         console.log("Nuove immagini di galleria:");
         console.log(informazioniProfiloUtente.urlGalleryImages);
@@ -206,89 +195,7 @@ export default function ProfileComponent(props){
         setDettagli([...dettagliTMP]);
     }
 
-    function getDetailViewFromSection(item){
-
-        if(item.section=="location"){
-            return (
-                <View style={{width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, flexDirection:"row", padding:10, margin:10, justifyContent:"center"}}>
-                    
-                    <Ionicons name="location-sharp" size={fontSizeTitoloPiccolo} color={MosCeleste} style={{alignSelf:"center"}} />
-                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}>{item.city}</Text>
-                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}>,{item.region}</Text>
-                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}>,{item.country}</Text>
-                </View>
-            )
-        }
-        else if(item.section=="sex and gender"){
-            return (
-                <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center"}}>
-                    <View style={{flexDirection:"row"}}>
-                        <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>Sesso:</Text>
-                        <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.sex}</Text>
-                    </View>
-                    <View style={{flexDirection:"row"}}>
-                        <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Identità di genere:</Text>
-                        <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_identity}</Text>
-                    </View>
-                    <View style={{flexDirection:"row"}}>
-                        <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Genere di preferenza:</Text>
-                        <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_preference}</Text>
-                    </View>
-                    </View>
-            )
-        }
-        else if(item.section=="occupation and decription"){
-            return (
-                <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center"}}>
-                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>Occupazione corrente</Text>
-                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.occupation}</Text>
-
-                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Descrizione personale</Text>
-                    <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.description}</Text>
-                </View>
-            )
-        }
-        else if(item.section=="hobbies interests and passions"){
-            return (
-                <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center"}}>
-                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola, marginBottom:5}]}>Hobby, interessi e passioni</Text>
-                    <View style={{flexDirection:"row", flex:1, flexWrap:"wrap"}}>
-                    {item.hobbies_interests_and_passions.map((data)=>{
-                        return (
-                            <View key={data} style={{padding:5, margin:3, backgroundColor:MosCeleste, borderRadius:fontSizeTitoloPiccolo*0.2, justifyContent:"center"}}><Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.4, textAlignVertical:"center", color:"white"}]}>{data}</Text></View>
-                        )
-                    })} 
-                    </View>
-                </View>
-            )
-        }
-    }
-
-    const _onViewableItemsChanged = useCallback(({ viewableItems, changed }) => {
-        console.log("Visible items are", viewableItems);
-        console.log("Changed in this iteration", changed);
-    }, []);
-
-    const _viewabilityConfig = {
-        itemVisiblePercentThreshold: 50
-    }
-
-    const [slideNumber, setSlideNumber] = useState(1);
-
-
-
-    function getAge(timestamp) {
-        var today = new Date();
-        var birthDate = new Date(timestamp.seconds*1000);
-        var age = today.getFullYear() - birthDate.getFullYear();
-        var m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age;
-    }
-
-    const [daEliminare, setDaEliminare] = useState("");
+    
     const [visibility, setVisibility] = useState("0");
 
     //contiene l'uri se non è "null"
@@ -431,17 +338,17 @@ export default function ProfileComponent(props){
                     setIsLoading(false);
                     console.log("Errore nell'eliminazione dell'immagine: "+e);
                     console.log(e);
-                    setSnackMessage("Si è verificato un problema. Riprova più tardi.");
+                    setSnackMessage(i18n.t('err_generic'));
                 })
         
             }catch(e){
                 console.log(e);
-                setSnackMessage("Si è verificato un problema. Riprova più tardi.");
+                setSnackMessage(i18n.t('err_generic'));
                 setIsLoading(false);
             }
 
         }else {
-            setSnackMessage("Attendi la fine del caricamento prima di procedere.");
+            setSnackMessage(i18n.t('wait'));
             setIsLoading(false);
             closeDialog();
         }     
@@ -462,13 +369,13 @@ export default function ProfileComponent(props){
                     console.log(ris);
                     //se ha bloccato la possibilità di chiedere i permessi
                     if(ris.canAskAgain==false){
-                        setSnackMessage("Vai in impostazioni e consenti a Mosaic di chiedere i permessi per accedere alla galleria.");
+                        setSnackMessage(i18n.t('galleryPermissions1'));
                         setIsLoading(false);
                         return;
                     }
                     //se non ha bloccato, ma ha rifiutato di concedere i permessi
                     if(ris.status!="granted"){
-                        setSnackMessage("Mosaic ha bisogno del tuo permesso per aprire la galleria.");
+                        setSnackMessage(i18n.t('galleryPermissions2'));
                         setIsLoading(false);
                         return;
                     }
@@ -506,7 +413,7 @@ export default function ProfileComponent(props){
                                       }
                                       navigation.navigate("UploadImageLoaderScreen",{isProfileImage: isForProfile ,uri: localUri, base64:immagineManipolata.base64, nomeNuovaImmagine: nomeNuovaImmagine});
                                   }).catch((e)=>{
-                                    setSnackMessage("Si è verificato un problema. Riprova più tardi.");
+                                    setSnackMessage(i18n.t('err_generic'));
                                     console.log("photo.js errore2:"+e);
                                   })
 
@@ -518,17 +425,17 @@ export default function ProfileComponent(props){
     
                             })}).catch((e)=>{
                     setIsLoading(false);
-                    setSnackMessage("Si è verificato un problema. Riprova più tardi.");
+                    setSnackMessage(i18n.t('err_generic'));
                     console.log("photo.js errore1:"+e);
                 })
             }catch(e){
                 setIsLoading(false);
-                setSnackMessage("Si è verificato un problema. Riprova più tardi.");
+                setSnackMessage(i18n.t('err_generic'));
                 console.log("errore galleria:"+e);
             }
 
         }else {
-            setSnackMessage("Attendi la fine del caricamento prima di procedere.");
+            setSnackMessage(i18n.t('wait'));
             setIsLoading(false);
             closeDialog();
         }  
@@ -539,7 +446,7 @@ export default function ProfileComponent(props){
         {isUserProfileLoading==true &&
         <>
         <View style={styles.barraSuperiore}>
-                <Text style={styles.titolo}>Profile</Text>
+                <Text style={styles.titolo}>{i18n.t('profile')}</Text>
                 <TouchableOpacity onPress={apriUserSettings} style={{position:"absolute", right:Dimensions.get("window").width*0.03}}>
                         <MaterialIcons name="menu" size={fontSizeTitoloBarra} color="#52575D" />
                 </TouchableOpacity>
@@ -553,7 +460,7 @@ export default function ProfileComponent(props){
         {isUserProfileLoading==false &&
             <>
             <View style={styles.barraSuperiore}>
-                <Text style={styles.titolo}>Profilo</Text>
+                <Text style={styles.titolo}>{i18n.t('profile')}</Text>
                 <TouchableOpacity onPress={apriUserSettings} style={{position:"absolute", right:Dimensions.get("window").width*0.03}}>
                         <MaterialIcons name="menu" size={fontSizeTitoloBarra} color="#52575D" />
                 </TouchableOpacity>
@@ -572,7 +479,7 @@ export default function ProfileComponent(props){
                         <View style={styles.contenitoreImmagineProfilo}>
                             <ActivityIndicator animating={urlProfileImage!="null"} size={fontSizeTitoloBarra} color={MosCeleste} style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center'}}/>
                             {urlProfileImage!="null" && error==false && <Image source={{uri:urlProfileImage}} resizeMode="cover"  style={styles.immagineProfilo}/>}
-                            {error==true && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
+                            {error==true && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>{i18n.t('failedToGetImage')}</Text>}
                             </View>
                         {/* pallino online */}
                         <View style={styles.onlineCircle} />
@@ -591,11 +498,6 @@ export default function ProfileComponent(props){
 
                     <SliderDetails dettagli={dettagli} />
 
-                    {/*
-                        <View style ={styles.areaDescrizione}>
-                            <Text style={styles.descrizioneTesto}>{informazioniProfiloUtente.self_description}</Text>
-                        </View>
-                    */}
                     </View>
                     <View style={{backgroundColor:"#fff"}}>
                     

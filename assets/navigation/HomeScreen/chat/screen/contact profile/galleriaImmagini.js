@@ -5,7 +5,7 @@ import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button } from 'react-
 import { navbarHeight } from '../../../../../context/variabili_globali/variabiliGlobali';
 import { MosCeleste,MosViola } from '../../../../../resources/colors';
 import { AutenticazioneUtente } from '../../../../../context/firebase/autenticazione';
-
+import i18n from 'i18n-js'
 
 const larghezzaSchermo = Dimensions.get("window").width;
 const altezzaSezioneGalleria = Dimensions.get("window").height*0.47-navbarHeight;
@@ -31,7 +31,7 @@ export default function GalleriaImmagini({galleryUrls}){
                                            onLoad={()=>{setIsImageLoaded(true)}} 
                                            resizeMode="cover" 
                                            onError={(e) => {setIsImageLoaded(true); setUriGalleryImage(null);}}/>}
-                    {!uriGalleryImage && <Text style={{position:"absolute", textAlign:"center", textAlignVertical:"center", top:"40%"}}>Non è stato possibile recuperare l'immagine.</Text>}
+                    {!uriGalleryImage && <Text style={{position:"absolute", textAlign:"center", textAlignVertical:"center", top:"40%"}}>{i18n.t('failedToGetImage')}</Text>}
                  </View>
             )
         }

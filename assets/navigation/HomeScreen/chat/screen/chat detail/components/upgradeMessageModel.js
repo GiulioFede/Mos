@@ -15,6 +15,7 @@ import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import { Feather } from '@expo/vector-icons'; 
 import LottieView from 'lottie-react-native';
+import i18n from 'i18n-js'
 
 export default function UpgradeMessageModel({type,contactName, mostraNuovaData}){
 
@@ -48,10 +49,10 @@ export default function UpgradeMessageModel({type,contactName, mostraNuovaData})
                     <View style={styles.areaMessaggio}>
                         <LottieView autoPlay loop={true} source={require('../../../../../../resources/lottie/upgradeAnimation.json')} resizeMode="cover" />
                         {type=="upgrade_1" &&
-                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.mexUpgrade}>Tu e {contactName} siete passati al livello successivo!</Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.mexUpgrade}>{i18n.t('upgradeMessage_pt1')}{contactName}{i18n.t('upgradeMessage1_pt2')}</Text>
                         }
                         {type=="upgrade_2" &&
-                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.mexUpgrade}>Tu e {contactName} avete raggiunto il massimo della visibilità!</Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.mexUpgrade}>{i18n.t('upgradeMessage_pt1')}{contactName}{i18n.t('upgradeMessage2_pt2')}</Text>
                         }
                         <View style={{flexDirection:"row", alignSelf:"flex-end"}}>     
                                 {getTimestamp()}

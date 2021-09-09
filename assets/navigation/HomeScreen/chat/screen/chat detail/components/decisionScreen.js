@@ -1,29 +1,30 @@
 import React,{ useImperativeHandle, forwardRef, useState,useEffect, useRef} from "react";
 import { ActivityIndicator,TouchableOpacity, Dimensions,Animated, Text, View, StyleSheet, Platform, Image} from "react-native";
 import { Dialog, Portal, Button } from "react-native-paper";
-import { altezzaDevice, fontSizeTitolo, larghezzaDevice } from "../../../../../../context/variabili_globali/variabiliGlobali";
-
-import { MosCeleste, MosPurple } from "../../../../../../resources/colors";
+import { altezzaDevice, fontSizeCampi, fontSizeTitolo, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../../context/variabili_globali/variabiliGlobali";
+import {Ionicons} from "@expo/vector-icons";
+import { MosCeleste, MosPurple, MosViola } from "../../../../../../resources/colors";
 import local_storage from "../../../../../../context/local_storage/localStorage";
 import { sendPushNotification } from "../../../../../../context/push_notifications/functions";
+import i18n from 'i18n-js'
 
-const loadPhrase = "Attendi "; //cambiarla a seconda della lingua
-const questionPhrase1 = "Vuoi renderti più visibile?";
-const questionPhrase2 = "Vuoi renderti completamente visibile?"
+
 const DecisionScreen = forwardRef((props, ref) => {
-
+    const loadPhrase = i18n.t('decisionScreen1');
+    const questionPhrase1 = i18n.t('decisionScreen2');
+    const questionPhrase2 = i18n.t('decisionScreen3')
 
      const [showDecisionScreen, setShowDecisionScreen] = useState(false);
      const [uri1error, setUri1Error] = useState(false);
      const [uri2error, setUri2Error] = useState(false);
-     const [question, setQuestion ] = useState("Vuoi renderti più visibile?");
+     const [question, setQuestion ] = useState(questionPhrase1);
      const [refresh, setRefresh] = useState(false);
      const [urlProfileImage, setUrlProfileImage] = useState(null);
      const current_statistics = useRef(null);
      const isMounted = useRef(false);
      const [wait, setWait] = useState(false);
 
-     const {makeDecision,upgradeConversation, chatID, uidCurrentUser, contactUid, contactName,currentUserName, urlProfileImageContactUser,informazioniProfiloUtenteCorrente, myToken, contactToken} = props;
+     const {navigation, makeDecision,upgradeConversation, chatID, uidCurrentUser, contactUid, contactName,currentUserName, urlProfileImageContactUser,informazioniProfiloUtenteCorrente, myToken, contactToken} = props;
 
      useImperativeHandle(ref, () => ({
         show(sonoAmministratore, miaScelta, suaScelta, livelloCorrenteDiVisibilità){
@@ -314,8 +315,16 @@ const DecisionScreen = forwardRef((props, ref) => {
         return (
             <Animated.View style={{position:"absolute",opacity:opacityAnimation ,width:larghezzaDevice, height:altezzaDevice, justifyContent:"center", alignItems:"center", flex:1, backgroundColor:"rgba(0,0,0,0.5)"}}>
                     <Animated.View style={{width:larghezzaDevice*0.9, height:altezzaDevice*0.7, backgroundColor:"white", top:motionAnimation, borderRadius:larghezzaDevice*0.02}}>
-                        <View style={{flexGrow:1, borderTopRightRadius:larghezzaDevice*0.02, borderTopLeftRadius:larghezzaDevice*0.02, justifyContent:"center"}}>
-                            <Text style={styles.title}>...parlate già da un pò</Text>
+                        <View style={{flexGrow:1, borderTopRightRadius:larghezzaDevice*0.02, borderTopLeftRadius:larghezzaDevice*0.02}}>
+                            <TouchableOpacity onPress={()=>{navigation.goBack();}}>
+                                <View style={{flexDirection:"row", alignItems:"center"}}>
+                                    <Ionicons name="chevron-back" size={fontSizeTitoloBarra} color={MosViola} />
+                                    <Text style={styles.back}>{i18n.t('back')}</Text>
+                                </View>
+                            </TouchableOpacity>
+                            <View style={{ flex:1, justifyContent:"center"}}>
+                                <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.title,{paddingHorizontal:5}]}>{i18n.t('decisionScreen4')}</Text>
+                            </View>
                         </View>
                         <View style={{height:"40%", justifyContent:"center", alignItems:"center", flexDirection:"row"}}>
                             <Animated.View style={[styles.contenitoreImmagineProfilo,{top: topTransitionAnimation,opacity:topOpacityAnimation, left:10, borderColor:"white", borderWidth:2}]}>
@@ -329,7 +338,7 @@ const DecisionScreen = forwardRef((props, ref) => {
                         </View>
                         <View style={{flexGrow:1, justifyContent:"center", padding:1, margin:5}}>
                             <Text style={styles.question}>{question} {question==loadPhrase?contactName+"...":""}</Text>
-                            {question!=loadPhrase && <Text style={styles.subquestion}>Sia tu che {contactName} dovrete essere daccordo, altrimenti continuerete per un altro pò prima che vi venga richiesto ancora.</Text>}
+                            {question!=loadPhrase && <Text style={styles.subquestion}>{i18n.t('decisionScreen5_pt1')}{contactName}{i18n.t('decisionScreen5_pt2')}</Text>}
                         </View>
 
                         {question!=loadPhrase &&
@@ -340,7 +349,7 @@ const DecisionScreen = forwardRef((props, ref) => {
                                         makeLocalDecision(true);
                                     }
                                     }}>
-                                    <Text style={[styles.question,{color:MosCeleste}]}>Si</Text>
+                                    <Text style={[styles.question,{color:MosCeleste}]}>{i18n.t('yes')}</Text>
                                 </TouchableOpacity>
                             </View>
                             <View style={{width:larghezzaDevice*0.9*0.5, justifyContent:"center"}}>
@@ -349,7 +358,7 @@ const DecisionScreen = forwardRef((props, ref) => {
                                         makeLocalDecision(false);
                                     }                        
                                     }}>
-                                    <Text style={[styles.question,{color:MosPurple}]}>Non ancora</Text>
+                                    <Text style={[styles.question,{color:MosPurple}]}>{i18n.t('noYet')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -387,7 +396,8 @@ const styles = StyleSheet.create({
         color: "#52575D",
         textAlign:"center",
         alignItems:"center",
-        fontSize:larghezzaDevice*0.03
+        fontSize:larghezzaDevice*0.03,
+        marginTop:5
     },
     nome:{
         fontFamily: "Raleway_200ExtraLight",
@@ -425,4 +435,9 @@ const styles = StyleSheet.create({
             }
         })
     },
+    back:{
+        fontFamily: "Raleway_400Regular",
+        color: MosViola,
+        fontSize:fontSizeCampi*1.2
+    }
   });

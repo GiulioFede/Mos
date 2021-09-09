@@ -3,7 +3,7 @@ import { Text,View, TouchableOpacity,StyleSheet, Dimensions, Touchable } from "r
 import { Dialog, Portal, Button, Divider } from "react-native-paper";
 import { altezzaBarraScreen, altezzaDevice, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../../context/variabili_globali/variabiliGlobali";
 import Loading from "../../../../aroundYou/component/loading";
-
+import i18n from 'i18n-js'
 
 
 const ThreeDotTab = forwardRef((props, ref) => {
@@ -32,12 +32,12 @@ const ThreeDotTab = forwardRef((props, ref) => {
             <View />
         </TouchableOpacity>
         <View style={{flex:1, backgroundColor:"white", position:"absolute", top:altezzaBarraScreen,alignSelf:"flex-end", zIndex:10, right:Dimensions.get("window").width*0.03, elevation:10, padding:10, paddingVertical:20, borderRadius:10}}>
-            <TouchableOpacity onPress={()=>{optionsDialogRef.current.open_dialog("Eliminazione conversazione", "Vuoi davvero eliminare la conversazione con "+contactName+"?",0)}}>
-                <Text style={styles.itemMenu}>Elimina conversazione</Text>
+            <TouchableOpacity onPress={()=>{optionsDialogRef.current.open_dialog(i18n.t('threeDotRemoveConversation'), i18n.t('threeDotRemoveConversationSubTitle')+contactName+"?",0)}}>
+                <Text style={styles.itemMenu}>{i18n.t('threeDotRemoveConversation')}</Text>
             </TouchableOpacity>
             <Divider />
-            <TouchableOpacity onPress={()=>{optionsDialogRef.current.open_dialog("Blocca contatto", "Vuoi davvero bloccare "+contactName+"? L'intera conversazione verrà rimossa e "+contactName+" non potrà più contattarti fino a quando non sbloccherai il contatto.",1)}}>
-                <Text style={styles.itemMenu}>Blocca utente</Text>
+            <TouchableOpacity onPress={()=>{optionsDialogRef.current.open_dialog(i18n.t('threeDotBlockUser'), i18n.t('threeDotBlockUserSubTitle_pt1')+contactName+i18n.t('threeDotBlockUserSubTitle_pt2')+contactName+i18n.t('threeDotBlockUserSubTitle_pt3'),1)}}>
+                <Text style={styles.itemMenu}>{i18n.t('threeDotBlockUser')}</Text>
             </TouchableOpacity>
         </View>
     </View>

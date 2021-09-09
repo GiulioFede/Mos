@@ -23,6 +23,7 @@ import { idChatCorrente } from './HomeScreen/chat/screen/chat detail/chat_detail
 import Loading from './HomeScreen/aroundYou/component/loading';
 import BlockedConversationsScreen from './BlockedConversations/blockedConversations';
 import AboutMosaicScreen from './infoMosaic/aboutMosaic';
+import i18n from 'i18n-js'
 
 /*
   NB: Questa funzione decide solo come comportarsi quando si riceve una notifica MA l'app è in FOREGROUND.
@@ -82,8 +83,7 @@ export default function HomeNavigator({navigation}) {
     const notificationListener = useRef();
     //variabile che contiene il listener per la ricezione delle notifiche
     const notificationReceiverListener = useRef();
-    //se true indica che c'è stata una notifica
-    const [notification, setNotification] = useState(false);
+  
 
     //simulo la Promise.allSettled che da problemi ma è vitale in questo caso
     //raccoglie tutti gli url delle immagini di galleria e di profilo dell'utente. I risultati errati verranno marchiati come
@@ -279,9 +279,9 @@ export default function HomeNavigator({navigation}) {
     <>
       <Drawer.Navigator initialRouteName="Home" drawerContent={props => <AltriPulsanti {...props} />} >
         <Drawer.Screen name="Home" component={HomeScreen} />
-        <Drawer.Screen name="Informazioni Personali" component={InformazioniPersonali} />
-        <Drawer.Screen name="Utenti bloccati" component={BlockedConversationsScreen} />
-        <Drawer.Screen name="About Mosaic" component={AboutMosaicScreen} />
+        <Drawer.Screen name= {i18n.t('personalInformation')} component={InformazioniPersonali} />
+        <Drawer.Screen name={i18n.t('blockedUsers')} component={BlockedConversationsScreen} />
+        <Drawer.Screen name={i18n.t('aboutMosaic')} component={AboutMosaicScreen} />
       </Drawer.Navigator>
       </>
   );

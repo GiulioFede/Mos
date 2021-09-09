@@ -33,7 +33,6 @@ const SnackMessage = forwardRef((props, ref) => {
                 duration= {3000}
                 style={{elevation:12, zIndex:12}}
                 action={{
-                label: 'Chiudi',
                 onPress: () => {
                     // Do something
                     hideSnackMessage();

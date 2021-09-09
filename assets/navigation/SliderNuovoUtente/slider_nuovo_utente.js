@@ -12,6 +12,7 @@ import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 import { Ionicons } from '@expo/vector-icons';
 import { geohashForLocation } from "geofire-common";
 import { getAgeFromDate } from "../../context/utilities/functions.utilities";
+import i18n from 'i18n-js'
 
 export default function SliderNuovoUtente({route, navigation}){ //NB: route.params.uid contiene l'uid col quale salvare l'utente (e' uguale all'uid di autenticazione)
     console.log("Slider nuovo utente");
@@ -48,11 +49,11 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
         const letters = /^[A-Za-z]+$/;
         if(nome.length<3){
             setShowForwardArrow(false);
-            setSnackError("Inserisci un nome almeno di 3 lettere.");
+            setSnackError(i18n.t('enterANameOfAtLeast3letters'));
         }
         else if(!nome.match(letters)){
             setShowForwardArrow(false);
-            setSnackError("Inserisci solamente caratteri alfabetici A-Z oppure a-z.");
+            setSnackError(i18n.t('azConstraint'));
         }
         else {
             name.current = nome; 
@@ -65,9 +66,9 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
         console.log("data di nascita settata: "+data);
         //l'oggetto data è di tipo Date
         const today = new Date();
-        if (Math.abs(today.getFullYear()- data.getFullYear()<14)){
+        if (Math.abs(today.getFullYear()- data.getFullYear()<16)){ //TODO: stabilire se 16
             setShowForwardArrow(false);
-            setSnackError("Devi avere almeno 14 anni per usare Mosaic.");
+            setSnackError(i18n.t('ageConstraint'));
         }
         else {
             dataDiNascita.current=data;//getDate()+"/"+(data.getMonth()+1)+"/"+data.getFullYear();
@@ -137,7 +138,7 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
         //ultimo check di sicurezza
         if(!uid || uid.length==0 || name.current.length==0 || dataDiNascita.current.toString().length==0 || posizione.current.length == 0 || sesso.current.length==0 || identitaDiGenere.current=="" || preferenzaSesso.current.length==0 || descrizione.current.length==0 || occupazione.current.length==0 || uriImmagineProfilo.current.length==0){
             console.log("Errore generico:"+e);
-            setSnackError("Si è verificato un problema. Riprova più tardi.");
+            setSnackError(i18n.t('err_generic'));
             return;
         }
         setIsCreazioneUtenteIsLoading(true);
@@ -184,79 +185,21 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
                                     navigation.navigate("Home");    
                                 }catch(e){
                                     console.log("errore durante la creazione del profilo:"+e);
-                                    setSnackError("Si è verificato un problema durante la creazione del profilo. Riprovare più tardi.");
+                                    setSnackError(i18n.t('errorDuringProfileCreation'));
                                     setIsCreazioneUtenteIsLoading(false);
                                 }                           
 
                             }).catch((e)=>{
-                                setSnackError("Si è verificato un problema. Riprova più tardi.");
+                                setSnackError(i18n.t('errorDuringProfileCreation'));
                                 console.log("slider_nuovo_utente.js : errore-->"+e);
                                 setIsCreazioneUtenteIsLoading(false);
                             })
         }catch(e){
             console.log("errore durante la creazione del profilo:"+e);
-            setSnackError("Si è verificato un problema durante la creazione del profilo. Riprovare più tardi.");
+            setSnackError(i18n.t('errorDuringProfileCreation'));
             setIsCreazioneUtenteIsLoading(false);
         }
-        //coloreBarra.setColore("white");
-           /*
-        try{
-                
-            console.log("creazione nuovo profilo..."); 
-            creaNuovoUtente(uid,
-                name.current,
-                dataDiNascita.current,
-                posizione.current,
-                sesso.current,
-                preferenzaSesso.current
-                )
-                    .then((ris)=>{
-                        //navigo nella home
-                        console.log("Utente inserito:");
-                        console.log(ris);
-
-                        //carico immagine del profilo in tutte le sue versioni
-                        //1) manipolo l'immagine per ridurne le dimensioni a meno di 1MB cosi da velocizzare lato server la trasformazione
-                        ImageManipulator.manipulateAsync(
-                            uriImmagineProfilo.current,
-                            [{ resize: { width: 800, height: 800 } }],
-                            { format: 'jpeg',base64: true }
-                            ).then((immagineManipolata)=>{
-                                //immagine manipolata. Carico versioni
-                                console.log("Carico immagine profilo con tutte le sue versioni");
-                                //carico nuova immagine passandogli la base 64 dell'immagine e indicando se si tratta di una immagine di profilo o meno
-                                //nel caso si tratta di immagine di profilo il nome dell'immagine del profilo che passo è utile dopo
-                                caricaNuovaImmagine(immagineManipolata.base64,true, "profileImage2") 
-                                  .then((ris)=>{
-                                    console.log("chiamata riuscita");
-                                    console.log(ris);
-                                  }).catch((e)=>{
-                                    console.log("errore: chiamata non riuscita");
-                                    console.log(e);
-                                    setMessaggioAuth("Non è stato possibile caricare l'imamgine del profilo. Riprova a caricarla.");
-                                  }).finally(() =>   navigation.navigate("Home"));
-                            }).catch((e)=>{
-                                setSnackError("Si è verificato un problema. Riprova più tardi.");
-                                console.log("slider_nuovo_utente.js : errore-->"+e);
-                            })
-
-                    }).catch((e)=>{
-                        setIsCreazioneUtenteIsLoading(false);
-                        //coloreBarra.setColore(MosCeleste);
-                        var messaggio = "Si è verificato un problema. Riprova più tardi.";
-                        var code = e.code;
-
-                        console.log("Errore specifico:"+code+","+e);
-                        setSnackError(messaggio);
-
-                    });
-            }catch(e){
-                setIsCreazioneUtenteIsLoading(false);
-                //coloreBarra.setColore(MosCeleste);
-                console.log("Errore generico:"+e);
-                setSnackError("Si è verificato un problema. Riprova più tardi.");
-            }
-            */
+        
             
     }
 
@@ -431,8 +374,8 @@ export default function SliderNuovoUtente({route, navigation}){ //NB: route.para
             { isCreazioneUtenteLoading &&
                      <View style={{width:width, height:height,position:"absolute",zIndex: 100, backgroundColor:"rgba(255, 255, 255,0.9)", justifyContent:"center", alignItems:"center"}}>
                             <ActivityIndicator animating={true} color={MosCeleste} />
-                            <Text style={{width:larghezzaDevice*0.6, textAlign:"center", paddingTop:10}}>Creazione del profilo in corso...</Text>
-                            <Text style={{width:larghezzaDevice*0.6, textAlign:"center", paddingTop:20}}>Le tempistiche sono necessarie per garantire la privacy dei tuoi dati.</Text>
+                            <Text style={{width:larghezzaDevice*0.6, textAlign:"center", paddingTop:10}}>{i18n.t('creationProfile')}</Text>
+                            <Text style={{width:larghezzaDevice*0.6, textAlign:"center", paddingTop:20}}>{i18n.t('messageDuringCreation')}</Text>
                      </View>
             }
         </View>

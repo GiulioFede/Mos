@@ -20,6 +20,8 @@ import local_storage from "../../../../../../context/local_storage/localStorage"
 import { Audio } from 'expo-av';
 import { INTERRUPTION_MODE_ANDROID_DO_NOT_MIX, INTERRUPTION_MODE_IOS_DO_NOT_MIX } from 'expo-av/build/Audio';
 import { RowsOfMessagesToUpdate } from '../../context/chatContext';
+import i18n from 'i18n-js'
+import { sendPushNotification } from '../../../../../../context/push_notifications/functions';
 
 let newRecording = new Audio.Recording();
 let recordingIconAudioSound = new Audio.Sound()
@@ -32,7 +34,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
     const {addNewUpdate} = useContext(RowsOfMessagesToUpdate);
 
     //prelevo metodi
-    const {setOpenRecordingKeyboard,isOpenRecordingKeyboardOpened, setSnackBarMessage, ultimaRow, getUtenteCorrente, chat,setChat, refFlatList,chatId, inviaNuovoMessaggio, lastMessage, contactUid, isMounted, lastStatistic, arrayOfRowsToUpdateState, setRefresh, refresh, getCurrentVisibility} = props;
+    const {setOpenRecordingKeyboard,isOpenRecordingKeyboardOpened, setSnackBarMessage, ultimaRow, getUtenteCorrente, chat,setChat, refFlatList,chatId, inviaNuovoMessaggio, lastMessage, contactUid, isMounted, lastStatistic, getCurrentVisibility, contactToken, myName} = props;
     //indica la durata attuale dell'audio mentre lo si registra
     const [durataAudio, setDurataAudio] = useState(0);
     //contiene info sul recording
@@ -123,15 +125,15 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                 local_setIsRecording(true);
             }catch(err){
                 console.log("E' avvenuto un errore "+err);
-                setSnackBarMessage("E' avvenuto un errore. Prova a chiudere e riaprire l'app.");
+                setSnackBarMessage(i18n.t('audioError1'));
                 setOpenRecordingKeyboard(false);
                 isOpenRecordingKeyboardOpened.current = false;
 
             }
         }else
-            setSnackBarMessage("Memoria insufficiente. Prova a liberare lo spazio per poter continuare la conversazione");
+            setSnackBarMessage(i18n.t('memoryError'));
     }).catch((e)=>{
-        setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare il messaggio.");
+        setSnackBarMessage(i18n.t('mexError3'));
     })
     }
 
@@ -188,7 +190,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
             console.log("Si è verificato un problema:"+e);
             setRecordingInfo(undefined);
             local_setIsRecording(false);
-            setSnackBarMessage("Si è verificato un problema.");
+            setSnackBarMessage(i18n.t('audioError2'));
             setOpenRecordingKeyboard(false);
             isOpenRecordingKeyboardOpened.current = false;
         }
@@ -224,7 +226,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
             console.log("Si è verificato un problema:"+e);
             setRecordingInfo(undefined);
             local_setIsRecording(false);
-            setSnackBarMessage("Si è verificato un problema.");
+            setSnackBarMessage(i18n.t('audioError2'));
             setOpenRecordingKeyboard(false);
             isOpenRecordingKeyboardOpened.current = false;
             setUriTmp(null);
@@ -265,6 +267,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                            //mi ritorna il percorso dove ha salvato l'audio. Di default salva l'audio con stato "in-progress" a indicare che non ha ancora ricevuto conferma di salvataggio nel database
                            //let local_uri = await local_storage.saveAudioIntoFolder(getUtenteCorrente(),contactUid,getUtenteCorrente(),uri);
                            await local_storage.updateMessageState(getUtenteCorrente()+contactUid+"",nuovaChiave,"succeed");
+                           await sendPushNotification(contactToken,myName+i18n.t('pushNewMessage'), i18n.t('vocalMessage'), {chatId: chatId} )
                            console.log("percorso salvato nel database e nel file system in uri: "+local_uri);
                            //aggiorno UI
                            console.log("Il componente è montato? "+isMounted.current);
@@ -275,7 +278,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                            }catch(e){
                                 console.log("Non Salvo nella chat "+contactUid+" di chiave "+nuovaChiave+" lo stato failed"); 
                                 addNewUpdate(contactUid,nuovaChiave,"failed");
-                               setSnackBarMessage("E' avvenuto un errore durante il salvataggio dell'audio in locale. Il messaggio è stato comunque inviato.");
+                               setSnackBarMessage(i18n.t('audioError3'));
                                console.log("errore durante l'aggiornamento dello stato dell'audio:"+e);
                            }
                        },
@@ -292,13 +295,13 @@ const RecordingKeyboard = forwardRef((props, ref) => {
                            }
                        })
                }catch(error2){
-                   setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare l'audio vocale.");
+                   setSnackBarMessage(i18n.t('audioError4'));
                    console.log(error2);
                }
            }else
-               setSnackBarMessage("Memoria insufficiente. Prova a liberare lo spazio per poter continuare la conversazione");
+               setSnackBarMessage(i18n.t('memoryError'));
        }).catch((e)=>{
-               setSnackBarMessage("Si è verificato un errore interno. Non è stato possibile inviare il messaggio.");
+               setSnackBarMessage(i18n.t('audioError4'));
        })
    }
 
@@ -318,7 +321,7 @@ const RecordingKeyboard = forwardRef((props, ref) => {
             console.log("Si è verificato un problema:"+e);
             setRecordingInfo(undefined);
             local_setIsRecording(false);
-            setSnackBarMessage("Si è verificato un problema.");
+            setSnackBarMessage(i18n.t('audioError2'));
             setOpenRecordingKeyboard(false);
             isOpenRecordingKeyboardOpened.current = false;
         }

@@ -6,7 +6,7 @@ import localStorage from "../../../../../../../context/local_storage/localStorag
 import { altezzaDevice, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste } from "../../../../../../../resources/colors";
 import NotificationMessageModel from "./notificationMessageModel";
-
+import i18n from 'i18n-js'
 
 
 var unsubscribe = null;
@@ -210,7 +210,7 @@ const TabNotifiche = forwardRef((props, ref) => {
 
                             {/* TITOLO NOTIFICA */}
                             <View style={{flex:1/6, textAlign:"center", justifyContent:"center", backgroundColor:MosCeleste, borderTopLeftRadius:altezzaDevice*0.01, borderTopRightRadius:altezzaDevice*0.01}}>
-                                <Text style={styles.titolo}>Notifiche</Text>
+                                <Text style={styles.titolo}>{i18n.t('notifications')}</Text>
                             </View>
                             <Divider />
 
@@ -233,7 +233,7 @@ const TabNotifiche = forwardRef((props, ref) => {
                             {/* BOTTONE PER MOSTRARNE ANCORA*/}
                             <View style={{flex:1/6, textAlign:"center", justifyContent:"center", backgroundColor:"white", borderBottomLeftRadius:altezzaDevice*0.01, borderBottomRightRadius:altezzaDevice*0.01}}>
                                 <TouchableOpacity onPress={mostraAltreNotifiche}>
-                                    <Text style={styles.footer}>Mostra altre notifiche</Text>
+                                    <Text style={styles.footer}>{i18n.t('showMore')}</Text>
                                 </TouchableOpacity>
                             </View>
                             <Divider />

@@ -3,6 +3,7 @@ import {StyleSheet, View, Text} from 'react-native'
 import { ProgressBar, Colors } from 'react-native-paper';
 import { altezzaBarraScreen, fontSizeTitoloBarra, larghezzaDevice } from '../../../../../../context/variabili_globali/variabiliGlobali';
 import { MosCeleste } from '../../../../../../resources/colors';
+import i18n from 'i18n-js'
 
 const ProgressRequest = forwardRef((props, ref) => {
 
@@ -45,7 +46,7 @@ const ProgressRequest = forwardRef((props, ref) => {
         {visible==true &&
         <View style={{ width:larghezzaDevice, height:altezzaBarraScreen*0.4, justifyContent:"center"}}>
             <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
-                <Text style={styles.prossimaRichiesta}>prossima richiesta</Text>
+                <Text style={styles.prossimaRichiesta}>{i18n.t('nextRequest')}</Text>
                 <ProgressBar progress={progress/100} color={MosCeleste} style={{width:100, height:fontSizeTitoloBarra*0.15, borderRadius:fontSizeTitoloBarra}}/>
                 <Text style={[styles.prossimaRichiesta,{paddingLeft:3}]}>{progress}%</Text>
             </View>

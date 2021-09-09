@@ -13,6 +13,7 @@ import { MosCeleste, MosPurple } from "../../../../resources/colors";
 import {LinearGradient} from "expo-linear-gradient";
 import { AutenticazioneUtente } from "../../../../context/firebase/autenticazione";
 import * as firebase from 'firebase';
+import i18n from 'i18n-js';
 
 export default function UploadImageLoader({navigation,route}){
 
@@ -66,7 +67,7 @@ export default function UploadImageLoader({navigation,route}){
                     informazioniProfiloUtente.urlProfileImage = {url_0: result.data.url_0, url_50: result.data.url_50, url_100: result.data.url_100}; 
                     var nuoveInformazioniProfilo = JSON.parse(JSON.stringify(informazioniProfiloUtente));
                     setInformazioniProfiloUtente(nuoveInformazioniProfilo); 
-                    setMessaggioAuth("Immagine di profilo aggiornata.");
+                    setMessaggioAuth(i18n.t('profileImageUpdated'));
                   })
                 })
               }else {
@@ -80,14 +81,12 @@ export default function UploadImageLoader({navigation,route}){
                 console.log(nuoveInformazioniProfilo);
                 setInformazioniProfiloUtente(nuoveInformazioniProfilo);
               }
-                navigation.navigate({name:"ProfileScreen",params: {uploadImageMex: "Immagine caricata con successo."}, merge: true});
-               //setMessaggioAuth("Immagine caricata con successo.");
-               //navigation.setParams({uploadImageMex: "Immagine caricata con successo."});
-          }).catch((e)=>{
+                navigation.navigate({name:"ProfileScreen",params: {uploadImageMex: i18n.t('imgUploadedWithSuccess')}, merge: true});
+               }).catch((e)=>{
             console.log("errore: chiamata non riuscita");
             console.log(e);
             //setMessaggioAuth("Si è verificato un problema. Riprova più tardi.");
-            navigation.navigate({name:"ProfileScreen",params: {uploadImageMex: "Caricamento immagine fallito."}, merge: true});
+            navigation.navigate({name:"ProfileScreen",params: {uploadImageMex: i18n.t('imgUploadeWithFailure')}, merge: true});
           });//.finally(() => navigation.navigate("ProfileScreen"));
 
     }
@@ -110,14 +109,14 @@ export default function UploadImageLoader({navigation,route}){
     return (
         <View style={styles.container} >
             <View style={{height:Dimensions.get("window").height*0.3,alignItems:"center", justifyContent:"center"}}>
-              <Text style={styles.titolo}>Il livello di dettaglio con cui gli altri potranno vederti dipenderà dallo stato della conversazione</Text>
+              <Text style={styles.titolo}>{i18n.t('uploadImageLoaderTitle')}</Text>
             </View>
             <View style={styles.contenitoreImmagine}>
                 {isImg1Visible==true && <Image source={{uri:route.params.uri}} resizeMode="cover" onLoadEnd={caricaNuovaImmagineUtente} style={styles.immagine1} />}
             </View>
             <View style={styles.areaLoading}>
               <ActivityIndicator animating={isLoading} size={fontSizeTitoloBarra} color={MosCeleste}/>
-              <Text style={styles.titoloLoading}>Stiamo elaborando l'immagine per assicurarti il massimo della privacy...</Text>
+              <Text style={styles.titoloLoading}>{i18n.t('uploadImageLoaderSubTitle')}</Text>
             </View>
         </View>
     )

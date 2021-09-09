@@ -4,10 +4,10 @@ import { Text, View,StyleSheet, Dimensions, Image } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
 import { Divider } from "react-native-paper";
 import { getAgeFromDate } from "../../../../context/utilities/functions.utilities";
-import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaSchermoInterno, fontSizeSottoTitolo, fontSizeTitolo } from "../../../../context/variabili_globali/variabiliGlobali";
+import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaSchermoInterno, fontSizeSottoTitolo, fontSizeTitolo, larghezzaDevice } from "../../../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste, MosPurple, MosViola } from "../../../../resources/colors";
 import {Entypo} from "@expo/vector-icons";
-
+import i18n from 'i18n-js';
 
 
 const BottomSheetUserDetails = forwardRef((props, ref) => {
@@ -106,10 +106,6 @@ const UserInformationView = forwardRef((props, ref) => {
         setRefresh(!refresh);
      }
 
-     function getDistance(){
-         return "50km";
-     }
-
      function getHobbiesInterestsAndPassions(){
          return currentUserDisplayed.current.hobbies_interests_and_passions.map((hobby, index)=>{
              return <Text key={index} style={styles.keyword}>{hobby}</Text>
@@ -136,12 +132,44 @@ function getCityRegionCountryView(city, region, country){
         countryTmp = ","+country;
     }
 
-    return (
-        <View style={{marginBottom:10, paddingLeft:10, flexDirection:"row"}}>
-            {(cityTmp!=null || countryTmp!=null || regionTmp!=null) && <Entypo name="location-pin" size={fontSizeSottoTitolo} color="#444" />}
-            {cityTmp!=null && <Text style={{fontFamily:"Raleway_200ExtraLight", fontSize: fontSizeSottoTitolo, color:"#444"}}>{cityTmp}</Text>}
-            {regionTmp!=null && <Text style={{fontFamily:"Raleway_200ExtraLight", fontSize: fontSizeSottoTitolo, color:"#444"}}>{regionTmp}</Text>}
-            {countryTmp!=null && <Text style={{fontFamily:"Raleway_200ExtraLight", fontSize: fontSizeSottoTitolo, color:"#444"}}>{countryTmp}</Text>}
+ return (
+        <View style={{marginBottom:10, paddingLeft:10, flexDirection:"row", flexWrap:"wrap"}}>
+           
+           {cityTmp!=null && regionTmp!=null && countryTmp!=null &&
+                <View style={{flexDirection:"row", flexWrap:"wrap", justifyContent:"center", alignContent:"center"}}>
+                    <Entypo name="location-pin" size={fontSizeSottoTitolo} color="#444" />
+                    <View style={{justifyContent:"center" }}>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{fontFamily:"Raleway_200ExtraLight", fontSize: fontSizeSottoTitolo, color:"#444", width:larghezzaDevice*0.8 }}>{cityTmp}{regionTmp}{countryTmp}</Text>
+                    </View>
+                </View>
+            }
+
+        {cityTmp==null && regionTmp!=null && countryTmp!=null &&
+                <View style={{flexDirection:"row", flexWrap:"wrap", justifyContent:"center", alignContent:"center"}}>
+                    <Entypo name="location-pin" size={fontSizeSottoTitolo} color="#444" />
+                    <View style={{justifyContent:"center" }}>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{fontFamily:"Raleway_200ExtraLight", fontSize: fontSizeSottoTitolo, color:"#444", width:larghezzaDevice*0.8 }}>{regionTmp.substring(1)}{countryTmp}</Text>
+                    </View>
+                </View>
+            }
+
+        {cityTmp==null && regionTmp==null && countryTmp!=null &&
+                <View style={{flexDirection:"row", flexWrap:"wrap", justifyContent:"center", alignContent:"center"}}>
+                    <Entypo name="location-pin" size={fontSizeSottoTitolo} color="#444" />
+                    <View style={{justifyContent:"center" }}>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{fontFamily:"Raleway_200ExtraLight", fontSize: fontSizeSottoTitolo, color:"#444", width:larghezzaDevice*0.8 }}>{countryTmp.substring(1)}</Text>
+                    </View>
+            </View>
+            }
+
+        {cityTmp==null && regionTmp!=null && countryTmp==null &&
+                <View style={{flexDirection:"row", flexWrap:"wrap", justifyContent:"center", alignContent:"center"}}>
+                    <Entypo name="location-pin" size={fontSizeSottoTitolo} color="#444" />
+                    <View style={{justifyContent:"center" }}>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{fontFamily:"Raleway_200ExtraLight", fontSize: fontSizeSottoTitolo, color:"#444", width:larghezzaDevice*0.8 }}>{regionTmp.substring(1)}</Text>
+                    </View>
+                </View>
+            }
         </View>
     )
 }
@@ -157,31 +185,31 @@ function getCityRegionCountryView(city, region, country){
 
                 {getCityRegionCountryView(currentUserDisplayed.current.location.city,currentUserDisplayed.current.location.region,currentUserDisplayed.current.location.country)}
                 
-                <Text style={[styles.fieldBold,{marginTop:20}]}>Occupazione</Text>
+                <Text style={[styles.fieldBold,{marginTop:20}]}>{i18n.t('currentOccupation')}</Text>
                 <Text style={[styles.fieldLight,{paddingBottom:20, paddingLeft:20, color:MosCeleste}]}>{currentUserDisplayed.current.current_occupation}</Text>
 
-                <Text style={styles.fieldBold}>Sesso biologico</Text>
+                <Text style={styles.fieldBold}>{i18n.t('sex')}</Text>
                 <Text style={styles.content}>{currentUserDisplayed.current.biological_sex}</Text>
-                <Text style={styles.fieldBold}>Identità di genere</Text>
+                <Text style={styles.fieldBold}>{i18n.t('genderIdentity')}</Text>
                 <Text style={styles.content}>{currentUserDisplayed.current.gender_identity}</Text>
-                <Text style={styles.fieldBold}>Genere di preferenza</Text>
+                <Text style={styles.fieldBold}>{i18n.t('genderPreferenceLabel')}</Text>
                 <Text style={styles.content}>{currentUserDisplayed.current.gender_preference}</Text>
 
                 <Divider style={{margin:10}} />
 
-                <Text style={styles.fieldBold}>Hobby, interessi e passioni</Text>
+                <Text style={styles.fieldBold}>{i18n.t('hobbiesInterestsAndPassions')}</Text>
                 <View style={{margin:10, flexDirection:"row", flexGrow:1, flexWrap:"wrap"}}>
                     {getHobbiesInterestsAndPassions()}
                 </View>
 
                 <Divider style={{margin:10}} />
 
-                <Text style={styles.fieldBold}>Descrizione di sé</Text>
+                <Text style={styles.fieldBold}>{i18n.t('personalDescription')}</Text>
                 <Text style={[styles.fieldLight,{margin:10}]}>{currentUserDisplayed.current.self_description}</Text>
 
                 <Divider style={{margin:10}} />
 
-                <Text style={styles.fieldBold}>Galleria profilo</Text>
+                <Text style={styles.fieldBold}>{i18n.t('profileGallery')}</Text>
                 <View style={{margin:20}}>
                     <FlatList
                         data = {galleryCurrentUser.current}

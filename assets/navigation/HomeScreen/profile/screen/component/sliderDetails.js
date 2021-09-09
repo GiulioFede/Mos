@@ -4,6 +4,7 @@ import {ActivityIndicator, Divider, FAB, ProgressBar, Snackbar} from "react-nati
 import {Octicons, Ionicons, MaterialIcons, FontAwesome} from "@expo/vector-icons";
 import { fontSizeTitolo, fontSizeTitoloPiccolo, larghezzaDevice } from "../../../../../context/variabili_globali/variabiliGlobali";
 import { MosCeleste, MosViola } from "../../../../../resources/colors";
+import i18n from 'i18n-js';
 
 const SliderDetails = ({dettagli}) => {
 
@@ -14,7 +15,7 @@ const SliderDetails = ({dettagli}) => {
         if(item.section=="location"){
             return (
                 <View style={{width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, flexDirection:"row", padding:10, margin:10, justifyContent:"center", alignItems:"center"}}>
-                    <View style={{width:larghezzaDevice-40, flexDirection:"column", justifyContent:"center", }}>
+                    <View style={{width:larghezzaDevice-40, flexDirection:"column", justifyContent:"center"}}>
                         <Ionicons name="location-sharp" size={fontSizeTitoloPiccolo} color={MosCeleste} style={{alignSelf:"center", alignContent:"center", alignItems:"center"}} />
                         <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", textAlign:"center"}]}>{item.city}</Text>
                         <Text adjustsFontSizeToFit={true} numberOfLines={1}  style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",textAlign:"center"}]}>{item.region}</Text>
@@ -26,19 +27,19 @@ const SliderDetails = ({dettagli}) => {
         else if(item.section=="sex and gender"){
             return (
                 <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center",alignItems:"center"}}>
-                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>Sesso:<Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.sex}</Text></Text>
-                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Identità di genere:<Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_identity}</Text></Text>
-                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Genere di preferenza:<Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_preference}</Text></Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>{i18n.t('sex')}:<Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.sex}</Text></Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>{i18n.t('genderIdentity')}:<Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_identity}</Text></Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>{i18n.t('genderPreferenceLabel')}:<Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_preference}</Text></Text>
                     </View>
             )
         }
         else if(item.section=="occupation and decription"){
             return (
                 <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center",alignItems:"center"}}>
-                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>Occupazione corrente</Text>
+                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>{i18n.t('currentOccupation')}</Text>
                     <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.occupation}</Text>
 
-                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>Descrizione personale</Text>
+                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>{i18n.t('personalDescription')}</Text>
                     <Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.description}</Text>
                 </View>
             )
@@ -46,7 +47,7 @@ const SliderDetails = ({dettagli}) => {
         else if(item.section=="hobbies interests and passions"){
             return (
                 <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center"}}>
-                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola, marginBottom:5}]}>Hobby, interessi e passioni</Text>
+                    <Text style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola, marginBottom:5}]}>{i18n.t('hobbiesInterestsAndPassions')}</Text>
                     <View style={{flexDirection:"row", flex:1, flexWrap:"wrap"}}>
                     {item.hobbies_interests_and_passions.map((data)=>{
                         return (

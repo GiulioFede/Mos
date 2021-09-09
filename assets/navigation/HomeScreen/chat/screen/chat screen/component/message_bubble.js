@@ -18,6 +18,7 @@ import { Entypo } from '@expo/vector-icons';
 import { moderateScale } from 'react-native-size-matters' //installa con: yarn add react-native-size-matters
 import { MosCeleste, MosPurple, MosViola } from '../../../../../../resources/colors'
 import { fontSizeCampi } from '../../../../../../context/variabili_globali/variabiliGlobali'
+import i18n from 'i18n-js'
 
 // Props info list
 // 1. mine (bool) => renders blue bubble on right
@@ -40,8 +41,8 @@ function MessageBubble({messaggio, type, author, currentUser}) {
                             <View style={{ paddingRight:5, justifyContent:"center"}}>
                                 <Entypo name="megaphone" size={fontSizeCampi} color="white"/>
                             </View> } 
-          {messaggio!=null && <Text style={{paddingTop: 5, color: 'white', fontSize:fontSizeCampi, fontStyle:type=="text"?"normal":"italic"}}>{type=="mex"?messaggio:"messaggio vocale"}</Text>} 
-          {messaggio==null && <Text style={{paddingTop: 5, color: messaggio==null?MosPurple:"white", fontSize:fontSizeCampi, fontStyle:"italic"}}>fai il primo passo!</Text>} 
+          {messaggio!=null && <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{paddingVertical: 3, color: 'white', textAlignVertical:"center", fontSize:fontSizeCampi, fontStyle:type=="text"?"normal":"italic"}}>{type=="mex"?messaggio:i18n.t('vocalMessage')}</Text>} 
+          {messaggio==null && <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{paddingVertical: 3, color: messaggio==null?MosPurple:"white", fontSize:fontSizeCampi, fontStyle:"italic"}}>{i18n.t('takeFirstStep')}</Text>} 
           <View
           style={[
             styles.arrowContainer,

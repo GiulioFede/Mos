@@ -3,6 +3,7 @@ import {Dimensions, StyleSheet, View} from 'react-native';
 import { FAB, Portal, Provider } from 'react-native-paper';
 import { altezzaDevice, larghezzaDevice} from '../../../../../context/variabili_globali/variabiliGlobali';
 import { MosCeleste, MosViola } from '../../../../../resources/colors';
+import i18n from 'i18n-js';
 
 const VisibilityFAB = (props) => {
   const [state, setState] = React.useState({ open: false });
@@ -23,10 +24,10 @@ const VisibilityFAB = (props) => {
           icon={open ? 'eye-outline' : 'eye'}
           color={MosCeleste}
           actions={[
-            { icon: 'eye',label: 'Scopri come gli altri vedono il tuo profilo', onPress: () => console.log('Pressed add') },
+            { icon: 'eye',label: i18n.t('discoverHowOthersSeeYourProfile'), onPress: () => console.log('Pressed add') },
               {
                 icon: 'circle-outline',
-                label: '33% di visibilità',
+                label: i18n.t('minimumVisibility'),
                 color: props.visibility=="100"?MosViola:"grey",
                 onPress: () => props.setVisibility("100"),
               },
@@ -39,7 +40,7 @@ const VisibilityFAB = (props) => {
 */
               {
                 icon: 'circle-slice-4',
-                label: '66% di visibilità',
+                label: i18n.t('mediumVisibility'),
                 color: props.visibility=="50"?MosViola:"grey",
                 onPress: () => props.setVisibility("50"),
               },
@@ -53,7 +54,7 @@ const VisibilityFAB = (props) => {
 */
             {
               icon: 'circle-slice-8',
-              label: '100% di visibilità',
+              label: i18n.t('maximumVisibility'),
               color: props.visibility=="0"?MosViola:"grey",
               onPress: () => props.setVisibility("0"),
               small: false,

@@ -8,7 +8,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { AutenticazioneUtente } from "../../context/firebase/autenticazione";
 import { altezzaDevice, fontSizeTitolo, larghezzaDevice, fontSizeSottoTitolo, fontSizeCampi } from "../../context/variabili_globali/variabiliGlobali";
 import { RFPercentage} from "react-native-responsive-fontsize";
-
+import i18n from 'i18n-js';
 
 
 
@@ -27,7 +27,7 @@ export default function LoginScreen({navigation}){
     //contesto autenticazione
     const {user,userAuth, accediConEmailPassword,isControlDone, inviaEmailRecuperoPassword, inviaEmailDiVerifica, getUtenteCorrente, isProfiloCompletato,messaggioAuth,setMessaggioAuth,setIsControlDone, isUserProfileCompleted} = useContext(AutenticazioneUtente);
     //label button email e password
-    const [labelEmailPasswordButton, setLabelEmailPasswordButton] = useState("ACCEDI CON EMAIL/PASSWORD");
+    const [labelEmailPasswordButton, setLabelEmailPasswordButton] = useState(i18n.t('logInWithEmailAndPassword'));
     //email
     const [email, setEmail] = useState('');
     //password
@@ -102,17 +102,17 @@ export default function LoginScreen({navigation}){
                     icon="account-plus"
                     
                     onPress={() => navigation.navigate("RegisterScreen")}
-                    label="REGISTRATI"
+                    label={i18n.t('register')}
             />
 
-            <Text style={[styles.campiDaCompilare, {paddingBottom:20}]}> oppure </Text>
+            <Text style={[styles.campiDaCompilare, {paddingBottom:20}]}> {i18n.t('or')} </Text>
 
             <FAB
                 style={{backgroundColor:MosPurple, width:"90%"}}
                 small
                 icon="cellphone-iphone"
                 onPress={() => navigation.navigate("PhoneAuthScreen",{updatePhoneNumber: "no"})}
-                label="ACCEDI COL TUO NUMERO DI TELEFONO"
+                label={i18n.t('logInWithPhoneNumber')}
             /> 
             </View>
         )
@@ -156,7 +156,7 @@ export default function LoginScreen({navigation}){
                 {/*HAI DIMENTICATO LA PASSWORD?*/}
                 <TouchableOpacity onPress={mostraCampoRecuperaPassword}>
                     <View style={{ paddingTop:10,alignItems:"flex-end", width:larghezzaDevice*0.8}}>
-                        <Text style={[styles.campiDaCompilare,{color:MosViola}]}>Hai dimenticato la password?</Text>
+                        <Text style={[styles.campiDaCompilare,{color:MosViola}]}>{i18n.t('didYouForgetYourPassword')}</Text>
                     </View>
                 </TouchableOpacity>
 
@@ -179,7 +179,7 @@ export default function LoginScreen({navigation}){
             </TouchableOpacity>
 
             {/*Titolo*/}
-            <Text style={[styles.sottoTesto,{width:larghezzaDevice*0.8}]}>Inserisci l'email alla quale contattarti.</Text>
+            <Text style={[styles.sottoTesto,{width:larghezzaDevice*0.8}]}>{i18n.t('enterTheEmailAddressToContactYou')}</Text>
 
              {/*EMAIL*/}
             <View>
@@ -209,7 +209,7 @@ export default function LoginScreen({navigation}){
         isRecuperaPasswordClicked.current=false;
         setErrore("");
         refFlatList.current.scrollToIndex({animated:true, index:1});
-        setLabelEmailPasswordButton("ACCEDI");
+        setLabelEmailPasswordButton(i18n.t('logIn'));
     }
 
     function mostraCampoRecuperaPassword(){
@@ -217,7 +217,7 @@ export default function LoginScreen({navigation}){
         isRecuperaPasswordClicked.current=true;
         isEmailEPasswordClicked.current=false;
         refFlatList.current.scrollToIndex({animated:true, index:2});
-        setLabelEmailPasswordButton("INVIA");
+        setLabelEmailPasswordButton(i18n.t('logIn'));
     }
 
     function nascondiCampiEmailEPassword(){
@@ -225,14 +225,14 @@ export default function LoginScreen({navigation}){
         isRecuperaPasswordClicked.current=false;
         setErrore("");
         refFlatList.current.scrollToIndex({animated:true, index:0});
-        setLabelEmailPasswordButton("ACCEDI CON EMAIL/PASSWORD");
+        setLabelEmailPasswordButton(i18n.t('logInWithEmailAndPassword'));
     }
 
     //ACCEDI CON EMAIL E PASSWORD
     function accediConEmail(){
         console.log("accedi");
         if(email.length==0 || password.length==0)
-            setErrore("*inserire email e password.");
+            setErrore(i18n.t('err_insertEmailAndPassword'));
         else {
             setIsLoading(true);
             if(errore.length>0) setErrore("");
@@ -274,7 +274,7 @@ export default function LoginScreen({navigation}){
                             }).catch((e)=>{
                                 setIsLoading(false);
                                 console.log("Si è verificato un errore:"+e);
-                                setErrore("Si è verificato un problema. Riprova più tardi.");
+                                setErrore(i18n.t('err_generic'));
                             })
                     }
 
@@ -285,22 +285,22 @@ export default function LoginScreen({navigation}){
                     var errorMessage = error.message;
                     //gestione errori a seconda del codice
                     if(errorCode==="auth/invalid-email")
-                        errorMessage="*l'indirizzo email non è formattato correttamente.";
+                        errorMessage=i18n.t('err_theEmailAddressIsNotFormattedCorrectly');
                     else if(errorCode==="auth/user-not-found")
-                        errorMessage="*non esiste alcun utente con questo indirizzo email.";
+                        errorMessage=i18n.t('err_thereIsNoUserWithThisEmailAddress');
                     else if(errorCode==="auth/wrong-password"){
-                        errorMessage="*la password inserita è errata."
+                        errorMessage=i18n.t('err_theEnteredPasswordIsIncorrect');
                         //incremento il numero dei tentativi
                         numeroDiTentativiEmailPassword.current+=1;
                     }
                     else if(errorCode==="auth/user-disabled")
-                        errorMessage="*l'utente è stato attualmente disabilitato.";
+                        errorMessage=i18n.t('err_theUserHasCurrentlyBeenDisabled');
                     else if(errorCode==="auth/too-many-requests")
-                        errorMessage="*hai effettuato troppe richieste. Riprova più tardi.";
+                        errorMessage=i18n.t('err_youHaveMadeTooManyRequests');
                     else if(errorCode==="auth/network-request-failed")
-                        errorMessage="*problema di rete. Non è possibile registrarsi.";
+                        errorMessage=i18n.t('err_networkProblem');
                     else
-                        errorMessage="*errore imprevisto. Riprovare piu tardi.";
+                        errorMessage=i18n.t('err_generic');
                     
                     setErrore(errorMessage);
                     console.log(error);
@@ -313,7 +313,7 @@ export default function LoginScreen({navigation}){
         }catch(e){
             setIsLoading(false);
             console.log("errore imprevisto:"+e);
-            setErrore("*errore imprevisto. Riprovare piu tardi.");
+            setErrore(i18n.t('err_generic'));
         } 
       }
     }
@@ -326,18 +326,18 @@ export default function LoginScreen({navigation}){
             .then(function() {
                 // Email sent.
                 setIsLoading(false);
-                setSnackBarMessage("Abbiamo inviato un email all'indirizzo "+email+" per il recupero della password.");
+                setSnackBarMessage(i18n.t('sendEmailPasswordRecover_pt1')+email+i18n.t('sendEmailPasswordRecover_pt2'));
                 console.log("email inviata");
                 
             }).catch(function(error) {
-                var messaggioDiErrore = "Nessun utente registrato con questa email.";
+                var messaggioDiErrore = i18n.t('err_noUsersRegisteredWithThisEmail');
                 var codice = error.code;
                 if(codice=="auth/invalid-email")
-                    messaggioDiErrore = "Email non valida."
+                    messaggioDiErrore = i18n.t('err_invalidEmail');
                 else if(codice=="auth/user-not-found")
-                    messaggioDiErrore = "Nessun utente registrato con questa email.";
+                    messaggioDiErrore = i18n.t('err_noUsersRegisteredWithThisEmail');
                 else
-                    messaggioDiErrore = "Si è verificato un problema. Riprova più tardi."
+                    messaggioDiErrore = i18n.t('err_generic');
                 
                 setIsLoading(false);
                 setErrore(messaggioDiErrore);
@@ -345,14 +345,14 @@ export default function LoginScreen({navigation}){
             });
         }catch(e){
             setIsLoading(false);
-            setErrore("Errore imprevisto. Riprovare più tardi.");
+            setErrore(i18n.t('err_generic'));
         }
             
     }
     //--------------------------------------------------
     
     console.log("Rendering LoginScreen.js");
-
+    console.log("snackMessage:"+snackmessageEmailVerified);
 
     if(mostraSchermataTelefono)
         return (
@@ -377,8 +377,8 @@ export default function LoginScreen({navigation}){
                         <ScrollView alignItems="center" justifyContent="center" showsVerticalScrollIndicator={false}>
                             <View style={{alignItems:"center", justifyContent:"center", paddingBottom:20}}>
                                 <Image source={require("../../resources/images/logoMosaic.png")} style={{width:altezzaDevice*0.18,height:altezzaDevice*0.18 , alignSelf:"center"}}/> 
-                                <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.titolo}>Accedi a Mosaic</Text>
-                                <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.testo}>Prima la mente, poi il corpo</Text>
+                                <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.titolo}>{i18n.t('welcomeTitle')}</Text>
+                                <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.testo}>{i18n.t('welcomeSubTitle')}</Text>
                                     {/*BOTTONE ACCEDI CON EMAIL/PASSWORD*/}
 
                                     {/*MOSTRO I BOTTONI REGISTRATI,TELEFONO e nella seconda parte I CAMPI EMAIL E PASSWORD DA COMPILARE*/}
@@ -421,12 +421,12 @@ export default function LoginScreen({navigation}){
                                     theme={{ colors: {surface:"white", accent: "white"},}}
                                     style={{position:"absolute",zIndex:10, elevation:10, bottom:0}}
                                     action={{
-                                        label: 'INVIA',
+                                        label: i18n.t('send'),
                                         onPress: () => {
                                             inviaEmailRecuperoPsw()
                                         },
                                     }}>
-                                    Hai problemi ad accedere? Invia un email di recupero password.
+                                    {i18n.t('recoverPassword')}
                         </Snackbar>
 
                         {/*COMPARE SOLO PER DARE UNA RISPOSTA SE L'EMAIL E' STATA INVIATA O MENO */}
@@ -466,7 +466,7 @@ export default function LoginScreen({navigation}){
                                 duration = {5000}
                                 theme={{ colors: { surface: "white",accent: MosCeleste},}}
                                 action={{
-                                label: 'INVIA EMAIL',
+                                label: i18n.t('sendEmail'),
                                 onPress: () => {
                                     console.log("invia email ");
                                     var user = getUtenteCorrente();
@@ -479,32 +479,32 @@ export default function LoginScreen({navigation}){
                                                 setIsLoading(false);
                                                 // Verification email sent.
                                                 console.log("email di verifica inviata");
-                                                setSnackBarMessage("Abbiamo inviato un email di verifica. Autorizza il tuo account prima di procedere al login.");
+                                                setSnackBarMessage(i18n.t('weHaveSentAVerificationEmail'));
                                             })
                                             .catch(function(error) {
                                                 setIsLoading(false);
                                                 // Error occurred. Inspect error.code.
-                                                var errorMessage="Errore imprevisto. Riprovare piu tardi.";
+                                                var errorMessage=i18n.t('err_generic');
                                                 var errorCode = error.code;
                                                 if(errorCode==="auth/user-disabled")
-                                                    errorMessage="L'utente è stato attualmente disabilitato.";
+                                                    errorMessage=i18n.t('err_theUserHasCurrentlyBeenDisabled');
                                                 else if(errorCode==="auth/too-many-requests" || errorCode=="TOO_MANY_ATTEMPTS_TRY_LATER")
-                                                    errorMessage="Hai effettuato troppe richieste. Riprova più tardi.";
+                                                    errorMessage=i18n.t('err_youHaveMadeTooManyRequests');
                                                 else if(errorCode==="auth/network-request-failed")
-                                                    errorMessage="Problema di rete. Non è possibile registrarsi.";
+                                                    errorMessage=i18n.t('err_networkProblem');
                                                     
                                                 setSnackBarMessage(errorMessage);
                                                 console.log("errore: email di verifica non inviata:"+error.code+","+error);
                                             });
                                         }catch(e){
                                             setIsLoading(false);
-                                            setSnackBarMessage("Si è verificato un problema. Riprovare più tardi.");
+                                            setSnackBarMessage(i18n.t('err_generic'));
                                             console.log("errore: email di verifica non inviata:"+e);
                                         }
                                     onSnackmessageEmailVerified();
                                 },
                             }}>
-                                Devi verificare l'email per accedere. Non hai ricevuto l'email?
+                                {i18n.t('youMustVerifyTheEmail')}
                             </Snackbar>  
             </View>
 

@@ -52,7 +52,6 @@ function HomeScreen({navigation}){
                 duration = {5000}
                 
                 action={{
-                label: 'Chiudi',
                 onPress: () => {
                         setMessaggioAuth(null);
                     },

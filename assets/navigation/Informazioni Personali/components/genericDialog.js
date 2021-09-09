@@ -2,7 +2,7 @@ import React,{ useImperativeHandle, forwardRef, useState, useRef} from "react";
 import { Text } from "react-native";
 import { Dialog, Portal, Button } from "react-native-paper";
 import { MosCeleste, MosViola } from "../../../resources/colors";
-
+import i18n from 'i18n-js';
 
 
 const GenericDialog = forwardRef((props, ref) => {
@@ -48,8 +48,8 @@ const GenericDialog = forwardRef((props, ref) => {
                     <Text>{titleAndContent[1]}</Text>
                 </Dialog.Content>
                 <Dialog.Actions>
-                    <Button onPress={closeDialog} color={MosCeleste} ><Text>Annulla</Text></Button>
-                    <Button onPress={()=>{closeDialog(); yesAction()}} color={MosViola} ><Text>Si</Text></Button>
+                    <Button onPress={closeDialog} color={MosCeleste} ><Text>{i18n.t('cancel')}</Text></Button>
+                    <Button onPress={()=>{closeDialog(); yesAction()}} color={MosViola} ><Text>{i18n.t('yes')}</Text></Button>
                 </Dialog.Actions>
             </Dialog>
         </Portal>

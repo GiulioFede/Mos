@@ -1,12 +1,13 @@
 // Import react
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 // Import react-native components
 import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity
+  TouchableOpacity,
+  Platform
 } from 'react-native'
 import { altezzaDevice, fontSizeCampi, larghezzaDevice } from '../../../../../../context/variabili_globali/variabiliGlobali';
 import { MosCeleste, MosPurple, MosViola } from '../../../../../../resources/colors';
@@ -85,6 +86,8 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
     const [tempoAudio, setTempoAudio] = useState(0);
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);
     const isLoaded = useRef(false);
+    const isMounted = useRef(false);
+
 
     console.log("mostra nuova data per "+messaggio.row+"?: "+mostraNuovaData);
         
@@ -191,17 +194,18 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
         try{
             if(status.isLoaded==true){
                 if(status.isPlaying==true){
-                    if(isAudioPlaying==false) setIsAudioPlaying(true);
+                    if(isAudioPlaying==false && isMounted.current == true) setIsAudioPlaying(true);
                     //prelevo durata totale audio
                     let total_duration = status.durationMillis;
                     //prelevo quanto è trascorso di tempo dall'inizio
                     let actual_duration = status.positionMillis;
                     //calcolo rapporto per aggiornare progress bar
                     let percentOfTotalTime = actual_duration/total_duration;
-                    setTempoAudio(percentOfTotalTime);
+                    if(isMounted.current == true) setTempoAudio(percentOfTotalTime);
                     console.log("aggiorno tempo di "+messaggio.row+" a "+percentOfTotalTime);
-                }else
-                    setIsAudioPlaying(false);
+                }else{
+                    if(isMounted.current == true) setIsAudioPlaying(false);
+                }
             }
         }catch(err){
             sound = new Audio.Sound();
@@ -221,9 +225,11 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
                 await sound.stopAsync();
                 await sound.unloadAsync();
             }
-            setIsAudioPlaying(false);
-            isLoaded.current = false;
-            setTempoAudio(0);
+            if(isMounted.current == true){
+                setIsAudioPlaying(false);
+                isLoaded.current = false;
+                setTempoAudio(0);
+            }
         }catch(error){
             sound = new Audio.Sound();
             mostraMessaggioErrore("Si è verificato un errore durante la riproduzione dell'audio.")
@@ -304,6 +310,12 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
     
     }
 
+    useEffect(()=>{
+        isMounted.current = true;
+
+        return () => isMounted.current = false;
+    },[])
+
             //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
     let [Raleway2] = useFonts2({Raleway_400Regular});
@@ -321,12 +333,13 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
                                 <Entypo name={isAudioPlaying==false ? "controller-play" : "controller-paus"} size={altezzaDevice*0.15*0.3} color="#52575D" />
                             </TouchableOpacity>
                             <View style={{backgroundColor:MosCeleste, flex:1, borderRadius:altezzaDevice*0.01, height:altezzaDevice*0.15*0.3}}>
+                            <View style={{height:altezzaDevice*0.15*0.3, paddingHorizontal:Platform.OS=="ios"?10:0, transform: [{ scaleX: Platform.OS=="ios"?0.5:1 }, { scaleY: Platform.OS=="ios"?0.5:1 }]}}>
                                 <Slider
                                     value = {tempoAudio}
                                     onValueChange = {(t) =>{setTempoAudio(t)}}
-                                    style={{flex:1, height:altezzaDevice*0.15*0.3}}
+                                    style={{flex:1, height:altezzaDevice*0.15*0.3,width:Platform.OS=="ios"?"200%":"100%", alignSelf:"center"}}
                                     thumbTintColor="white"
-                                    
+                                    thumbStyle={{backgroundColor:"green"}}
                                     //aggiorna l'audio quando l'utente va avanti con lo slider
                                     onSlidingComplete={spostaAudioAvantiIndietro} //NB: questo metodo non significa "quando lo slider arrivato alla fine", ma quando, muovendo lo slider manualmente, lo rilascio
                                     onSlidingStart = {pauseAudio}
@@ -334,10 +347,11 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
                                     minimumTrackTintColor="#52575D"
                                 />
                             </View>
+                            </View>
                         </View>
-                            <View style={{flexDirection:"row", alignSelf:"flex-end"}}>     
+                            <View style={{flexDirection:"row", alignSelf:"flex-end", marginTop:5}}>     
                                 {getTimestamp(messaggio.date,true)}
-                                <View style={{justifyContent:"center"}}>
+                                <View style={{justifyContent:"center", marginLeft:3}}>
                                     {messaggio.state=="in-progress" && <ActivityIndicator size={fontSizeCampi*0.8} color={MosCeleste} />}
                                     {messaggio.state=="failed" && <Feather name="x" size={fontSizeCampi*0.8} color="red" />}
                                 </View>
@@ -352,10 +366,11 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
                             <Entypo name={isAudioPlaying==false ? "controller-play" : "controller-paus"} size={altezzaDevice*0.15*0.3} color="#52575D" />
                          </TouchableOpacity>
                          <View style={{backgroundColor:MosPurple, flex:1, borderRadius:altezzaDevice*0.01, height:altezzaDevice*0.15*0.3}}>
+                            <View style={{height:altezzaDevice*0.15*0.3, paddingHorizontal:Platform.OS=="ios"?10:0, transform: [{ scaleX: Platform.OS=="ios"?0.5:1 }, { scaleY: Platform.OS=="ios"?0.5:1 }]}}>
                             <Slider
                                 value = {tempoAudio}
                                 onValueChange = {(t) =>{console.log("spostamento percentuale audio di "+ messaggio.row+" a "+t);setTempoAudio(t)}}
-                                style={{flex:1, height:altezzaDevice*0.15*0.3}}
+                                style={{flex:1, height:altezzaDevice*0.15*0.3,width:Platform.OS=="ios"?"200%":"100%", alignSelf:"center"}}
                                 thumbTintColor="white"
                                 //aggiorna l'audio quando l'utente va avanti con lo slider
                                 onSlidingComplete={spostaAudioAvantiIndietro} //NB: questo metodo non significa "quando lo slider arrivato alla fine", ma quando, muovendo lo slider manualmente, lo rilascio
@@ -363,6 +378,7 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
                                 maximumTrackTintColor="white"
                                 minimumTrackTintColor="#52575D"
                             />
+                            </View>
                          </View>
                     </View>
                         {getTimestamp(messaggio.date,false)}     
@@ -444,5 +460,22 @@ const styles = StyleSheet.create({
         fontFamily: "Raleway_200ExtraLight",
         color: "#52575D",
         fontSize:fontSizeCampi*1.5
+    },
+    areaSlider:{
+        ...Platform.select({
+            android: {
+                backgroundColor:"red",
+                flex:1, 
+                height:altezzaDevice*0.15*0.3
+            },
+            ios: {
+                backgroundColor:"black",
+                flex:1, 
+                height:altezzaDevice*0.15*0.3,
+                transform: [{ scaleX:  0.5 }, { scaleY: 0.5 }], 
+                width:"200%", 
+                alignSelf:"center"
+            }
+        })
     }
   });

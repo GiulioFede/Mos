@@ -11,6 +11,7 @@ import { MosCeleste, MosPurple } from "../../resources/colors";
 import { Divider} from 'react-native-paper';
 import Loading from "../HomeScreen/aroundYou/component/loading";
 import SnackMessage from "../HomeScreen/profile/screen/component/snackMessage";
+import i18n from 'i18n-js';
 
 export default function BlockedConversationsScreen({navigation}){
 
@@ -40,7 +41,7 @@ export default function BlockedConversationsScreen({navigation}){
         setConversazioniBloccate([...utentiBloccati]);
        }catch(e){
            loadingRef.current.off();
-           snackMessageRef.current.setta_messaggio_da_mostrare("E' avvenuto un errore. Riprova più tardi");
+           snackMessageRef.current.setta_messaggio_da_mostrare(i18n.t('err_generic'));
            console.log(e);
        }
    }
@@ -68,11 +69,11 @@ export default function BlockedConversationsScreen({navigation}){
                 <TouchableOpacity onPress={tornaIndietro} style={{position:"absolute",left:0, paddingLeft:Dimensions.get("window").width*0.03}}>
                     <Ionicons name="chevron-back" size={iconSize} color="#52575D" />
                 </TouchableOpacity>
-                <Text style={styles.titolo}>Utenti bloccati</Text>
+                <Text style={styles.titolo}>{i18n.t('blockedUsers')}</Text>
             </View>
 
             {/*DESCRIZIONE*/}
-            <Text style={[styles.titoloCampo,{marginBottom:20,marginTop: 25, color:MosPurple}]}>Questa sezione ospita le informazioni base sui contatti che nel tempo hai bloccato. Puoi sbloccarli quando desideri.</Text>
+            <Text style={[styles.titoloCampo,{marginBottom:20,marginTop: 25, color:MosPurple}]}>{i18n.t('blockedUsersDescription')}</Text>
             
             <Divider />
 

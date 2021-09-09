@@ -5,6 +5,7 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import Start from './Start';
 import {ColoreBarraDiStato, ColoreBarraDiStatoProvider} from "./assets/context/variabili_globali/variabiliGlobali";
 import { LogBox } from 'react-native';
+import translation from './assets/context/translation/translation';
 
 LogBox.ignoreLogs(['Setting a timer']);
 

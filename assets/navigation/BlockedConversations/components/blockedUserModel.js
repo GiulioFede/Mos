@@ -13,7 +13,7 @@ import { FontAwesome, Feather } from '@expo/vector-icons';
 import { MosCeleste, MosPurple, MosViola } from '../../../resources/colors';
 import { fromDateToGGMMYYYYHHMM } from '../../../context/utilities/functions.utilities';
 import { Divider } from 'react-native-paper';
-
+import i18n from 'i18n-js';
 
 export default function BlockedUserModel({user, index, unlockContact}){
 
@@ -23,7 +23,7 @@ export default function BlockedUserModel({user, index, unlockContact}){
                 <FontAwesome name="lock" size={altezzaBarraScreen*0.6} color={MosPurple} style={{paddingRight:10}}/>
                 <View>
                     <Text style={styles.name}>{user.name}</Text>
-                    <Text style={styles.blocked}>Bloccato il {fromDateToGGMMYYYYHHMM(parseInt(user.lock_timestamp/1000))}</Text>
+                    <Text style={styles.blocked}>{i18n.t('blockedModelTitle')} {fromDateToGGMMYYYYHHMM(parseInt(user.lock_timestamp/1000))}</Text>
                 </View>
             </View>
             
@@ -32,7 +32,7 @@ export default function BlockedUserModel({user, index, unlockContact}){
             <TouchableOpacity onPress={()=>{unlockContact(index)}} >
                 <View style={{backgroundColor:MosCeleste, padding:5, borderRadius:altezzaBarraScreen*0.15, width:larghezzaDevice*0.7, alignSelf:"center", flexDirection:"row", justifyContent:"center"}}>
                     <Feather name="unlock" size={altezzaBarraScreen*0.3} color="white" style={{paddingRight:10}} />
-                    <Text style={styles.unlock}>sblocca</Text>
+                    <Text style={styles.unlock}>{i18n.t('blockedModelButton')}</Text>
                 </View>
             </TouchableOpacity>
         </View>

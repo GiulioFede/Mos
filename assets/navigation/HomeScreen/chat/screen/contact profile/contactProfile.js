@@ -11,6 +11,7 @@ import { AutenticazioneUtente } from '../../../../../context/firebase/autenticaz
 import { MosCeleste, MosViola } from '../../../../../resources/colors';
 import {navbarHeight, fontSizeTitolo, altezzaBarraScreen, larghezzaDevice, fontSizeTitoloBarra, altezzaMenuNavigazione, fontSizeSottoTitolo } from '../../../../../context/variabili_globali/variabiliGlobali';
 import SliderDetails from '../../../profile/screen/component/sliderDetails';
+import i18n from 'i18n-js'
 
 /*
     MISURE
@@ -103,7 +104,7 @@ export default function ContactProfile({navigation, route}){
                 <TouchableOpacity onPress={tornaIndietro} style={{position:"absolute",left:0,zIndex:10, paddingLeft:Dimensions.get("window").width*0.03}}>
                     <Ionicons name="chevron-back" size={fontSizeTitoloBarra} color="#52575D" />
                 </TouchableOpacity>
-                <Text style={styles.titolo}>Profilo</Text>
+                <Text style={styles.titolo}>{i18n.t('profile')}</Text>
                 
             </View>
             <ScrollView horizontal={false} style={{backgroundColor:"#fff"}}>

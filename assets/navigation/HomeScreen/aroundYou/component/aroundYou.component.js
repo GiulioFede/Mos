@@ -1,17 +1,15 @@
 import React, {useState, useContext, useCallback, useEffect, useRef} from 'react';
-import {View, Text, StyleSheet, ScrollView,TouchableOpacity as TouchableOpacityNative, Image, Dimensions, Animated,FlatList,  SafeAreaView, StatusBar, Platform} from 'react-native';
+import {View, Text, StyleSheet, ScrollView,TouchableOpacity as TouchableOpacityNative, Image, Dimensions, Animated,FlatList, Platform} from 'react-native';
 import {Octicons,Ionicons, Entypo, AntDesign, MaterialIcons, SimpleLineIcons} from "@expo/vector-icons";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
-import { FAB, Snackbar, ActivityIndicator, Dialog, Portal, Button, Divider } from 'react-native-paper';
-import { altezzaBarraScreen, altezzaDevice, altezzaMenuNavigazione, altezzaSchermoInterno, fontSizeCampi, fontSizeTitoloBarra, iconSize, larghezzaDevice } from '../../../../context/variabili_globali/variabiliGlobali';
-import { MosCeleste, MosPurple, MosViola } from '../../../../resources/colors';
+import {ActivityIndicator} from 'react-native-paper';
+import { altezzaBarraScreen, altezzaMenuNavigazione, fontSizeCampi, fontSizeTitoloBarra,larghezzaDevice } from '../../../../context/variabili_globali/variabiliGlobali';
+import { MosCeleste} from '../../../../resources/colors';
 import SnackMessage from '../../profile/screen/component/snackMessage';
 import { LinearGradient } from "expo-linear-gradient";
 import {geohashQueryBounds} from "geofire-common";
 import { Directions, FlingGestureHandler, State, TouchableOpacity} from 'react-native-gesture-handler';
-//import { FlatList } from 'react-native-gesture-handler';
-import BottomSheet, {BottomSheetScrollView} from '@gorhom/bottom-sheet'
 import BottomSheetUserDetails from './bottomSheetUserDetails';
 import DialogCreaNuovaConversazione from './dialogoCreaNuovaConversazione';
 import { AutenticazioneUtente } from '../../../../context/firebase/autenticazione';
@@ -19,108 +17,14 @@ import { computeDistance, getAgeFromTimestamp, range } from '../../../../context
 import localStorage from '../../../../context/local_storage/localStorage';
 import { sendPushNotification } from '../../../../context/push_notifications/functions';
 import LottieView from 'lottie-react-native';
+import i18n from 'i18n-js';
+import { language } from '../../../../context/translation/translation';
 
 const {width, height} = Dimensions.get("window");
-const IMAGE_WIDTH = width*0.86;
-const IMAGE_HEIGHT = (width<height/2)?width*0.86*1.5:width*0.85*1.3;
+const IMAGE_WIDTH = width*0.8;
+const IMAGE_HEIGHT = (width<height/2)?width*0.8*1.5:(height-altezzaBarraScreen*2-altezzaMenuNavigazione);//(width*0.8*1.3);
 
-//mantiene della flatlist le informazioni sull'item attualmente mostrato
-var currentItemDisplayed = null;
 
-const info_profiles3 = [
-    {
-        id: "1",
-        key: "1",
-        name: "Marco",
-        self_description: "Sono uno studente di Palermo.",
-        date_of_birth: "Fri Mar 07 1975 09:08:10 GMT+0100 (CET)",
-        biological_sex: "maschio",
-        gender_identity: "demi boy",
-        gender_preference: "demi girl",
-        location: {
-            geohash: "sqc0p129br",
-            lat: 37.97,
-            lng: 12.96
-        },
-        current_occupation: "student",
-        hobbies_interests_and_passions: ["Ballare", "cantare", "pallavolo", "dipingere"],
-        profileImageUrl: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2FprofileImage2_50?alt=media&token=cf02f2a1-df3c-4fb3-aead-b3dd9e2a209f",
-        gallery: {
-            1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
-            2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
-            3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
-        }
-    },
-    {
-        id: "2",
-        key: "2",
-        name: "Lisa",
-        self_description: "Sono una studentessa di Palermo.",
-        date_of_birth: "Fri Mar 07 1983 09:08:10 GMT+0100 (CET)",
-        biological_sex: "femmina",
-        gender_identity: "demi girl",
-        gender_preference: "pangender",
-        location: {
-            geohash: "sqc0p129br",
-            lat: 38.97,
-            lng: 7.96
-        },
-        current_occupation: "student",
-        hobbies_interests_and_passions: ["Ballare", "cantare", "pallavolo", "dipingere"],
-        profileImageUrl: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F11_75?alt=media&token=1b443f70-2824-44f3-86f7-0970601c077d",
-        gallery: {
-            1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
-            2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
-            3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
-        }
-    },
-    {
-        id: "3",
-        key: "3",
-        name: "Giuseppe",
-        self_description: "Sono un barista",
-        date_of_birth: "Fri Mar 07 1975 09:08:10 GMT+0100 (CET)",
-        biological_sex: "maschio",
-        gender_identity: "demi boy",
-        gender_preference: "demi girl",
-        location: {
-            geohash: "sqc0p129br",
-            lat: 37.97,
-            lng: 12.96
-        },
-        current_occupation: "worker",
-        hobbies_interests_and_passions: ["Ballare", "cantare", "pallavolo", "dipingere"],
-        profileImageUrl: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F12_75?alt=media&token=e677c1a7-7be8-4e7d-a821-111923fe78a0",
-        gallery: {
-            1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
-            2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
-            3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
-        }
-    },
-    {
-        id: "4",
-        key: "4",
-        name: "Sonia",
-        self_description: "Sono una infermiera.",
-        date_of_birth: "Fri Mar 07 1975 09:08:10 GMT+0100 (CET)",
-        biological_sex: "femmina",
-        gender_identity: "femmina",
-        gender_preference: "maschio",
-        location: {
-            geohash: "sqc0p129br",
-            lat: 41.97,
-            lng: 21.96
-        },
-        current_occupation: "worker",
-        hobbies_interests_and_passions: ["Ballare", "cantare", "pallavolo", "dipingere"],
-        profileImageUrl: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F13_75?alt=media&token=67d0845b-bd33-41f3-806d-1e8777c74313",
-        gallery: {
-            1:"https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F1_100?alt=media&token=ed35bd57-a4ba-4622-90b4-0cdf33a7decd",
-            2: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F2_100?alt=media&token=9bf093c2-0ddd-437b-b1ae-0bd3e7a00b2b",
-            3: "https://firebasestorage.googleapis.com/v0/b/mos-test-db748.appspot.com/o/users%2FobYCXDPHLKXlsvi9TPrPlYginj62%2F3_100?alt=media&token=ba091c55-a5c0-468f-83a3-cfabfaf18cb4" 
-        }
-    },
-]
 
 const info_profiles2 = [
     {
@@ -173,18 +77,46 @@ function getCityRegionCountryView(city, region, country){
     }
 
     return (
-        <View style={{marginBottom:10, paddingLeft:10, flexDirection:"row", flexWrap:"wrap"}}>
-            {(cityTmp!=null || countryTmp!=null || regionTmp!=null) && <Entypo name="location-pin" size={IMAGE_HEIGHT*0.2/5} color="white" />}
-            {cityTmp!=null && <Text style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff"}}>{cityTmp}</Text>}
-            {regionTmp!=null && <Text style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff"}}>{regionTmp}</Text>}
-            {countryTmp!=null && <Text style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff"}}>{countryTmp}</Text>}
+        <View style={{marginBottom:10, paddingLeft:10, flexDirection:"row", flexWrap:"wrap", width:IMAGE_WIDTH*0.7}}>
+           
+           {cityTmp!=null && regionTmp!=null && countryTmp!=null &&
+                <View style={{flexDirection:"row", flexWrap:"wrap", justifyContent:"center", alignContent:"center"}}>
+                    <Entypo name="location-pin" size={IMAGE_HEIGHT*0.2/5} color="white" />
+                    <View style={{justifyContent:"center" }}>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff", width:IMAGE_WIDTH*0.5 }}>{cityTmp}{regionTmp}{countryTmp}</Text>
+                    </View>
+                </View>
+            }
+
+        {cityTmp==null && regionTmp!=null && countryTmp!=null &&
+                <View style={{flexDirection:"row", flexWrap:"wrap", justifyContent:"center", alignContent:"center"}}>
+                    <Entypo name="location-pin" size={IMAGE_HEIGHT*0.2/5} color="white" />
+                    <View style={{justifyContent:"center" }}>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff", width:IMAGE_WIDTH*0.5 }}>{regionTmp.substring(1)}{countryTmp}</Text>
+                    </View>
+                </View>
+            }
+
+        {cityTmp==null && regionTmp==null && countryTmp!=null &&
+                <View style={{flexDirection:"row", flexWrap:"wrap", justifyContent:"center", alignContent:"center"}}>
+                    <Entypo name="location-pin" size={IMAGE_HEIGHT*0.2/5} color="white" />
+                    <View style={{justifyContent:"center" }}>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff", width:IMAGE_WIDTH*0.5 }}>{countryTmp.substring(1)}</Text>
+                    </View>
+            </View>
+            }
+
+        {cityTmp==null && regionTmp!=null && countryTmp==null &&
+                <View style={{flexDirection:"row", flexWrap:"wrap", justifyContent:"center", alignContent:"center"}}>
+                    <Entypo name="location-pin" size={IMAGE_HEIGHT*0.2/5} color="white" />
+                    <View style={{justifyContent:"center" }}>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#fff", width:IMAGE_WIDTH*0.5 }}>{regionTmp.substring(1)}</Text>
+                    </View>
+                </View>
+            }
         </View>
     )
 }
-
-//sono la data di inizio e fine entro cui cercare possibili utenti. Vengono inizializzate nello useEffect la prima volta ed ogni volta che tali preferenze cambiano.
-let startDateToSearch = null;
-let endDateToSearch = null;
 
 /*
     Questo numero decide il numero di carte massimo da mostrare.  Es. con valore 4 saranno 'swipabili' solo 4 carte prima di un
@@ -196,15 +128,12 @@ const MAX_CARD_INTO_LIST = 3;
 //variabili di appoggio
 var radius = 25;
 var rangeEta = [];
-const emptyArray = [{key:"empty"}];
 
 export default function AroundYouComponent(props){
 
     var {navigation, route} = props;
     //contesto autenticazione
     const {findNextTenClosestUsers, listOfConversations, setListOfConversations, informazioniProfiloUtente, user, createNewConversation} = useContext(AutenticazioneUtente);
-    
-    const [startingPointHeightBottomMenu, setstartingPointHeightBottomMenu] = useState(0);
 
     const snackMessageRef = useRef();
     const bottomSheetUserDetailsRef = useRef();
@@ -215,7 +144,6 @@ export default function AroundYouComponent(props){
     //se false nasconderà la scheda
     const [showMe, setShowMe] = useState(true);
     const refFlatList = useRef();
-    const startFrom = useRef(0);
 
     //per il bottone refresh
     const [refresh, setRefresh] = useState(false);
@@ -228,9 +156,6 @@ export default function AroundYouComponent(props){
         navigation.openDrawer();
  
     }
-
-
-    //const scrollX = React.useRef(new Animated.Value(0)).current;
 
     function apriChiudiBottomSheetMenu(item){
         bottomSheetUserDetailsRef.current.setNewUserInformationDetails(item);
@@ -257,7 +182,7 @@ export default function AroundYouComponent(props){
                 console.log("invio una push notification a "+nameOfCard+" al token "+token);
                 try{
                //manda una push notification al contatto per avvertirlo che hai creato una conversazione
-                    await sendPushNotification(token,"Qualcuno ti trova interessante!", (informazioniProfiloUtente.name+" vorrebbe parlare con te."),{});
+                    await sendPushNotification(token,i18n.t('pushNotification1'), (informazioniProfiloUtente.name+i18n.t('pushNotification1Content')),{});
                 }catch(e){
                     console.log("errore nell'invio della push notification:"+e);
                 }
@@ -267,11 +192,11 @@ export default function AroundYouComponent(props){
             }).catch((err)=>{
                 console.log("errore durante creazione chat:"+err);
                 if(err=="A conversation already exists")
-                    snackMessageRef.current.setta_messaggio_da_mostrare("Sembra che stai già avendo una conversazione con "+nameOfCard);
+                    snackMessageRef.current.setta_messaggio_da_mostrare(i18n.t('youHaveAlreadyAConversation')+nameOfCard);
                 else if(err=="The user blocked you")
-                    snackMessageRef.current.setta_messaggio_da_mostrare("Non è possibile iniziare una conversazione con "+nameOfCard+". L'utente ti ha bloccato.");
+                    snackMessageRef.current.setta_messaggio_da_mostrare(i18n.t('youWereBlocked_pt1')+nameOfCard+i18n.t('youWereBlocked_pt2'));
                 else
-                    snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un errore durante la creazione della chat. Riprova più tardi.");
+                    snackMessageRef.current.setta_messaggio_da_mostrare(i18n.t('errorDuringChatCreation'));
                 
 
             }).finally(()=>{
@@ -308,8 +233,6 @@ export default function AroundYouComponent(props){
     const current_bounds_index = useRef(0);
     //conterrà gli utenti prelevati (dato alla flatlist)
     const [info_profiles, setInfoProfiles] = useState([]);
-
-    const [callUpdate, setCallUpdate] = useState(true);
 
     useEffect(()=>{
         console.log("Use effect eseguito in aroundYou.component.js con:"+informazioniProfiloUtente.action_range_preference+","+informazioniProfiloUtente.gender_preference+",");
@@ -386,7 +309,7 @@ export default function AroundYouComponent(props){
             setActiveSlide(0);
             
         }catch(e){
-            snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un errore.");
+            snackMessageRef.current.setta_messaggio_da_mostrare(i18n.t('err_generic'));
         }
     }
 
@@ -498,7 +421,7 @@ export default function AroundYouComponent(props){
             
             }catch(e){
                 console.log("errore:"+e);
-                snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un errore. Riprova più tardi.");
+                snackMessageRef.current.setta_messaggio_da_mostrare(i18n.t('err_generic'));
                 setIsLoading(false);
             }
 
@@ -520,7 +443,6 @@ export default function AroundYouComponent(props){
     
     }
 
-    var nextPos = 0;
 //console.log("info_profiles:");
 //console.log(info_profiles);
     //carico font
@@ -534,7 +456,7 @@ export default function AroundYouComponent(props){
             <>
                 {/* BARRA SUPERIORE */}
                 <View style={styles.barraSuperiore}>
-                <Text style={styles.titolo}>Attorno a te</Text>
+                <Text style={styles.titolo}>{i18n.t('aroundYouTitle')}</Text>
                 <View style={{position:"absolute", right:Dimensions.get("window").width*0.03}}>
                     <TouchableOpacity onPress={apriUserSettings}>
                             <MaterialIcons name="menu" size={fontSizeTitoloBarra} color="#52575D" />
@@ -544,7 +466,7 @@ export default function AroundYouComponent(props){
             <View style={{width:width, height:height, position:"absolute", justifyContent:"center", alignItems:"center"}}>
                 <Octicons name="eye-closed" size={height*0.2} color="rgba(68, 68, 68,0.3)" />
                 <Text style={{fontSize:fontSizeCampi,fontFamily: "Raleway_200ExtraLight", textAlign:"center", marginTop:10}}>
-                    La tua scheda è nascosta. Non potrai vedere le schede degli altri fino a quando non decidi di mostrarti.
+                    {i18n.t('hiddenTab')}
                 </Text>
             </View>
             </>
@@ -554,7 +476,7 @@ export default function AroundYouComponent(props){
         <>
             {/* BARRA SUPERIORE */}
             <View style={styles.barraSuperiore}>
-                <Text style={styles.titolo}>Attorno a te</Text>
+                <Text style={styles.titolo}>{i18n.t('aroundYouTitle')}</Text>
                 <View style={{position:"absolute", right:Dimensions.get("window").width*0.03}}>
                     <TouchableOpacity onPress={apriUserSettings}>
                             <MaterialIcons name="menu" size={fontSizeTitoloBarra} color="#52575D" />
@@ -648,15 +570,18 @@ export default function AroundYouComponent(props){
                             {item.key!="empty" &&
                             <TouchableOpacity onPress={()=>{console.log("apri menu di "+item.name); apriChiudiBottomSheetMenu(item)}}>
                                     <Image source = {{ uri: item.profileImageUrl}} style={styles.image} />
-                                <LinearGradient
-                                    // Background Linear Gradient sopra chat
-                                    colors={['transparent',"black"]}
-                                    style={{position: 'absolute',bottom:0, width: IMAGE_WIDTH,height: IMAGE_HEIGHT*0.8, borderBottomLeftRadius: 16, borderBottomRightRadius:16}}
-                                    />
+                                <View style={{position: 'absolute',bottom:0, overflow:"hidden", width: IMAGE_WIDTH,height: IMAGE_HEIGHT*0.8, borderBottomLeftRadius: 16, borderBottomRightRadius:16}}
+                                     >
+                                    <LinearGradient
+                                        // Background Linear Gradient sopra chat
+                                        colors={['transparent',"black"]}
+                                        style={{position: 'absolute',bottom:0, width: IMAGE_WIDTH,height: IMAGE_HEIGHT*0.8}}
+                                        />
+                                </View>
                                 <View style={{position:"absolute", alignItems:"flex-start", justifyContent:"flex-end", height:IMAGE_HEIGHT, bottom:10, overflow:"hidden", width:IMAGE_WIDTH*0.7}}>
                                     <View style={{flexDirection:"row", flexWrap:"wrap", marginBottom:5}}><Text style={styles.name}>{item.name}</Text><Text style={styles.name}> {item.age}</Text></View>
                                     {getCityRegionCountryView(item.location.city, item.location.region, item.location.country)}
-                                    <Text style={[styles.name,{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:MosCeleste}]}>{item.gender_identity}</Text>
+                                    <Text style={[styles.name,{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#00a6ff"}]}>{item.gender_identity}</Text>
                                     <Text style={[styles.name,{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5}]}>{item.current_occupation}</Text>
                                 </View>
                                 <View style={{position: 'absolute', top:0, left:0, backgroundColor:"white",borderBottomRightRadius: 16, elevation:1 }}>
@@ -668,7 +593,10 @@ export default function AroundYouComponent(props){
                             isSwipeAnimationFinished.current == false
                             &&
                             <Animated.View style={{position:'absolute', width:IMAGE_WIDTH, height:IMAGE_HEIGHT, opacity, transform: [{translateY}, {scale} ] }}>
-                                <LottieView ref={animation => {lottieAnimationRef.current = animation}} autoPlay loop={false} onAnimationFinish={()=>{isSwipeAnimationFinished.current = true}} source={require('../../../../resources/lottie/swipe.json')} resizeMode="cover"/>
+                                {language=="en" &&
+                                <LottieView ref={animation => {lottieAnimationRef.current = animation}} autoPlay loop={false} onAnimationFinish={()=>{isSwipeAnimationFinished.current = true}} source={require('../../../../resources/lottie/swipe_en.json')} resizeMode="cover"/> }
+                                {language=="it" &&
+                                <LottieView ref={animation => {lottieAnimationRef.current = animation}} autoPlay loop={false} onAnimationFinish={()=>{isSwipeAnimationFinished.current = true}} source={require('../../../../resources/lottie/swipe_it.json')} resizeMode="cover"/> }
                             </Animated.View>
                         }
                             </TouchableOpacity>
@@ -693,23 +621,23 @@ export default function AroundYouComponent(props){
         </FlingGestureHandler>
     </FlingGestureHandler> 
 
-    {/* TASTO REFRESH */}
-    <View style={{position:"absolute",zIndex:5, top:altezzaBarraScreen+10, right:Dimensions.get("window").width*0.03}}>
-        <TouchableOpacityNative onPress={()=>{setRefresh(!refresh)}} disabled={isLoading}>
-            <SimpleLineIcons name="reload" size={fontSizeTitoloBarra} color="#444" />
-        </TouchableOpacityNative>
-    </View>
-
     {/* VIEW CHE APPARE SOLO QUANDO PROPRIO NESSUNO E' STATO TROVATO */}
     {noOne==true
         &&
     <View style={{width:width, height:height,zIndex:0, position:"absolute", justifyContent:"center", alignItems:"center"}}>
         <AntDesign name="frowno" size={height*0.2} color="rgba(68, 68, 68,0.3)" />
         <Text style={{fontSize:fontSizeCampi,fontFamily: "Raleway_200ExtraLight", textAlign:"center", marginTop:10}}>
-            Sembra non ci sia nessun'altro vicino a te che rispetti le tue preferenze. Prova a cambiare qualche parametro, come il raggio di azione o la fascia di età.
+            {i18n.t('noOne')}
         </Text>
     </View>
     }
+
+    {/* TASTO REFRESH */}
+    <View style={{position:"absolute",zIndex:0, top:altezzaBarraScreen+10, right:Dimensions.get("window").width*0.03}}>
+        <TouchableOpacityNative onPress={()=>{setRefresh(!refresh)}} disabled={isLoading}>
+            <SimpleLineIcons name="reload" size={fontSizeTitoloBarra} color="#444" />
+        </TouchableOpacityNative>
+    </View>
 
     <BottomSheetUserDetails ref={bottomSheetUserDetailsRef} IMAGE_HEIGHT={IMAGE_HEIGHT} />
     <DialogCreaNuovaConversazione ref={dialogCreaNuovaConversazioneRef} creaNuovaConversazione = {creaNuovaConversazione} />
@@ -718,7 +646,7 @@ export default function AroundYouComponent(props){
                 <LottieView autoPlay loop={true} source={require('../../../../resources/lottie/radar_animation.json')} resizeMode="cover" />
             </View>
             <ActivityIndicator animating={isLoading} color={MosCeleste} />
-            {isChatCreating==true && <Text style={styles.messaggioCreazioneChat}>Creazione chat in corso...</Text>}
+            {isChatCreating==true && <Text style={styles.messaggioCreazioneChat}>{i18n.t('chatCreationInProgress')}</Text>}
     </View>}
     <SnackMessage ref={snackMessageRef}/>
     </> 
