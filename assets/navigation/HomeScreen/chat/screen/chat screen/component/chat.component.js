@@ -116,6 +116,7 @@ export default function ChatListComponent({navigation, route}){
     //array contenente le preview della chat
 
     function caricaChat(){
+        console.log("carico le chat...");
         /*
             La funzione seguente fa quanto segue:
             1) Sul profilo dell'utente, in Firestore, nella collezione users/utente/chats abbiamo un solo documento contenente una mappa del genere:
@@ -209,20 +210,29 @@ export default function ChatListComponent({navigation, route}){
                         },
                     ]
         */
-        //console.log("Lista conversazioni");
-        //console.log(listOfConversations);
+        console.log("Lista conversazioni");
+        console.log(listOfConversations);
         //se non possiede delle conversazioni devo comunque settare [] cosi da fare il refresh di chatsSummary e mediaContatti per aggiornare la grafica
-        if(listOfConversations.conversations.length==0){
+        if(listOfConversations!=null && listOfConversations!=undefined && listOfConversations.conversations.length==0){
             if(isMounted.current==true)
                 setChatsSummary([]);
+            console.log("non possiede conversazioni.")
                 //setMediaContatti([]);
         }
-
+        
+        console.log("possiede conversazioni...");
+        console.log(listOfConversations);
         //se possiede delle conversazioni...
-        if(listOfConversations!=null && listOfConversations["conversations"].length>0){
+        if(listOfConversations!=null && listOfConversations!=undefined && listOfConversations["conversations"].length>0){
             const promises = []; //qui inserisco tutte le promise per i summary delle chat
+            const blocked = []; //qui metterò le conversazioni bloccate
             for(var i = 0; i < listOfConversations["conversations"].length; i++) {
                 let conversation = listOfConversations["conversations"][i];
+                if(conversation.hasOwnProperty("blocked")){
+                    //console.log("la aggiungo a blocked");
+                    blocked.push({uid: conversation.uid, contactName: conversation.contactName, lock_timestamp: conversation.lock_timestamp});
+                    continue;
+                }
                 promises.push(getChatSummaryInformation(conversation.chatId));
             }
             //attendo tutte le promise
@@ -235,7 +245,7 @@ export default function ChatListComponent({navigation, route}){
                     //const promisesMediaContatti = []; //qui inserisco tutte le promise per le immagini
                     const chatsSummaryTmp = []; //qui avrò tutte le informazioni sulla conversazione
                     const promisesInfoProfileContatti = []; //qui avrò tutte le informazioni sul profilo dei contatti
-                    const blocked = []; //qui metterò le conversazioni bloccate
+                   
                     let j= 0;
                     for(var i = 0; i < listOfConversations["conversations"].length; i++) {
                         //sfrutto questo ciclo per salvarmi i sommari delle conversazioni
@@ -245,11 +255,11 @@ export default function ChatListComponent({navigation, route}){
                         //se la conversazione è di tipo blocked non la aggiungo al resto delle conversazioni, ma la metto insieme a quelle bloccate
                         if(conversation.hasOwnProperty("blocked")){
                             //console.log("la aggiungo a blocked");
-                            blocked.push({uid: conversation.uid, name: conversation.contactName, lock_timestamp: conversation.lock_timestamp});
+                           // blocked.push({uid: conversation.uid, name: conversation.contactName, lock_timestamp: conversation.lock_timestamp});
                             continue;
-                        }else if(summaries[i].data()!=null && summaries[i].data()!=undefined) {
+                        }else if(summaries[j].data()!=null && summaries[j].data()!=undefined) {
                             //console.log("la aggiungo alle conversazioni");
-                            chatsSummaryTmp.push({key:j.toString(),chatId:conversation.chatId, creation_data: conversation.creation_data,  value: summaries[i].data(), contactName:conversation.contactName, contactUid:conversation.uid });
+                            chatsSummaryTmp.push({key:j.toString(),chatId:conversation.chatId, creation_data: conversation.creation_data,  value: summaries[j].data(), contactName:conversation.contactName, contactUid:conversation.uid });
                             //prelevo informazioni base utente
                             promisesInfoProfileContatti.push(getUserInformation(conversation.uid));
                             j++;

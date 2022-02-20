@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "mos-test-db748"
-  }
+    "default": "mosaic-a781d",
+    "mosaic": "mosaic-a781d"
+  },
+  "targets": {}
 }

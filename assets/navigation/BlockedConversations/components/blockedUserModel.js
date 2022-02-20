@@ -17,12 +17,15 @@ import i18n from 'i18n-js';
 
 export default function BlockedUserModel({user, index, unlockContact}){
 
+    console.log("Modello bloccato");
+    console.log(user);
+
     return (
         <View style={styles.container}>
             <View style={{flexDirection:"row"}}>
                 <FontAwesome name="lock" size={altezzaBarraScreen*0.6} color={MosPurple} style={{paddingRight:10}}/>
                 <View>
-                    <Text style={styles.name}>{user.name}</Text>
+                    <Text style={styles.name}>{user.contactName}</Text>
                     <Text style={styles.blocked}>{i18n.t('blockedModelTitle')} {fromDateToGGMMYYYYHHMM(parseInt(user.lock_timestamp/1000))}</Text>
                 </View>
             </View>

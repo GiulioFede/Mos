@@ -38,7 +38,7 @@ export default function ContactProfile({navigation, route}){
     console.log(mediaProfilo);
     console.log(informazioniProfiloUtente);
 
-    const [uriProfileImage, setUriProfileImage] = useState(mediaProfilo.profileImageUrl=="" ? null : mediaProfilo.profileImageUrl);
+    const [errore, setErrore] = useState(null);
 
     const [dettagli, setDettagli] = useState([]);
 
@@ -115,8 +115,9 @@ export default function ContactProfile({navigation, route}){
                     <View style={styles.contenitoreMediaProfilo} >
                         {/* immagine */}
                         <View style={styles.contenitoreImmagineProfilo}>
-                            <ActivityIndicator animating={mediaProfilo.profileImageUrl!="null"} size={fontSizeTitoloBarra} color={MosCeleste} style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center'}}/>
-                            <Image source={{uri:mediaProfilo.profileImageUrl}} resizeMode="cover"  style={styles.immagineProfilo}/>
+                            <ActivityIndicator animating={errore==null} size={fontSizeTitoloBarra} color={MosCeleste} style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center'}}/>
+                            {(errore==null || errore==false) && <Image source={{uri:mediaProfilo.profileImageUrl}} resizeMode="cover"  style={styles.immagineProfilo} onLoadEnd={()=>{setErrore(false)}} onError={()=>{setErrore(true)}}/>}
+                            {errore==true && <Image source={require('../../../../../resources/images/img-profile-not-found.png')} resizeMode="cover"  style={styles.immagineProfilo} />}
                             </View>
                     </View>
 

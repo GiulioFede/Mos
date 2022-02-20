@@ -4,7 +4,7 @@ export default function InizializzaApp(){
     console.log("inizializzaApp.js");
     //FIREBASE-----------------------------------------------------------
       //collegare l'app a Firebase
-    
+   /* 
       var firebaseConfig = {
         apiKey: "AIzaSyBEYn0hg3rNWeljccSt6rgMNuSz2B7b6pE",
         authDomain: "mos-test-db748.firebaseapp.com",
@@ -15,6 +15,22 @@ export default function InizializzaApp(){
         measurementId: "G-2D69E7K6M7"
       };
     
+      if(!firebase.apps.length){
+        console.log("app non collegata");
+        firebase.initializeApp(firebaseConfig);
+      }*/
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCtTcQ2OCHAzZ8zxW9BKmGz2tt4hGDbUvE",
+        authDomain: "mosaic-a781d.firebaseapp.com",
+        projectId: "mosaic-a781d",
+        storageBucket: "mosaic-a781d.appspot.com",
+        messagingSenderId: "951004712015",
+        appId: "1:951004712015:web:38868c5b46c09201daee3a",
+        measurementId: "G-W2F8LJDFHP"
+      };
+      
+      // Initialize Firebase
       if(!firebase.apps.length){
         console.log("app non collegata");
         firebase.initializeApp(firebaseConfig);

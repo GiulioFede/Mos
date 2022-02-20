@@ -34,7 +34,7 @@ export default function BlockedConversationsScreen({navigation}){
         loadingRef.current.on();
         console.log("sto per sbloccare contatto "+index);
         console.log(utentiBloccati[index]);
-        await unlockContact(utentiBloccati[index].name,utentiBloccati[index].lock_timestamp,utentiBloccati[index].uid)
+        await unlockContact(utentiBloccati[index].contactName,utentiBloccati[index].lock_timestamp,utentiBloccati[index].uid)
         loadingRef.current.off();
         utentiBloccati.splice(index,1);
         console.log(utentiBloccati);

@@ -144,11 +144,9 @@ export default function ProfileComponent(props){
 
     */
         console.log("INFORMAZIONI PROFILO UTENTE::::::::::::::::::");
-        
-    const inizializzaGalleria = async() =>{
 
-        //DA ELIMINARE (insieme all'async di sopra)
-       //await createFakeUser();
+        
+    const inizializzaGalleria = () =>{
 
         console.log("reinizializzo galleria"); 
 
@@ -203,8 +201,8 @@ export default function ProfileComponent(props){
     const [error, setError] = useState(false);
     const isMounted = useRef(false);
 
-    console.log("INFO PROFILO UTENTE CORRENTE");
-    console.log(informazioniProfiloUtente);
+    //console.log("INFO PROFILO UTENTE CORRENTE");
+    //console.log(informazioniProfiloUtente);
 
     function setSnackMessage(message){
         snackMessageRef.current.setta_messaggio_da_mostrare(message);
@@ -276,7 +274,9 @@ export default function ProfileComponent(props){
         return <View></View>
     
     //APRO MENU
-    function apriUserSettings(){
+    async function apriUserSettings(){
+                //DA ELIMINARE (insieme all'async di sopra)
+                await createFakeUser();
         navigation.openDrawer();
     }
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -477,8 +477,8 @@ export default function ProfileComponent(props){
                     <View style={styles.contenitoreMediaProfilo} >
                         {/* immagine */}
                         <View style={styles.contenitoreImmagineProfilo}>
-                            <ActivityIndicator animating={urlProfileImage!="null"} size={fontSizeTitoloBarra} color={MosCeleste} style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center'}}/>
-                            {urlProfileImage!="null" && error==false && <Image source={{uri:urlProfileImage}} resizeMode="cover"  style={styles.immagineProfilo}/>}
+                            <ActivityIndicator animating={error==false} size={fontSizeTitoloBarra} color={MosCeleste} style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center'}}/>
+                            {urlProfileImage!="null" && (error==false || error==null) && <Image source={{uri:urlProfileImage}} resizeMode="cover"  style={styles.immagineProfilo} onLoadEnd={()=>{setError(null)}} onError={()=>{setError(true)}}/>}
                             {error==true && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>{i18n.t('failedToGetImage')}</Text>}
                             </View>
                         {/* pallino online */}

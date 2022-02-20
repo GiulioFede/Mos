@@ -38,13 +38,13 @@ const ref = function MessageModel({messaggio, utenteCorrente, mostraNuovaData}){
     }
 
     function getTimestamp(){
+        let min = (data.getMinutes()<=9)?("0"+data.getMinutes()):data.getMinutes();
+        let time_str = data.getHours()+":"+min;
         if(messaggio.author==utenteCorrente){
-            let time_str = data.getHours()+":"+data.getMinutes();
             return( 
                 <Text style={styles.timestampOrarioUtenteCorrente}>{time_str}</Text>
             )
         }else {
-            let time_str = data.getHours()+":"+data.getMinutes();
             return( 
                 <Text style={styles.timestampOra}>{time_str}</Text>
             )

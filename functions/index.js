@@ -7,13 +7,12 @@ const {spawn,spawnSync} = require('child_process');
 const os = require('os');
 const fs = require('fs');
 const { v4: uuid } = require("uuid");
-const bucketName = "mos-test-db748.appspot.com"; // NB: CAMBIA 'mos-test-db748' QUANDO CAMBI NOME DATABASE
+const bucketName = "mosaic-a781d.appspot.com"; // NB: CAMBIA 'mos-test-db748' QUANDO CAMBI NOME DATABASE
 
 
 
 //Creazione nuovo profilo a 5 livelli (vecchio)
 /*exports.createNewUserProfile = functions.https.onCall( async(data, context) =>{
-
    //controllo che l'utente si sia autenticato
    if (!context.auth) {
       // Throwing an HttpsError so that the client gets the error details.
@@ -200,7 +199,6 @@ const bucketName = "mos-test-db748.appspot.com"; // NB: CAMBIA 'mos-test-db748' 
                //1) documento 100% 
                var updateImmagineProfilo100 = admin.firestore().collection("users").doc(folder).collection("media").doc("100");
                batch.set(updateImmagineProfilo100, {profileImageUrl: urls[4], gallery: new Object()});
-
                //creo documento conversazioni vuoto
                var createEmptyConversation = admin.firestore().collection("users").doc(folder).collection("chats").doc("Conversations");
                batch.set(createEmptyConversation, {conversations: []}); 
@@ -297,11 +295,11 @@ exports.createNewUserProfile = functions.https.onCall( async(data, context) =>{
       //formula x=((100-p)/p)*100+100 --> dove p è la prima percentuale di scala (scegliamo noi) e x e la seconda che dobbiamo trovare. 
          //scrivo il file modificato del 50%
          const tempFilePath_50 = path.join(os.tmpdir(),folder,fileName+"_50.jpg");
-         spawnSync('convert', [tempFilePath, '-scale', '6.8%','-scale','1470.58%>', tempFilePath_50]);
+         spawnSync('convert', [tempFilePath, '-scale', '5.3%','-scale','1886.7924%>', tempFilePath_50]);
 
          //scrivo il file modificato del 100%
          const tempFilePath_100 = path.join(os.tmpdir(),folder,  fileName+"_100.jpg");
-         spawnSync('convert', [tempFilePath, '-scale', '4%','-scale','2500%>', tempFilePath_100]);
+         spawnSync('convert', [tempFilePath, '-scale', '3.5%','-scale','2857.1428%>', tempFilePath_100]);
       
          //genero i 4 token. Mi saranno utili cosi da sapere già l'url di download di ciascuna senza richiedere getDownloadUrl()
          const tokenImmagineOriginale = uuid();
@@ -391,17 +389,17 @@ exports.createNewUserProfile = functions.https.onCall( async(data, context) =>{
                         });
                //1) documento originale
                var updateImmagineProfiloOriginale = admin.firestore().collection("users").doc(folder).collection("media").doc("0");
-               batch.set(updateImmagineProfiloOriginale, {profileImageUrl: urls[0], gallery: new Object()});
+               batch.set(updateImmagineProfiloOriginale, {profileImageUrl: urls[0], gallery: new Object(), authorized_users: []});
                //3) documento 50% 
                var updateImmagineProfilo50 = admin.firestore().collection("users").doc(folder).collection("media").doc("50");
-               batch.set(updateImmagineProfilo50, {profileImageUrl: urls[1],gallery: new Object()});
+               batch.set(updateImmagineProfilo50, {profileImageUrl: urls[1],gallery: new Object(), authorized_users: []});
                //1) documento 100% 
                var updateImmagineProfilo100 = admin.firestore().collection("users").doc(folder).collection("media").doc("100");
                batch.set(updateImmagineProfilo100, {profileImageUrl: urls[2], gallery: new Object()});
 
                //creo documento conversazioni vuoto
                var createEmptyConversation = admin.firestore().collection("users").doc(folder).collection("chats").doc("Conversations");
-               batch.set(createEmptyConversation, {conversations: []}); 
+               batch.set(createEmptyConversation, {conversations: [], contactsUid: []}); 
       
             //commit del batch
                return batch.commit().then((result)=>{
@@ -453,7 +451,6 @@ exports.createNewUserProfile = functions.https.onCall( async(data, context) =>{
 /*
 //Quando l'utente carica la propria immagine si creano diverse versioni di questa
 exports.uploadImageVecchio = functions.https.onCall(async(data, context) => {
-
    // Checking that the user is authenticated.
 if (!context.auth) {
    // Throwing an HttpsError so that the client gets the error details.
@@ -473,24 +470,19 @@ var base64EncodedImageString = data.image,
 mimeType = 'image/jpeg',
 //se l'immagine è di profilo allora scelgo il nome predefinito altrimenti il timestamp del server
 fileName = data.imageName; 
-
 if (!fs.existsSync(os.tmpdir()+"/"+folder)){
    fs.mkdirSync(os.tmpdir()+"/"+folder);
 }
-
 functions.logger.log("Listo tutti i file presenti...")
 fs.readdirSync(os.tmpdir()+"/"+folder).forEach(file => {
    functions.logger.log(file);
 });
-
 const tempFilePath = path.join(os.tmpdir(),folder, fileName+".jpg");
-
 //scrivo il file originale
 fs.writeFileSync(tempFilePath,base64EncodedImageString,'base64',function(err){
    functions.logger.log("file scritto in"+tempFilePath);
 })
 functions.logger.log("file originale scritto in"+tempFilePath);
-
 //converto immagine
    //scrivo il file modificato del 25%
    const tempFilePath_25 = path.join(os.tmpdir(),folder, fileName+"_25.jpg");
@@ -506,14 +498,12 @@ functions.logger.log("file originale scritto in"+tempFilePath);
    //scrivo il file modificato del 100%
    const tempFilePath_100 = path.join(os.tmpdir(),folder,  fileName+"_100.jpg");
    spawnSync('convert', [tempFilePath, '-scale', '1%','-scale','10000%>', tempFilePath_100]);
-
    //genero i 4 token. Mi saranno utili cosi da sapere già l'url di download di ciascuna senza richiedere getDownloadUrl()
    const tokenImmagineOriginale = uuid();
    const tokenImmagine25 = uuid();
    const tokenImmagine50 = uuid();
    const tokenImmagine75 = uuid();
    const tokenImmagine100 = uuid();
-
    return Promise.all([
       bucket.upload(tempFilePath, {
          destination: "users/"+folder+"/"+fileName,
@@ -523,9 +513,7 @@ functions.logger.log("file originale scritto in"+tempFilePath);
             } 
           },
        }).then((data) => {
-
          let file = data[0];
-
          return Promise.resolve("https://firebasestorage.googleapis.com/v0/b/" + bucketName + "/o/" + encodeURIComponent(file.name) + "?alt=media&token=" + tokenImmagineOriginale);
      }),
       bucket.upload(tempFilePath_25, {
@@ -536,9 +524,7 @@ functions.logger.log("file originale scritto in"+tempFilePath);
             } 
           },
        }).then((data) => {
-
          let file = data[0];
-
          return Promise.resolve("https://firebasestorage.googleapis.com/v0/b/" + bucketName + "/o/" + encodeURIComponent(file.name) + "?alt=media&token=" + tokenImmagine25);
      }),
        bucket.upload(tempFilePath_50, {
@@ -549,9 +535,7 @@ functions.logger.log("file originale scritto in"+tempFilePath);
             } 
           },
        }).then((data) => {
-
          let file = data[0];
-
          return Promise.resolve("https://firebasestorage.googleapis.com/v0/b/" + bucketName + "/o/" + encodeURIComponent(file.name) + "?alt=media&token=" + tokenImmagine50);
      }),
        bucket.upload(tempFilePath_75, {
@@ -562,9 +546,7 @@ functions.logger.log("file originale scritto in"+tempFilePath);
             } 
           },
        }).then((data) => {
-
          let file = data[0];
-
          return Promise.resolve("https://firebasestorage.googleapis.com/v0/b/" + bucketName + "/o/" + encodeURIComponent(file.name) + "?alt=media&token=" + tokenImmagine75);
      }),
        bucket.upload(tempFilePath_100, {
@@ -575,9 +557,7 @@ functions.logger.log("file originale scritto in"+tempFilePath);
             } 
           },
        }).then((data) => {
-
          let file = data[0];
-
          return Promise.resolve("https://firebasestorage.googleapis.com/v0/b/" + bucketName + "/o/" + encodeURIComponent(file.name) + "?alt=media&token=" + tokenImmagine100);
      })
    ]).then(async(urls)=>{
@@ -594,13 +574,10 @@ functions.logger.log("file originale scritto in"+tempFilePath);
          functions.logger.log("file col 100% in locale eliminato");
          fs.unlinkSync(tempFilePath);
          functions.logger.log("file originale in locale eliminato");
-
          fs.rmdirSync(os.tmpdir()+"/"+folder);
          functions.logger.log("Cartella eliminata. Fine");
-
          //daEliminare
          functions.logger.log("Nomi paths:"+urls[0]+"   "+urls[1]+"   "+urls[2]+"   "+urls[3]+"   "+urls[4]);
-
       //aggiorno in batch i 4 documenti in users/utente/media
          var batch = admin.firestore().batch();
           
@@ -609,27 +586,22 @@ functions.logger.log("file originale scritto in"+tempFilePath);
          var updateImmagineProfiloOriginale = admin.firestore().collection("users").doc(folder).collection("media").doc("0");
          if(isForProfile==true) batch.update(updateImmagineProfiloOriginale, {profileImageUrl: urls[0]});
          else batch.update(updateImmagineProfiloOriginale, {[`gallery.${fileName}`]: urls[0]});
-
          //2) documento 25% 
          var updateImmagineProfilo25 = admin.firestore().collection("users").doc(folder).collection("media").doc("25");
          if(isForProfile==true) batch.update(updateImmagineProfilo25, {profileImageUrl: urls[1]});
          else batch.update(updateImmagineProfilo25, {[`gallery.${fileName}`]: urls[1]});
-
          //3) documento 50% 
          var updateImmagineProfilo50 = admin.firestore().collection("users").doc(folder).collection("media").doc("50");
          if(isForProfile==true) batch.update(updateImmagineProfilo50, {profileImageUrl: urls[2]});
          else batch.update(updateImmagineProfilo50, {[`gallery.${fileName}`]: urls[2]});
-
          //4) documento 75% 
          var updateImmagineProfilo75 = admin.firestore().collection("users").doc(folder).collection("media").doc("75");
          if(isForProfile==true) batch.update(updateImmagineProfilo75, {profileImageUrl: urls[3]});
          else batch.update(updateImmagineProfilo75, {[`gallery.${fileName}`]: urls[3]});
-
          //1) documento 100% 
          var updateImmagineProfilo100 = admin.firestore().collection("users").doc(folder).collection("media").doc("100");
          if(isForProfile==true) batch.update(updateImmagineProfilo100, {profileImageUrl: urls[4]});
          else batch.update(updateImmagineProfilo100, {[`gallery.${fileName}`]: urls[4]});
-
       //commit del batch
          return batch.commit().then((result)=>{
             //i 4 documenti sono stati scritti su firestore con successo
@@ -648,7 +620,6 @@ functions.logger.log("file originale scritto in"+tempFilePath);
          }).catch((err)=>{
             throw new functions.https.HttpsError("errore firestore: "+err);
          })   
-
    })
      .catch((e)=>{ //viene chiamato anche se il return di sopra fallisce
       
@@ -663,7 +634,6 @@ functions.logger.log("file originale scritto in"+tempFilePath);
                functions.logger.log("file col 100% in locale eliminato");
                fs.unlinkSync(tempFilePath);
                functions.logger.log("file originale in locale eliminato");
-
                fs.rmdirSync(os.tmpdir()+"/"+folder);
                functions.logger.log("Cartella eliminata. Fine");  
          }
@@ -695,7 +665,7 @@ var bucket = admin.storage().bucket();
 //ottengo l'informazione se l'immagine da caricare è di profilo (true) o meno (false)
 const isForProfile = data.isForProfile; 
 //genero una folder qualsiasi
-var folder = data.idUser;
+var folder = context.auth.uid;//data.idUser;
 // Convert the base64 string back to an image to upload into the Google Cloud Storage bucket
 var base64EncodedImageString = data.image,
 //uuid dell'utente
@@ -724,11 +694,11 @@ functions.logger.log("file originale scritto in"+tempFilePath);
    //formula x=((100-p)/p)*100+100 --> dove p è la prima percentuale di scala (scegliamo noi) e x e la seconda che dobbiamo trovare. 
    //scrivo il file modificato del 50%
    const tempFilePath_50 = path.join(os.tmpdir(),folder,fileName+"_50.jpg");
-   spawnSync('convert', [tempFilePath, '-scale', '6.8%','-scale','1470.58%>', tempFilePath_50]);
+   spawnSync('convert', [tempFilePath, '-scale', '5.3%','-scale','1886.7924%>', tempFilePath_50]);
 
    //scrivo il file modificato del 100%
    const tempFilePath_100 = path.join(os.tmpdir(),folder,  fileName+"_100.jpg");
-   spawnSync('convert', [tempFilePath, '-scale', '4%','-scale','2500%>', tempFilePath_100]);
+   spawnSync('convert', [tempFilePath, '-scale', '3.5%','-scale','2857.1428%>', tempFilePath_100]);
 
    //genero i 4 token. Mi saranno utili cosi da sapere già l'url di download di ciascuna senza richiedere getDownloadUrl()
    const tokenImmagineOriginale = uuid();
@@ -850,3 +820,221 @@ functions.logger.log("file originale scritto in"+tempFilePath);
    throw new functions.https.HttpsError("errore. Eccezione interna");
 }
 });
+
+
+
+//ELIMINARE ACCOUNT UTENTE
+
+exports.deleteUserAccount = functions.https.onCall(async(data, context) => {
+
+   try{
+      //controlla che l'utente sia autenticato
+      if (!context.auth) {
+         // Throwing an HttpsError so that the client gets the error details.
+         throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
+            'while authenticated.');
+      }
+
+      let myUid = context.auth.uid;
+      let myName = data.myName;
+      let db = admin.firestore();
+      let storage = admin.storage().bucket();
+      
+      //conterrà gli identificativi delle conversazioni i cui file necessitano di essere eliminati sullo storage
+      let idConversations = [];
+
+      await admin.firestore().runTransaction(async (transaction) => {
+
+         try{
+
+            let myPathConversations = db.collection("users").doc(myUid).collection("chats").doc("Conversations");
+
+            //scarico le mie conversazioni
+            let myConversationsRef = await transaction.get(myPathConversations);
+
+            functions.logger.log("Le conversazioni dell'utente corrente sono:");
+            functions.logger.log(myConversationsRef.data());  
+
+            //se possiedo delle conversazioni
+            if(myConversationsRef.exists && myConversationsRef.data().contactsUid.length>0){
+               
+               functions.logger.log("L'utente corrente possiede delle conversazioni."); 
+
+               let uidContatto = null;
+               let pathListOfContactConversations = null;
+               let listOfContactConversationsRef = null;
+               let pathChat = null;
+               let chatId = null;
+               let chatRef = null;
+               let channel1 = null;
+               let channel2 = null;
+               let channel1Messages = null;
+               let channel2Messages = null;
+               let pathChannel1 = null;
+               let pathChannel2 = null;
+               let pathMediaContatto_0 = null;
+               let pathMediaContatto_50 = null;
+               let chat = {};
+               //allora mi elimino dagli altri utenti. Prendo le conversazioni
+               let myConversations = myConversationsRef.data().conversations;
+
+               //per ogni conversazione che possiedo...
+               for( let i = 0; i<myConversations.length; i++){
+
+                  //prendo l'uid del contatto
+                  uidContatto = myConversations[i].uid;
+                  //prendo id chat
+                  chatId = myConversations[i].chatId;
+
+                  //aggiungo all'array cosi da eliminare dopo nello storage
+                  idConversations.push(chatId);
+
+                  functions.logger.log("Procedo ad eliminare conversazione "+chatId+" con utente "+uidContatto); 
+
+                  //prendo riferimento conversazioni contatto
+                  pathListOfContactConversations = db.collection("users").doc(uidContatto).collection("chats").doc("Conversations");
+                  //prendo riferimenti media
+                  pathMediaContatto_0 = db.collection("users").doc(uidContatto).collection("media").doc("0");
+                  pathMediaContatto_50 = db.collection("users").doc(uidContatto).collection("media").doc("50");   
+                  //scarico le conversazioni del contatto (magari ha precedentemente eliminato l'account)
+                  listOfContactConversationsRef = await pathListOfContactConversations.get();
+
+                  //se il contatto esiste ancora...e se non è stato bloccato
+                  if(listOfContactConversationsRef.exists && !myConversations[i].hasOwnProperty('blocked')){
+                     functions.logger.log("Il contatto esiste ancora"); 
+                     //costruisco chat
+                     chat = {
+                        uid: myUid,
+                        contactName: myName,
+                        chatId: chatId,
+                        creation_data: myConversations[i].creation_data
+                     }
+
+                     functions.logger.log("Mi rimuovo dalle sue conversazioni e contatti"); 
+                     //rimuovo me dalle sue conversazioni e dai suoi contatti
+                     await transaction.update(pathListOfContactConversations,{
+                        "conversations": admin.firestore.FieldValue.arrayRemove(chat),
+                        "contactsUid": admin.firestore.FieldValue.arrayRemove(myUid)
+                     })
+                     functions.logger.log("Mi rimuovo dagli utenti autorizzati nei media 0"); 
+                     //rimuovo me dai suoi utenti autorizzati come media
+                     await transaction.update(pathMediaContatto_0, {
+                        "authorized_users": admin.firestore.FieldValue.arrayRemove("chat_with_"+myUid)
+                     })
+                     functions.logger.log("Mi rimuovo dagli utenti autorizzati nei media 50"); 
+                     await transaction.update(pathMediaContatto_50, {
+                        "authorized_users": admin.firestore.FieldValue.arrayRemove("chat_with_"+myUid)
+                     })
+
+                  }else {
+                     functions.logger.log("Il contatto non esiste più"); 
+                  }
+
+                  if(!myConversations[i].hasOwnProperty('blocked')){
+                     functions.logger.log("Scarico la summary della chat"); 
+                     //se la chat esiste ancora
+                     pathChat = db.collection("chats").doc(chatId);
+                     chatRef = await pathChat.get();
+
+                     //se esiste la chat...
+                     if (chatRef.exists){
+                        functions.logger.log("La chat esiste ancora."); 
+
+                        functions.logger.log("Elimino tutti i messaggi nel channel1"); 
+                        //elimino tutti i messaggi nel canale 1
+                        channel1 = uidContatto+"_"+myUid;
+                        pathChannel1 = db.collection("chats").doc(chatId).collection(channel1);
+                        channel1Messages = await pathChannel1.get();
+                        channel1Messages.docs.map(async(doc)=>{
+                           await transaction.delete(doc.ref);
+                        })
+                        
+                        functions.logger.log("Elimino tutti i messaggi nel channel2"); 
+                        channel2 = myUid+"_"+uidContatto;
+                        pathChannel2 = db.collection("chats").doc(chatId).collection(channel2);
+                        channel2Messages = await pathChannel2.get();
+                        channel2Messages.docs.map(async(doc)=>{
+                           await transaction.delete(doc.ref);
+                        })
+
+                        functions.logger.log("Elimino chat"); 
+                        //elimino chat
+                        await transaction.delete(pathChat);
+                     }else {
+                        functions.logger.log("La chat non esiste più"); 
+                     }
+                  }
+
+               }
+
+            }else{
+               functions.logger.log("L'utente corrente non possiede conversazioni"); 
+            }
+
+            functions.logger.log("Elimino le mie conversazioni");
+            //elimino le mie conversazioni
+            await transaction.delete(myPathConversations); 
+
+            //elimino media 0, 50 e 100
+            functions.logger.log("Elimino media 0");
+            await transaction.delete(db.collection("users").doc(myUid).collection("media").doc("0"));
+            functions.logger.log("Elimino media 50");
+            await transaction.delete(db.collection("users").doc(myUid).collection("media").doc("50"));
+            functions.logger.log("Elimino media 100");
+            await transaction.delete(db.collection("users").doc(myUid).collection("media").doc("100")); 
+
+            //elimino notifications
+            functions.logger.log("Elimino notifiche");
+            let notificationsPath = db.collection("users").doc(myUid).collection("notifications");
+            let notifications = await notificationsPath.get();
+            notifications.docs.map(async(doc)=>{
+               await transaction.delete(doc.ref);
+            })
+
+            functions.logger.log("Elimino le mie informazioni base");
+            await transaction.delete(db.collection("users").doc(myUid));
+
+            functions.logger.log("Libero lo storage dalle immagini dell'utente corrente");
+            await storage.deleteFiles({
+               prefix: `users/${myUid}`
+            })
+
+            for(let i=0; i<idConversations.length; i++){
+               functions.logger.log("Libero storage dai dati ");
+               await storage.deleteFiles({
+                  prefix: `chats/${idConversations[i]}`
+               })
+            }
+
+             //elimino auth
+             await admin.auth().deleteUser(myUid);
+
+         }catch(e){
+            throw e;
+         }
+      })
+
+      /*
+      //elimino dallo storage
+      try {
+
+         functions.logger.log("Libero lo storage dalle immagini dell'utente corrente");
+         await storage.deleteFiles({
+            prefix: `users/${myUid}`
+         })
+
+         for(let i=0; i<idConversations.length; i++){
+            functions.logger.log("Libero storage dai dati ");
+            await storage.deleteFiles({
+               prefix: `chats/${idConversations[i]}`
+            })
+         }
+
+      }catch(e){
+         functions.logger.log("errore storage:"+e); 
+      }*/
+
+   }catch(e){
+      throw new functions.https.HttpsError('error1', e+"");
+   }
+})

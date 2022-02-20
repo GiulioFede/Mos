@@ -88,6 +88,7 @@ export const AutenticazioneUtenteProvider = ({children}) => {
                     setListOfConversations,
                     getUtenteCorrente,
                     logOut,
+                    setIsControlDone,
                     saveNewPushNotificationToken,
                     accediConEmailPassword,
                     inviaEmailRecuperoPassword,
@@ -270,8 +271,7 @@ export const AutenticazioneUtenteProvider = ({children}) => {
         async function deleteUserAccount(myName){
             try{
                 let res = await _deleteUserAccount(myName);
-                await firebase.auth().signOut();
-                //await firebase.auth().currentUser.delete(); NB: è corretto, mettilo
+               // await firebase.auth().currentUser.delete(); //lo faccio fare all'admin nella cloud functions
                 return res;
             }catch(e){
                 throw e;
@@ -489,9 +489,9 @@ export const AutenticazioneUtenteProvider = ({children}) => {
       }
   }
 
-  async function removeMessages(chatId, seconds){
+  async function removeMessages(chatId, seconds, contactUid){
     try{
-        _removeMessages(chatId,seconds);
+        _removeMessages(chatId,seconds, contactUid);
     }catch(e){
         throw e;
     }
@@ -505,8 +505,12 @@ export const AutenticazioneUtenteProvider = ({children}) => {
     }
   }
 
-  function ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored){
-      return _ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored);
+  function ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored, contactUid){
+      try{
+        return _ottieniAscoltatoreNuoviMessaggi(chatID, channelID, lastTimestampStored, contactUid);
+      }catch(e){
+          throw e;
+      }
   }
 
   function ottieniAscoltatoreStatistics(chatID){

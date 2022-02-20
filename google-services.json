@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "490821524858",
-    "project_id": "mos-test-db748",
-    "storage_bucket": "mos-test-db748.appspot.com"
+    "project_number": "951004712015",
+    "project_id": "mosaic-a781d",
+    "storage_bucket": "mosaic-a781d.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:490821524858:android:2742daaa03f19939430ac3",
+        "mobilesdk_app_id": "1:951004712015:android:23f4bd0a39e49364daee3a",
         "android_client_info": {
           "package_name": "com.giuliofederico.Mos"
         }
       },
       "oauth_client": [
         {
-          "client_id": "490821524858-21kkn3m0rqt665elvqteph06gmnpndfd.apps.googleusercontent.com",
+          "client_id": "951004712015-mimpveagoqm8bp99bnj7inqnkcq02m50.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCu5Aj2PbOzsEnHF_a2dasZF9HywlHNDzE"
+          "current_key": "AIzaSyA05ISadWcsCmwcMLs4VcVnOQu3eCSxdmM"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "490821524858-21kkn3m0rqt665elvqteph06gmnpndfd.apps.googleusercontent.com",
+              "client_id": "951004712015-mimpveagoqm8bp99bnj7inqnkcq02m50.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

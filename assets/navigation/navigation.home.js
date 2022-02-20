@@ -224,6 +224,7 @@ export default function HomeNavigator({navigation}) {
                                         });
                                     }
                                       //faccio partire tutto
+                                      console.log("Terminato. Apro all'utente...");
                                       setInformazioniProfiloUtente(info_utente); //info contiene le info dell'utente
                                       setIsProfileLoading(false);
 

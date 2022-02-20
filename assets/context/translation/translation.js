@@ -113,7 +113,7 @@ i18n.translations = {
         chooseFromGallery: "SCEGLI DALLA GALLERIA",
 
         //PhoneAuthScreen
-        mexToNumberSend: "Un messaggio col codice di verifica è stato inviato al nuovo numero ",
+        mexToNumberSend: "Un messaggio col codice di verifica è stato inviato al numero ",
         numberUpdated: "Numero di telefono aggiornato.",
         securityMex: "Per motivi di sicurezza ti chiediamo di accedere nuovamente prima di aggiornare il numero di telefono e di ripetere la procedura.",
         wrongVerificationCode: "Il codice di verifica è errato.",
@@ -209,7 +209,7 @@ i18n.translations = {
         audioError3: "E' avvenuto un errore durante il salvataggio dell'audio in locale. Il messaggio è stato comunque inviato.",
         audioError4: "Si è verificato un errore interno. Non è stato possibile inviare l'audio vocale.",
         nextRequest: "prossima richiesta",
-        decisionScreen1: "Attendi...",
+        decisionScreen1: "Attendi ",
         decisionScreen2: "Vuoi renderti più visibile?",
         decisionScreen3: "Vuoi renderti completamente visibile?",
         back: "torna indietro",
@@ -218,6 +218,7 @@ i18n.translations = {
         decisionScreen5_pt2: " dovrete essere daccordo, altrimenti continuerete per un altro pò prima che vi venga richiesto ancora.",
         noYet: "Non ancora",
         pushNewMessage: " ti ha inviato un nuovo messaggio",
+        waitChoice: "La conversazione attende ancora una scelta.",
 
         //AROUND YUOU
         pushNotification1: "Qualcuno ti trova interessante!",
@@ -234,6 +235,7 @@ i18n.translations = {
         subTitleNewConversation: "Vuoi davvero iniziare una nuova conversazione con ",
         create: "Crea",
         profileGallery: "Galleria profilo",
+        youHaveBlockedThisConversation: "Hai bloccato questo contatto.",
 
         //INFORMAZIONI PERSONALI
         verificationNewEmail_pt1: "Una email di verifica è stata inviata al nuovo indirizzo email ",
@@ -291,7 +293,7 @@ i18n.translations = {
         whatUsersDescription_pt1: "Mosaic non esclude nessuno! L'app è rivolta a ",
         whatUsersDescription_pt2: "tutti",
         whatUsersDescription_pt3: ". A chi si sente escluso dalle altre app di incontri, a chi sente una identità di genere che sia diversa dal sesso biologico assegnatogli alla nascita, a chi è incerto della propria identità e vuole sentirsi libero di scoprirla senza che nessuno possa giudicarlo e di rivelarla solo a chi merita. ",
-        whatUsersDescription_pt4: "Attenzione! Mosaic non esclude proprio nessuno. Infatti è possibile che la conversazione vada cosi bene che l'aspetto fisico, quando i profili diventeranno meno mosaicizzati, passerà i secondo piano. Ma è ovviamente possibile che ciò non accada. In tal caso è possibile troncare la conversazione ",
+        whatUsersDescription_pt4: "Attenzione! Mosaic non esclude proprio nessuno. Infatti è possibile che la conversazione vada cosi bene che l'aspetto fisico, quando i profili diventeranno meno mosaicizzati, passerà in secondo piano. Ma è ovviamente possibile che ciò non accada. In tal caso è possibile troncare la conversazione ",
         whatUsersDescription_pt5: "senza preoccuparsi che il contatto possa conoscere la propria identità",
         privacy: "Come garantisce la privacy?",
         privacy_pt1: "Mosaic rende i propri profili mosaicizzati tramite manipolazioni fatte in ",
@@ -476,7 +478,7 @@ i18n.translations = {
         chooseFromGallery: "CHOOSE FROM GALLERY",
 
         //PhoneAuthScreen
-         mexToNumberSend: "A message with the verification code has been sent to the new number ",
+         mexToNumberSend: "A message with the verification code has been sent to the number ",
          numberUpdated: "Phone number updated.",
          securityMex: "For security reasons we ask you to log in again before updating your phone number and repeating the procedure.",
          wrongVerificationCode: "The verification code is wrong.",
@@ -582,7 +584,8 @@ i18n.translations = {
          decisionScreen5_pt2: " will have to agree, otherwise you will continue for a while before you are asked again.",
          noYet: "Not yet",
          pushNewMessage: " sent you a new message",
-
+         waitChoice: "The conversation is still waiting for a choice.",
+         
          // AROUND YUOU
          pushNotification1: "Someone finds you interesting!",
          pushNotification1Content: " would like to talk to you.",
@@ -598,6 +601,7 @@ i18n.translations = {
          subTitleNewConversation: "Do you really want to start a new conversation with ",
          create: "Create",
          profileGallery: "Profile gallery",
+         youHaveBlockedThisConversation: "You blocked this contact.",
 
          //PERSONAL INFORMATIONS
         verificationNewEmail_pt1: "A verification email has been sent to the new email address ",
@@ -645,43 +649,77 @@ i18n.translations = {
         transexual2: "Transexual",
         demiAndrogynous2: "Demi-androgynous",
 
-        // ABOUT MOSAIC
-        aboutMosaicSectionDescription: "This section hosts general information about Mosaic.",
-        whatIsMosaic: "What is Mosaic?",
-        whatIsMosaicDescription_pt1: "Mosaic is an alternative dating app. The idea is to allow anyone to make themselves known without their physical appearance playing any role ",
+        //ABOUT MOSAIC
+
+        aboutMosaicSectionDescription: "This Section contains general informations about Mosaic.",
+
+        whatIsMosaic: "What's Mosaic?",
+
+        whatIsMosaicDescription_pt1: "Mosaic is a different dating app. The main idea is to allow you to make yourself known without your physical appearance playing any role ",
         whatIsMosaicDescription_pt2: "initially",
-        whatIsMosaicDescription_pt3: ". In fact the profiles of the users will be mosaicized. Over time, by measuring the quality of the conversation, the two users will be asked to make their profile more visible to the person they are chatting with, and only if both agree this will happen. ",
-        whatUsers: "Which users is it for?",
-        whatUsersDescription_pt1: "Mosaic does not exclude anyone! The app is aimed at ",
-        whatUsersDescription_pt2: "all",
-        whatUsersDescription_pt3: ". To those who feel excluded from other dating apps, to those who feel a gender identity that is different from the biological sex assigned to them at birth, to those who are uncertain of their identity and want to feel free to discover it without anyone being able to judge and to reveal it only to those who deserve it. ",
-        whatUsersDescription_pt4: "Please pay attention. Mosaic does not exclude anyone. In fact it is possible that the conversation goes so well that the physical aspect, when the profiles become less mosaicized, will take second place. But it is obviously possible that this does not happen. In this case it is possible to end the conversation ",
-        whatUsersDescription_pt5: "without worrying that the contact may know their own identity",
-        privacy: "How does it guarantee privacy?",
-        privacy_pt1: "Mosaic makes profiles mosaicized through manipulations made in ",
-        privacy_pt2: " (and not on the client side) guaranteeing the privacy of his image and leaving the owner the freedom to show himself to whoever he wants only when he has the opportunity to do so. Furthermore, behind the scenes, there are several",
-        privacy_pt3: " security rules",
-        privacy_pt4: " that will grant access to their data only to users who have the right permissions.",
-        privacy_pt5: " It is never possible to send images",
-        privacy_pt6: " so as to avoid inappropriate content. Furthermore, conversations on Mosaic are entirely",
-        privacy_pt7: " vocal",
-        privacy_pt8: " allowing just the exchange of some small text message. It is possible to delete the conversations or, in the most tragic cases, if the user with whom you are conversing is inappropriate, it will be possible",
-        privacy_pt9: " block it",
-        privacy_pt10: " (with the ability to unlock it at any time).",
-        privacy_pt11: "Please pay attention. All conversations are stored in",
-        privacy_pt12: " local",
-        privacy_pt13: ". The voice and text messages will remain remotely only until the contact has picked them up.",
-        mainWindows: "Its main screens",
-        mainWindows_pt1: "Mosaic has three main screens:",
+        whatIsMosaicDescription_pt3: ". Therefore the user profiles will be masaicized. Over time, measuring the conversion quality, will be request to the two users to make their own profile more visible to the person who is chatting with, and only if they both agree will it happen. ",
+
+        whatUsers: "Which users the app is aimed at?",
+
+        whatUsersDescription_pt1: "Mosaic doesn't exclude anyone! The app is aimed to ",
+
+        whatUsersDescription_pt2: "everybody",
+
+        whatUsersDescription_pt3: ". To those who feel excluded from other dating apps, to those who feel a gender identity that is different from the biological sex assigned to them at birth, to those who are uncertain of their identity and want to feel free to discover it, avoiding users to judge anyone, revealing their appearance only to who really deserves it. ",
+
+        whatUsersDescription_pt4: "Beware! Mosaic does not exclude anybody. Sure enough it is possibile that the conversation goes so well that the personal appearance, when the profiles become less pixellated, will become less important. But it's possible that all of it will not happen. Therefore it's possible to end the conversation ",
+
+        whatUsersDescription_pt5: "without worrying that the other user will know the own identity",
+
+        privacy: "How the privacy will be guaranteed?",
+
+        privacy_pt1: "Mosaic makes their pixellated profiles through manipulations made in the ",
+
+        privacy_pt2: " (and not client side) guaranteeing their own privacy leaving the users free to show themselves to anyone when they get the chance. Moreover, behind the scenes, there are several ",
+
+        privacy_pt3: "safety rules",
+
+        privacy_pt4: " which allow access to data only to users who have the necessary permissions. ",
+
+        privacy_pt5: "It's not possible to send images",
+
+        privacy_pt6: " thereby avoiding inappropriate content. Furthermore Mosaic's conversations are entirely ",
+
+        privacy_pt7: "vocal",
+
+        privacy_pt8: " allowing only just some short text message. It's possible to cancel conversations or, in tragic circumstances, if the user with whom you are chatting with is inappropriate, it will be possible to ",
+
+        privacy_pt9: "block it",
+
+        privacy_pt10: " (it is possible to unblock at anytime).",
+
+        privacy_pt11: "Beware! All conversations are stored ",
+
+        privacy_pt12: "locally",
+
+        privacy_pt13: ". Vocal and text messages will be stored remotely until the user will receive them.",
+
+        mainWindows: "Its main tabs",
+
+        mainWindows_pt1: "Mosaic has three main tabs: ",
+
         mainWindows_pt2: "Chat:",
-        mainWindows_pt3: " this screen hosts all your conversations. Each one shows the relative current level of visibility reached with the user. Clicking on each opens the relative details and you will be able to chat.",
+
+        mainWindows_pt3: " this tab contains all the conversations. Each of them show the relative level of the current visibility reached with the other user. Clicking on each of them opens all the details and so will be possible to chat.",
+
         mainWindows_pt4: "Around you",
-        mainWindows_pt5: " this screen hosts all the user cards that respect your preferences set in the section",
-        mainWindows_pt6: " of the side menu. The tabs are sorted by geographic proximity, gender preference and age.",
-        mainWindows_pt7: " this screen hosts your profile with your main image, your gallery and your basic information entered during registration. An eye icon on the right will allow you to see your profile with the eyes of those outside , and therefore to see it in the 3 possible levels of mosaicization that your contacts will see depending on the degree of visibility achieved. ",
+
+        mainWindows_pt5: " this tab contains all the user cards that respect the settings of your preferences in the",
+
+        mainWindows_pt6: " section of the side menu. The tabs are ordered by geographical proximity, gender preference and age. ",
+
+        mainWindows_pt7: " this tab contains your own profile with your main picture, your gallery and your main informations entered during the registration. The eye icon on the right side will allow you to view your profile with the eyes of the other users, and viewing it on the 3 possible levels of pixellation, which your contacts will see based on the visibility reached.",
+
         howWorks: "How do you make yourself more visible?",
-        howWorksDescription: "A new conversation can arise in only two ways: a user discovers your profile in the 'Around you' section and starts a conversation, or you discover someone yourself. At first both profiles will be completely mosaicized. After a while messages exchanged you will be asked for a possible visibility upgrade. You will be able to monitor how long this request is missing from the percentage of the top bar in the conversation. Only if you both agree will this happen. After two requests ended successfully the profiles will be completely visible. ",
-        
+
+        howWorksDescription: "A new conversation can begin in only two ways: a user discovers your profile on the tab  'Around you' and starts the conversation, otherwise it's yourself to discover someone else. At the beginning both profiles will be completely pixellated. After a number of messages sent, Mosaic will ask you eventually to upgrade your visibility. You can check how much is missing to this request from the percentage bar at the top of the conversation. Only if you both agree it will happen. After two level or pixellation the profiles will be completely visible.",
+
+
         // BLOCKED USERS
         blockedUsersDescription: "This section hosts basic information about the contacts you have blocked over time. You can unlock them whenever you want.",
         blockedModelTitle: "Blocked on",

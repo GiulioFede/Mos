@@ -1,6 +1,6 @@
 import React, {useState, useContext, useCallback, useEffect, useRef} from 'react';
 import {View, Text, StyleSheet, ScrollView,TouchableOpacity as TouchableOpacityNative, Image, Dimensions, Animated,FlatList, Platform} from 'react-native';
-import {Octicons,Ionicons, Entypo, AntDesign, MaterialIcons, SimpleLineIcons} from "@expo/vector-icons";
+import {Octicons,Ionicons, Entypo, AntDesign, MaterialIcons, SimpleLineIcons, FontAwesome} from "@expo/vector-icons";
 import {useFonts, Raleway_200ExtraLight} from '@expo-google-fonts/raleway';
 import {useFonts as useFonts2, Raleway_400Regular} from '@expo-google-fonts/raleway';
 import {ActivityIndicator} from 'react-native-paper';
@@ -19,6 +19,7 @@ import { sendPushNotification } from '../../../../context/push_notifications/fun
 import LottieView from 'lottie-react-native';
 import i18n from 'i18n-js';
 import { language } from '../../../../context/translation/translation';
+import ProfileImageCard from './profileImageCard';
 
 const {width, height} = Dimensions.get("window");
 const IMAGE_WIDTH = width*0.8;
@@ -133,7 +134,7 @@ export default function AroundYouComponent(props){
 
     var {navigation, route} = props;
     //contesto autenticazione
-    const {findNextTenClosestUsers, listOfConversations, setListOfConversations, informazioniProfiloUtente, user, createNewConversation} = useContext(AutenticazioneUtente);
+    const {findNextTenClosestUsers, listOfConversations, setListOfConversations, informazioniProfiloUtente, user, createNewConversation, conversazioniBloccate} = useContext(AutenticazioneUtente);
 
     const snackMessageRef = useRef();
     const bottomSheetUserDetailsRef = useRef();
@@ -261,7 +262,7 @@ export default function AroundYouComponent(props){
        else
             setShowMe(false);
 
-    },[refresh,informazioniProfiloUtente.location.geohash, informazioniProfiloUtente.action_range_preference, informazioniProfiloUtente.gender_preference,informazioniProfiloUtente.age_range, informazioniProfiloUtente.show_me]);
+    },[refresh,informazioniProfiloUtente.location.geohash, informazioniProfiloUtente.action_range_preference, informazioniProfiloUtente.gender_preference,informazioniProfiloUtente.age_range, informazioniProfiloUtente.show_me, conversazioniBloccate]);
 
 
     //resetta dati di ricerca cosi da ricominciare da capo in caso non trova nessuno una volta giunto alla fine
@@ -430,6 +431,40 @@ export default function AroundYouComponent(props){
    // console.log("INFO PROFILES");
    // console.log(info_profiles);
 
+   function returnButton(item){
+        console.log("CONVERSAZIONI BLOCCATE");
+        console.log(conversazioniBloccate.map(chat => chat.uid));
+        console.log(item.id);
+        if(conversazioniBloccate.map(chat => chat.uid).includes(item.id)){
+            console.log("ritorno bottone rosso");
+            return (
+                <View style={{ backgroundColor:"red", top:IMAGE_HEIGHT*0.9, left:IMAGE_WIDTH*0.75, width:IMAGE_WIDTH*0.18, height:IMAGE_WIDTH*0.18, borderRadius:IMAGE_WIDTH*0.2/2, alignItems:"center", justifyContent:"center" }}>
+                    <TouchableOpacity onPress={()=>{ snackMessageRef.current.setta_messaggio_da_mostrare(i18n.t('youHaveBlockedThisConversation'))}}>
+                        <FontAwesome name="lock" size={IMAGE_WIDTH*0.18/2} color="white" />
+                    </TouchableOpacity>
+                </View>
+            )
+        }else {
+            console.log("ritorno bottone blu");
+            return (
+                <View style={{ backgroundColor:MosCeleste, top:IMAGE_HEIGHT*0.9, left:IMAGE_WIDTH*0.75, width:IMAGE_WIDTH*0.18, height:IMAGE_WIDTH*0.18, borderRadius:IMAGE_WIDTH*0.2/2, alignItems:"center", justifyContent:"center" }}>
+                    <TouchableOpacity onPress={()=>{dialogCreaNuovaConversazioneRef.current.open_dialog(item.name, item.id, item.push_notification_token)}}>
+                        <Ionicons name="ios-chatbubble-sharp" size={IMAGE_WIDTH*0.18/2} color="white" />
+                    </TouchableOpacity>
+                </View>
+            )
+        }
+   }
+
+   function getTranslatedGender(genId){
+    if(genId=="male") return i18n.t('male2').toLowerCase();
+    else if(genId=="female") return i18n.t('female2').toLowerCase();
+    else if(genId=="androgynous") return i18n.t('androgynous2').toLowerCase();
+    else if(genId=="third gender") return i18n.t('thirdGender2').toLowerCase();
+    else if(genId=="transexual") return i18n.t('transexual2').toLowerCase();
+    else if(genId=="demi androgynous") return i18n.t('demiAndrogynous2').toLowerCase();
+    else return genId;
+}
 
 
     function getDistance(lat, lng){
@@ -569,7 +604,8 @@ export default function AroundYouComponent(props){
                             <Animated.View style={{position:'absolute',top:IMAGE_HEIGHT*0.08, width:IMAGE_WIDTH, height:IMAGE_HEIGHT, opacity, transform: [{translateY}, {scale} ] }}>
                             {item.key!="empty" &&
                             <TouchableOpacity onPress={()=>{console.log("apri menu di "+item.name); apriChiudiBottomSheetMenu(item)}}>
-                                    <Image source = {{ uri: item.profileImageUrl}} style={styles.image} />
+                                    {/*<Image source = { error==true? require('../../../../resources/images/img-profile-not-found.png') : {uri: item.profileImageUrl} } style={styles.image} onError={(e)=>{setError(true)}} /> */}
+                                    <ProfileImageCard profileImageUrl={item.profileImageUrl} />
                                 <View style={{position: 'absolute',bottom:0, overflow:"hidden", width: IMAGE_WIDTH,height: IMAGE_HEIGHT*0.8, borderBottomLeftRadius: 16, borderBottomRightRadius:16}}
                                      >
                                     <LinearGradient
@@ -581,8 +617,8 @@ export default function AroundYouComponent(props){
                                 <View style={{position:"absolute", alignItems:"flex-start", justifyContent:"flex-end", height:IMAGE_HEIGHT, bottom:10, overflow:"hidden", width:IMAGE_WIDTH*0.7}}>
                                     <View style={{flexDirection:"row", flexWrap:"wrap", marginBottom:5}}><Text style={styles.name}>{item.name}</Text><Text style={styles.name}> {item.age}</Text></View>
                                     {getCityRegionCountryView(item.location.city, item.location.region, item.location.country)}
-                                    <Text style={[styles.name,{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#00a6ff"}]}>{item.gender_identity}</Text>
-                                    <Text style={[styles.name,{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5}]}>{item.current_occupation}</Text>
+                                    <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.name,{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5, color:"#00a6ff"}]}>{getTranslatedGender(item.gender_identity)}</Text>
+                                    <Text adjustsFontSizeToFit={true} numberOfLines={2} style={[styles.name,{fontFamily:"Raleway_200ExtraLight", fontSize: IMAGE_HEIGHT*0.2/5}]}>{item.current_occupation}</Text>
                                 </View>
                                 <View style={{position: 'absolute', top:0, left:0, backgroundColor:"white",borderBottomRightRadius: 16, elevation:1 }}>
                                     <Text style={{color:"black", fontSize:IMAGE_HEIGHT*0.2/4, padding:10, fontFamily: "Raleway_400Regular"}}>{getDistance(item.location.lat, item.location.lng)}</Text>
@@ -604,11 +640,7 @@ export default function AroundYouComponent(props){
                         </Animated.View>
                         <Animated.View style={{position:'absolute', opacity, transform: [{translateY}, {scale} ] }}>
                         {item.key!="empty" &&
-                            <View style={{ backgroundColor:MosCeleste, top:IMAGE_HEIGHT*0.9, left:IMAGE_WIDTH*0.75, width:IMAGE_WIDTH*0.18, height:IMAGE_WIDTH*0.18, borderRadius:IMAGE_WIDTH*0.2/2, alignItems:"center", justifyContent:"center" }}>
-                                <TouchableOpacity onPress={()=>{dialogCreaNuovaConversazioneRef.current.open_dialog(item.name, item.id, item.push_notification_token)}}>
-                                    <Ionicons name="ios-chatbubble-sharp" size={IMAGE_WIDTH*0.18/2} color="white" />
-                                </TouchableOpacity>
-                            </View>
+                            returnButton(item)
                         }
                         </Animated.View>
 

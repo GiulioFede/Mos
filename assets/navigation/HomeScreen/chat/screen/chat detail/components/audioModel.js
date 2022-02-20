@@ -45,7 +45,8 @@ function getDate(mostraNuovaData, myDate){
 
 function getTimestamp(myDate, isAuthor){
     date = new Date(myDate);
-    let time_str = date.getHours()+":"+date.getMinutes();
+    let min = (date.getMinutes()<=9)?("0"+date.getMinutes()):date.getMinutes();
+    let time_str = date.getHours()+":"+min;
     if(isAuthor){
         console.log("ritorno timestamp");
         return( 
@@ -87,9 +88,6 @@ export default function AudioModel({messaggio, utenteCorrente, mostraMessaggioEr
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);
     const isLoaded = useRef(false);
     const isMounted = useRef(false);
-
-
-    console.log("mostra nuova data per "+messaggio.row+"?: "+mostraNuovaData);
         
     async function playAudio(){
         try{

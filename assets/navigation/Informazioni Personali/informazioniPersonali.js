@@ -26,7 +26,7 @@ let check = false;
 
 export default function InformazioniPersonali({ navigation }) {
 
-    var {user,informazioniProfiloUtente,setInformazioniProfiloUtente, informazioniAutenticazioneUtente, aggiornaEmail, inviaEmailDiVerifica, setMessaggioAuth,aggiornaDettagliProfiloUtente,logOut} = useContext(AutenticazioneUtente);
+    var {user,informazioniProfiloUtente,setInformazioniProfiloUtente, informazioniAutenticazioneUtente, aggiornaEmail, inviaEmailDiVerifica, setMessaggioAuth,aggiornaDettagliProfiloUtente,logOut,deleteUserAccount, setIsControlDone, setUser, setIsUserProfileCompleted} = useContext(AutenticazioneUtente);
 
     const [isLoading, setIsLoading] = useState(false);
 
@@ -112,7 +112,7 @@ export default function InformazioniPersonali({ navigation }) {
                         inviaEmailDiVerifica(user).then((ris)=>{
                             setMessaggioAuth(i18n.t('verificationNewEmail_pt1')+auth+i18n.t('verificationNewEmail_pt2'));
                         }).catch((e)=>{
-                            
+                            console.log("errore durante aggiornamento email:"+e);
                         });
                         //in ogni caso esegui il log out. L'utente avrà comunque possibilità di farsi mandare l'email di verifica se non l'ha ricevuta.
                         setIsLoading(false);
@@ -712,20 +712,30 @@ function aggiornaPhoneNumber(){
         return dataDiNascitaTMP.getDate()+"/"+(dataDiNascitaTMP.getMonth()+1)+"/"+dataDiNascitaTMP.getFullYear()
     }
 
+
     async function eliminaAccount(){
         try{
             console.log("elimino account...");
             scrollView.current.scrollTo({y: 0});
             loadingRef.current.on();
             loadingRef.current.set_message(i18n.t('removingAccountInProgress'));
-            //await deleteUserAccount(informazioniProfiloUtente.name);
-            localStorage.deleteLocalStorage(user);
-            loadingRef.current.off();
-            navigation.goBack();
-            //navigation.navigate("LoginScreen");
+            await deleteUserAccount(informazioniProfiloUtente.name);
+            //localStorage.deleteLocalStorage(user);
+            setUser(null);
+            setIsControlDone(false);
+            setIsUserProfileCompleted(false);
+            setTimeout(()=>{
+                if(isMounted.current == true)
+                    loadingRef.current.off();
+                navigation.navigate("LoginScreen");
+            },1000);
         }catch(e){
+            if(isMounted.current == true){
+                loadingRef.current.off();
+                setSnackMessage(i18n.t('removingAccountFailed'));
+            }
             console.log("errore durante eliminazione account...:"+e);
-            setSnackMessage(i18n.t('removingAccountFailed'));
+            
         }
     }
 

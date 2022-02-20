@@ -80,6 +80,7 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
 
     const opacityAnimation = useRef(new Animated.Value(0)).current;
     const opacityTransition = () => {
+        console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
         Animated.timing( opacityAnimation, {
            toValue: 1,
            duration: 900,
@@ -196,7 +197,9 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
 
     return (
         <Animated.View style={{marginVertical:0.5,opacity:opacityAnimation}}>
-            {uriProfileImage && media!=null && (lastContent.lastMessage.value==null) && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={{position:"absolute", width:"100%", height:"100%"}} blurRadius={5} onLoadEnd={()=>{opacityTransition();}} onError={(e)=>{setUriProfileImage(null); opacityTransition();}}></Animated.Image>}
+            {uriProfileImage!=null && media!=null && (lastContent.lastMessage.value==null) && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={{position:"absolute", width:"100%", height:"100%"}} blurRadius={5} onLoadEnd={()=>{opacityTransition();}} onError={()=>{setUriProfileImage("err")}} ></Animated.Image>}
+            {/*uriProfileImage==null && <Animated.View style={{position:"absolute", width:"100%", height:"100%", backgroundColor:MosPurple}} /> */}
+            {uriProfileImage=="err" && <Animated.Image source={require('../../../../../../resources/images/img-profile-not-found.png')} resizeMode="cover"  style={{position:"absolute", width:"100%", height:"100%"}} blurRadius={5} onLoadEnd={()=>{opacityTransition();}}></Animated.Image>}
             {fireworksVisibility==true &&
                 <View style={{width:"100%", height:"100%",position:"absolute"}}>
                     <LottieView autoPlay loop={true} source={require('../../../../../../resources/lottie/upgradeAnimation.json')} resizeMode="cover" />
@@ -213,7 +216,7 @@ const ChatPreview =({navigation,informazioniPersonaliContatto, chatId, nome,cont
                 }
                 <TouchableOpacity onPress={()=>{apriDettagliProfilo()}} style={[styles.contenitoreImmagineProfilo,{borderColor:"white", borderTopWidth:1, borderBottomWidth:1, borderLeftWidth:1, borderRightWidth:1 }]}  >
                         {uriProfileImage && <Animated.Image source={{uri:uriProfileImage}} resizeMode="cover"  style={[styles.immagineProfilo,{}]} onLoadEnd={()=>{if(isMounted.current==true){transitionProfileImage(); opacityTransition();}}} onError={(e)=>{if(isMounted.current==true){ setUriProfileImage(null); transitionProfileImage();opacityTransition();}}}></Animated.Image>}
-                        {!uriProfileImage && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%"}}>{i18n.t('failedToGetImage')}</Text>}
+                        {!uriProfileImage && <Text style={{position:"absolute", textAlign:"center", color:"white", textAlignVertical:"center", top:"40%", fontSize:fontSizeCampi*0.7}}>{i18n.t('failedToGetImage')}</Text>}
                 </TouchableOpacity>
                 <View style={[styles.ultimoMessaggio,{opacity:1}]}>
                     <MessageBubble messaggio={lastContent.lastMessage.value} type={lastContent.lastMessage.type} author = {lastContent.lastMessage.author} currentUser={user}/>

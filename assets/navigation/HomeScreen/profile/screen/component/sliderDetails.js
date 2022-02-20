@@ -27,9 +27,9 @@ const SliderDetails = ({dettagli}) => {
         else if(item.section=="sex and gender"){
             return (
                 <View style={{ width:larghezzaDevice-20, borderColor:MosViola, borderLeftWidth:3, padding:10, margin:10, justifyContent:"center",alignItems:"center"}}>
-                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>{i18n.t('sex')}:<Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.sex}</Text></Text>
-                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>{i18n.t('genderIdentity')}:<Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_identity}</Text></Text>
-                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>{i18n.t('genderPreferenceLabel')}:<Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {item.gender_preference}</Text></Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center", color:MosViola}]}>{i18n.t('sex')}:<Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {getTranslatedGender(item.sex)}</Text></Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>{i18n.t('genderIdentity')}:<Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {getTranslatedGender(item.gender_identity)}</Text></Text>
+                        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={[styles.nomeGrassetto,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center",color:MosViola}]}>{i18n.t('genderPreferenceLabel')}:<Text style={[styles.nome,{fontSize:fontSizeTitoloPiccolo*0.6, textAlignVertical:"center"}]}> {getTranslatedGender(item.gender_preference)}</Text></Text>
                     </View>
             )
         }
@@ -61,13 +61,23 @@ const SliderDetails = ({dettagli}) => {
     }
 
     const _onViewableItemsChanged = useCallback(({ viewableItems, changed }) => {
-        console.log("Visible items are", viewableItems);
-        console.log("Changed in this iteration", changed);
+        //console.log("Visible items are", viewableItems);
+        //console.log("Changed in this iteration", changed);
         setSlideNumber(viewableItems[0].index);
     }, []);
 
     const _viewabilityConfig = {
         itemVisiblePercentThreshold: 50
+    }
+
+    function getTranslatedGender(genId){
+        if(genId=="male") return i18n.t('male2').toLowerCase();
+        else if(genId=="female") return i18n.t('female2').toLowerCase();
+        else if(genId=="androgynous") return i18n.t('androgynous2').toLowerCase();
+        else if(genId=="third gender") return i18n.t('thirdGender2').toLowerCase();
+        else if(genId=="transexual") return i18n.t('transexual2').toLowerCase();
+        else if(genId=="demi androgynous") return i18n.t('demiAndrogynous2').toLowerCase();
+        else return genId;
     }
     
 

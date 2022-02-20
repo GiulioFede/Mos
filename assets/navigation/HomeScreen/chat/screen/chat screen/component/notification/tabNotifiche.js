@@ -32,6 +32,7 @@ const TabNotifiche = forwardRef((props, ref) => {
     const listOfNotifications = useRef([]);
     const [isLoading, setIsLoading] = useState(false);
     const [forceToHideRedBallon, setForceToHideRedBallon] = useState(false);
+    const isMounted = useRef(false);
 
     const {snackMessageRef, incrementaNumeroNotifiche, resettaNumeroNotifiche, decrementaNumeroNotifiche, setIsNotificationTabOpened} = props;
 
@@ -39,13 +40,17 @@ const TabNotifiche = forwardRef((props, ref) => {
     const {ottieniAscoltatoreNuoveNotifiche, user, removeNotification} = useContext(AutenticazioneUtente);
 
     async function apriTabNotifiche(){
-        setForceToHideRedBallon(false);
-        setVisible(true);
+        if(isMounted.current == true){
+            setForceToHideRedBallon(false);
+            setVisible(true);
+        }
     }
 
     const hideModal = () => {
-        setForceToHideRedBallon(true);
-        setVisible(false);
+        if(isMounted.current == true){
+            setForceToHideRedBallon(true);
+            setVisible(false);
+        }
     }
     const containerStyle = { backgroundColor: 'white',height:"100%", width:"100%",borderRadius:altezzaDevice*0.01};
 
@@ -56,15 +61,19 @@ const TabNotifiche = forwardRef((props, ref) => {
      }));
 
      function local_openCloseNotificationTab(){
-        if(visible==false)
-            apriTabNotifiche();
-        else
-            hideModal();
+        if(isMounted.current == true){
+            if(visible==false)
+                apriTabNotifiche();
+            else
+                hideModal();
+        }
      }
 
      function chiudiNotificaTab(){
-         setIsNotificationTabOpened(false);
-         hideModal();
+        if(isMounted.current == true){
+            setIsNotificationTabOpened(false);
+            hideModal();
+        }
      }
 
      //carica altre notifiche (non ancora mostrate) quando si preme il bottone "Mostra altre notifiche"
@@ -77,12 +86,22 @@ const TabNotifiche = forwardRef((props, ref) => {
             let listOfNotificationsResult = await localStorage.getListOfNotifications(user,contatoreNumeroNotificheMostrate);
             let listOfNotificationsResultArray = [...JSON.parse(listOfNotificationsResult)];
             listOfNotifications.current = [...listOfNotifications.current,...listOfNotificationsResultArray];
-            setList([...list,...listOfNotificationsResultArray]);
+            if(isMounted.current == true)
+                setList([...list,...listOfNotificationsResultArray]);
 
             //aggiorno contatore
             contatoreNumeroNotificheMostrate = contatoreNumeroNotificheMostrate + listOfNotificationsResultArray.length;
 
      }
+
+     useEffect(()=>{
+
+        isMounted.current = true;
+
+        //rilascia listener
+        return () => isMounted.current = false;
+
+     },[])
 
      //al caricamento, per prima cosa carico le vechie notifiche. Quando ho finito setto la variabile mettitiInAscolto cosi da far partire il secondo useEffect
      useEffect(()=>{
@@ -105,7 +124,8 @@ const TabNotifiche = forwardRef((props, ref) => {
                 //console.log(listOfNotificationsResult);
                 let listOfNotificationsResultArray = [...JSON.parse(listOfNotificationsResult)];
                 listOfNotifications.current = [...listOfNotificationsResultArray];
-                setList([...listOfNotificationsResultArray]);
+                if(isMounted.current == true)
+                    setList([...listOfNotificationsResultArray]);
                 //console.log("lista locale trasformata in array");
                 //console.log(listOfNotificationsResultArray);
 
@@ -139,42 +159,53 @@ const TabNotifiche = forwardRef((props, ref) => {
 
         unsubscribe = null;
         console.log("mi metto in ascolto di nuove notifiche:"+lastStoredTimestamp);
+        console.log("che partono dalla data:  "+new Date(lastStoredTimestamp).toString());
+        let ultimoTimestampDiSnapshot = lastStoredTimestamp;
         //passo all'ascoltatore l'ultimo timestamp ricevuto cosi da mettermi in ascolto su notifiche maggiori di quello
             unsubscribe = ottieniAscoltatoreNuoveNotifiche(lastStoredTimestamp)
-                .onSnapshot(async(snapshot) => {
-
-                    setIsLoading(true);
+                .onSnapshot({ includeMetadataChanges: true }, async(snapshot) => {
+                    if(isMounted.current == true)
+                        setIsLoading(true);
+                    
                     console.log("inizio notifiche");
+
                     let arrayTmp = [];
                     //NB: utilizzando for await invece di forEach mi metto in ascolto di un documento alla volta e per ognuno attendo determinate operazioni.
                     //    solo quando ho finito esco dal for
-                    for await (let change of snapshot.docChanges()){
+                    console.log("inizio ciclo for");
+                    await Promise.all(snapshot.docs.map(async(docReceived)=>{
                                 try{
+                                    
                                     console.log("ascolto nuovo doc in notifiche");
-                                    if (change.type != "added") 
-                                        return;
-                                    
-                                    //se sono qui allora c'è una nuova notifica
-                                    console.log("documento di notifica nuovo:");
-                                    let doc = change.doc.data();
-                                    //console.log(doc);
-                                    doc.state = "unseen";
-                                    
-                                    //la elimino da remoto. Elimino tutte le notifiche con data inferiore o uguale al documento corrente
-                                    await removeNotification(doc.timestamp);
-                                    //la memorizzo
-                                    console.log("Memorizzo"+doc.timestamp);
-                                    //se lo schermo è visibile allora metto stato "seen", altrimenti "unseeen";
-                                    await localStorage.storeNewNotification(user,doc.timestamp, doc.type,doc.author,visible==false?"unseen":"seen");
-                                    //l'aggiungo all'array temporaneo
-                                    doc.timestamp = doc.timestamp;
-                                    arrayTmp.push(doc);
-                                    //incremento contatore
-                                    contatoreNumeroNotificheMostrate = contatoreNumeroNotificheMostrate + 1;
-                                    //se lo schermo è visibile non incremento le notifiche, altrimenti si
-                                    if(visible==false) {
-                                        //incremento anche le notifiche in preferenza
-                                        await incrementaNumeroNotifiche();
+                                    console.log(docReceived.metadata);
+                                    console.log(docReceived.data());
+               
+                                    if (docReceived.metadata.hasPendingWrites == false && docReceived.data().timestamp > ultimoTimestampDiSnapshot ) {
+                                        ultimoTimestampDiSnapshot = docReceived.data().timestamp;
+                                        //se sono qui allora c'è una nuova notifica
+                                        console.log("documento di notifica nuovo:");
+                                        let doc = docReceived.data();
+                                        console.log(doc);
+                                        doc.state = "unseen";
+                                        
+                                        //la elimino da remoto. Elimino tutte le notifiche con data inferiore o uguale al documento corrente
+                                        await removeNotification(doc.timestamp);
+                                        //la memorizzo
+                                        console.log("Memorizzo"+doc.timestamp);
+                                        //se lo schermo è visibile allora metto stato "seen", altrimenti "unseeen";
+                                        await localStorage.storeNewNotification(user,doc.timestamp, doc.type,doc.author,visible==false?"unseen":"seen");
+                                        //l'aggiungo all'array temporaneo
+                                        doc.timestamp = doc.timestamp;
+                                        arrayTmp.push(doc);
+                                        //incremento contatore
+                                        contatoreNumeroNotificheMostrate = contatoreNumeroNotificheMostrate + 1;
+                                        //se lo schermo è visibile non incremento le notifiche, altrimenti si
+                                        if(isMounted.current == true){
+                                            if(visible==false) {
+                                                //incremento anche le notifiche in preferenza
+                                                await incrementaNumeroNotifiche();
+                                            }
+                                        }
                                     }
                                     
                                 }catch(e){
@@ -182,10 +213,11 @@ const TabNotifiche = forwardRef((props, ref) => {
                                     //snackMessageRef.current.setta_messaggio_da_mostrare("Si è verificato un errore.");
                                 }
                                 
-                            }
-                        //console.log("aggiorno notifiche");
+                            }));
+                        console.log("aggiorno notifiche");
                         //console.log(listOfNotifications.current);
-                        //console.log(arrayTmp);
+                        console.log(arrayTmp);
+                        arrayTmp.reverse();
                         let lastListOfNotifications = [...listOfNotifications.current];
                         listOfNotifications.current = [ ...arrayTmp, ...listOfNotifications.current];
                          //aggiorno lo stato con l'array di notifiche prelevate

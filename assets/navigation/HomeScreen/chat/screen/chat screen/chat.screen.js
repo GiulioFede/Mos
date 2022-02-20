@@ -73,21 +73,25 @@ export default function ChatScreen({navigation, route}){
     }
 
     function incrementaNumeroNotifiche(){
-        //if(iconaNotificheRef.current!=null)
+        if(iconaNotificheRef.current!=null)
           iconaNotificheRef.current.increment_notification_number();
     }
 
     function resettaNumeroNotifiche(){
-        iconaNotificheRef.current.reset_notification_number();
+        if(iconaNotificheRef.current!=null)
+            iconaNotificheRef.current.reset_notification_number();
     }
 
     function decrementaNumeroNotifiche(){
-        iconaNotificheRef.current.decrement_notification_number();
+        if(iconaNotificheRef.current!=null)
+            iconaNotificheRef.current.decrement_notification_number();
     }
 
     function apriChiudiTabNotification(){
-        tabNotificheRef.current.openCloseNotificationTab(); 
-        setIsNotificationTabOpened(!isNotificationTabOpened)
+        if(tabNotificheRef.current!=null){
+            tabNotificheRef.current.openCloseNotificationTab(); 
+            setIsNotificationTabOpened(!isNotificationTabOpened)
+        }
     }
 
     let [Raleway] = useFonts({Raleway_200ExtraLight});

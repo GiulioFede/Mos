@@ -2,7 +2,7 @@ import React,{ useImperativeHandle, forwardRef, useState,useEffect, useRef} from
 import { ActivityIndicator,TouchableOpacity, Dimensions,Animated, Text, View, StyleSheet, Platform, Image} from "react-native";
 import { Dialog, Portal, Button } from "react-native-paper";
 import { altezzaDevice, fontSizeCampi, fontSizeTitolo, fontSizeTitoloBarra, larghezzaDevice } from "../../../../../../context/variabili_globali/variabiliGlobali";
-import {Ionicons} from "@expo/vector-icons";
+import {Ionicons,Entypo} from "@expo/vector-icons";
 import { MosCeleste, MosPurple, MosViola } from "../../../../../../resources/colors";
 import local_storage from "../../../../../../context/local_storage/localStorage";
 import { sendPushNotification } from "../../../../../../context/push_notifications/functions";
@@ -273,8 +273,8 @@ const DecisionScreen = forwardRef((props, ref) => {
                             //console.log("la risposta del contatto è già stata data ed è: "+current_statistics.current["statistics"][nomeCampoDiInteresse]);
                             //se la risposta dell'utente è true e la mia è true faccio l'upgrade
                             if(contactChoice==true && response==true){
-                                //faccio upgrade
-                                console.log("essendo la riposta true, cosi come la mia, faccio l'upgrade");
+                                await makeDecision(response,chatID);
+                                /*
                                 upgradeConversation(chatID,true,contactUid, contactName, currentUserName, contactToken, myToken, currentVisibility)
                                     .then(async(ris)=>{
                                         console.log("upgrade riuscito con successo");
@@ -286,16 +286,17 @@ const DecisionScreen = forwardRef((props, ref) => {
                                         console.log("push notification inviate");
                                     }).catch((e)=>{
                                         console.log("si è verificato un problema durante l'upgrade:"+e);
-                                    })
+                                    })*/
                                 
 
                             }
                             //altrimenti in qualsiasi altro caso resetto
                             else {
                                 console.log("eseguo reset");
+                                await makeDecision(response,chatID);
                                 //resetto solo
-                                await upgradeConversation(chatID,false,contactUid,contactName, currentUserName, contactToken, myToken, currentVisibility);
-                                console.log("'continua con lo stesso livello di visibilità' riuscito con successo");
+                                //await upgradeConversation(chatID,false,contactUid,contactName, currentUserName, contactToken, myToken, currentVisibility);
+                               // console.log("'continua con lo stesso livello di visibilità' riuscito con successo");
                             }
                         }
 
@@ -317,9 +318,14 @@ const DecisionScreen = forwardRef((props, ref) => {
                     <Animated.View style={{width:larghezzaDevice*0.9, height:altezzaDevice*0.7, backgroundColor:"white", top:motionAnimation, borderRadius:larghezzaDevice*0.02}}>
                         <View style={{flexGrow:1, borderTopRightRadius:larghezzaDevice*0.02, borderTopLeftRadius:larghezzaDevice*0.02}}>
                             <TouchableOpacity onPress={()=>{navigation.goBack();}}>
-                                <View style={{flexDirection:"row", alignItems:"center"}}>
+                                <View style={{flexDirection:"row" }}>
                                     <Ionicons name="chevron-back" size={fontSizeTitoloBarra} color={MosViola} />
                                     <Text style={styles.back}>{i18n.t('back')}</Text>
+                                    <View style={{flexGrow:1, alignItems:"flex-end"}}>
+                                        <TouchableOpacity onPress={()=>{local_hide();}}>
+                                            <Entypo name="cross" size={fontSizeTitoloBarra} color={MosViola} />
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
                             </TouchableOpacity>
                             <View style={{ flex:1, justifyContent:"center"}}>

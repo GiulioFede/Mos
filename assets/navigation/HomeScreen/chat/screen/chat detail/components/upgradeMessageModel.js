@@ -17,9 +17,9 @@ import { Feather } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import i18n from 'i18n-js'
 
-export default function UpgradeMessageModel({type,contactName, mostraNuovaData}){
+export default function UpgradeMessageModel({messaggio, type,contactName, mostraNuovaData}){
 
-    let date = new Date();
+    let date = new Date(messaggio.date);
 
     //carico font
     let [Raleway] = useFonts({Raleway_200ExtraLight});
@@ -37,7 +37,8 @@ export default function UpgradeMessageModel({type,contactName, mostraNuovaData})
     }
 
     function getTimestamp(){
-            let time_str = date.getHours()+":"+date.getMinutes();
+        let min = (date.getMinutes()<=9)?("0"+date.getMinutes()):date.getMinutes();
+        let time_str = date.getHours()+":"+min;
             return( 
                 <Text style={styles.timestampOrarioUtenteCorrente}>{time_str}</Text>
             )

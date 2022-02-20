@@ -16,6 +16,7 @@ const ListaMessaggi = ({lista_messaggi, refFlatList, caricaSuccessivi10Messaggi,
     console.log("LISTA MESSAGGI________________________________________________(lunghezza):"+lista_messaggi.lenght);
     return (
         <View style={styles.areaMessaggi}>
+            {lista_messaggi.length != undefined &&
            <FlatList
             ref={refFlatList} 
             inverted={true}
@@ -66,11 +67,11 @@ const ListaMessaggi = ({lista_messaggi, refFlatList, caricaSuccessivi10Messaggi,
                             )
                         else if(item.type=="upgrade_1")
                             return (
-                                    <UpgradeMessageModel contactName={contactName} type="upgrade_1"  mostraNuovaData={true}/>
+                                    <UpgradeMessageModel messaggio = {item} contactName={contactName} type="upgrade_1"  mostraNuovaData={true}/>
                             )
                         else if(item.type=="upgrade_2")
                             return (
-                                    <UpgradeMessageModel contactName={contactName} type="upgrade_2"  mostraNuovaData={true}/>
+                                    <UpgradeMessageModel messaggio = {item} contactName={contactName} type="upgrade_2"  mostraNuovaData={true}/>
                             )
                     }
                     else {
@@ -85,15 +86,16 @@ const ListaMessaggi = ({lista_messaggi, refFlatList, caricaSuccessivi10Messaggi,
                             )
                         else if(item.type=="upgrade_1")
                             return (
-                                    <UpgradeMessageModel contactName={contactName} type="upgrade_1"  mostraNuovaData={false}/>
+                                    <UpgradeMessageModel messaggio = {item} contactName={contactName} type="upgrade_1"  mostraNuovaData={false}/>
                             )
                         else if(item.type=="upgrade_2")
                             return (
-                                    <UpgradeMessageModel contactName={contactName} type="upgrade_2"  mostraNuovaData={false}/>
+                                    <UpgradeMessageModel messaggio = {item} contactName={contactName} type="upgrade_2"  mostraNuovaData={false}/>
                             )
                     }
                 }}
             />
+            }
         </View>
     )
 }

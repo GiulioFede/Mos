@@ -46,7 +46,7 @@ var arrayOfRowsToUpdateState = {};
 var idChatAlreadyOpened = [];
 let ascoltatoreNuoviMessaggi = null;
 let ascoltatoreStatistics = null;
-let THRESHOLD = 3; //NB: cambiare anche l'omonima in chat_preview
+let THRESHOLD = 3; //NB: cambiare anche l'omonima in chat_preview NB: CAMBIARE ANCHE NELLE REGOLE DI SICUREZZA!!!
 let isIOS = Platform.OS=="ios";
 
 export var idChatCorrente = null;
@@ -57,7 +57,7 @@ export default function ChatDetail({ navigation,route}){
     //conterrà l'intera chat
     const [chat, setChat] = useState([]);
     //contesto autenticazione
-    const {getUtenteCorrente,informazioniProfiloUtente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi, ottieniAscoltatoreStatistics, makeDecision, upgradeConversation,removeGroupOfAudiosBeforeTimestamp, removeMessages,removeConversation, blockContact} = useContext(AutenticazioneUtente);
+    const {getUtenteCorrente,informazioniProfiloUtente, inviaNuovoMessaggio,ottieniAscoltatoreNuoviMessaggi, ottieniAscoltatoreStatistics, makeDecision, upgradeConversation,removeGroupOfAudiosBeforeTimestamp, removeMessages,removeConversation, blockContact, setConversazioniBloccate, conversazioniBloccate} = useContext(AutenticazioneUtente);
     
     const {addNewUpdate} = useContext(RowsOfMessagesToUpdate);
 
@@ -131,7 +131,11 @@ export default function ChatDetail({ navigation,route}){
                 await recordingKeyboardRef.current.closeRecordingBoard();
             blockListeners.current = true;
             optionsDialogRef.current.show_loading(true);
-            await blockContact(chatId,contactUid,name,informazioniProfiloUtente.name,creationData);
+            let blockedChatObj = await blockContact(chatId,contactUid,name,informazioniProfiloUtente.name,creationData);
+            //aggiorno la lista delle chat bloccate
+            let current_blocked_chat_list = conversazioniBloccate;
+            current_blocked_chat_list.push(blockedChatObj);
+            setConversazioniBloccate(current_blocked_chat_list);
             await local_storage.removeTable(getUtenteCorrente()+contactUid+"");
             setTimeout(()=>{
                 navigation.goBack();
@@ -163,7 +167,12 @@ export default function ChatDetail({ navigation,route}){
         }
     }
 
-    async function inviaMessaggio(){ 
+    async function inviaMessaggio(){
+        if(statistics.current==undefined) return;
+        if(statistics.current.statistics.number_of_messages>=THRESHOLD){
+            setSnackBarMessage(i18n.t('waitChoice'));
+            return;
+        }  
         //controllo che ci sia sufficiente spazio libero (nella memoria interna)
         FileSystem.getFreeDiskStorageAsync()
             .then(async(bytes)=>{
@@ -340,6 +349,10 @@ export default function ChatDetail({ navigation,route}){
                                                     if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
                                                         decisionScreenRef.current.show(false,miaScelta, null,livelloCorrenteDiVisibilità);
                                                 }
+                                                //altrimenti se entrambe le risposte non sono null MA ancora il numero di messaggi non è stato resettato (fase temporanea), mostro lo screen
+                                                else if(suaScelta!=null && miaScelta!=null && stat.statistics.number_of_messages>=THRESHOLD)
+                                                    if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
+                                                        decisionScreenRef.current.show(false,miaScelta, null,livelloCorrenteDiVisibilità);
                                                 //altrimenti se la sua scelta è stata data chiudo il decision screen
                                                 else if(suaScelta!=null){
                                                     if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
@@ -367,6 +380,7 @@ export default function ChatDetail({ navigation,route}){
                                                 if(decisionScreenRef.current!=null && decisionScreenRef.current!=undefined)
                                                         decisionScreenRef.current.show(true,miaScelta, null, livelloCorrenteDiVisibilità);
                                             }
+                                            
                                             //se invece sia la mia scelta che quella sua è !=null allora chiudo tutto
                                             else if(miaScelta!=null && suaScelta!=null){
                                                 //devo però fare l'upgrade o meno
@@ -378,7 +392,13 @@ export default function ChatDetail({ navigation,route}){
                                                 else if(miaScelta==true && suaScelta==false)
                                                     await upgradeConversation(chatId,false,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, livelloCorrenteDiVisibilità);
                                                 else if(miaScelta==true && suaScelta==true){
-                                                    await upgradeConversation(chatId,true,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, livelloCorrenteDiVisibilità);
+                                                    try{
+                                                        await upgradeConversation(chatId,true,contactUid, name, informazioniProfiloUtente.name,token, informazioniProfiloUtente.push_notification_token, livelloCorrenteDiVisibilità);
+                                                    }catch(e){
+                                                        setSnackBarMessage(i18n.t('conversationError'));
+                                                        decisionScreenRef.current.show(true,miaScelta, null, livelloCorrenteDiVisibilità);
+                                                        return;
+                                                    }
                                                     //await notifyUpgrade((livelloCorrenteDiVisibilità==0)?"upgrade_1":"upgrade_2");
                                                 }
 
@@ -515,72 +535,72 @@ export default function ChatDetail({ navigation,route}){
     },[])
 
     async function inizializzaAscoltatoreNuoviMessaggi(){
-            //prelevo ultimo timestamp memorizzato
-            let ultimoTimestampMemorizzato = -1;
-            if(listTmp.current[0])
-                ultimoTimestampMemorizzato = listTmp.current[0].date; //milliseconds (è un numero), per firstore ho bisogno di secondi, per questo divido per 1000
-            console.log("ultimo timestamp memorizzato:"+ultimoTimestampMemorizzato);
-            ascoltatoreNuoviMessaggi = ottieniAscoltatoreNuoviMessaggi(chatId, getUtenteCorrente(),ultimoTimestampMemorizzato )
-                                    .onSnapshot(async(snapshot) => {
-                                        const promises = [];
-                                        //mantengo l'ultimo timestamp (o nome) dell'audio ricevuto cosi che procedo a eliminare tutti gli audio con nome minore dell'ultimo
-                                        var lastAudioTimestamp = null;
-                                        var lastMessageTimestamp = null; //questo è per tutti, ossia tiene in memoria l'ultimo timestamp ricevuto, che il type sia mex o audio
-                                        snapshot.docChanges().forEach(async(change) => {
-                                                    console.log("ascolto nuovo messaggio");
-                                                    if (change.type != "added") {
-                                                        return;
-                                                    }
-                                                    if(blockListeners.current==true){
-                                                        console.log("Non posso ascoltare,sono in fase di lavoro...");
-                                                        return;
-                                                    }
+        //prelevo ultimo timestamp memorizzato
+        let ultimoTimestampMemorizzato = -1;
+        if(listTmp.current[0])
+            ultimoTimestampMemorizzato = listTmp.current[0].date; //milliseconds (è un numero), per firstore ho bisogno di secondi, per questo divido per 1000
+        console.log("ultimo timestamp memorizzato:"+ultimoTimestampMemorizzato);
+        let ultimoTimestampDiSnapshot = ultimoTimestampMemorizzato;
+        ascoltatoreNuoviMessaggi = ottieniAscoltatoreNuoviMessaggi(chatId, getUtenteCorrente(),ultimoTimestampMemorizzato, contactUid )
+                                .onSnapshot({ includeMetadataChanges: true },async(snapshot) => {
+                                    const promises = [];
+                                    //mantengo l'ultimo timestamp (o nome) dell'audio ricevuto cosi che procedo a eliminare tutti gli audio con nome minore dell'ultimo
+                                    var lastAudioTimestamp = null;
+                                    var lastMessageTimestamp = null; //questo è per tutti, ossia tiene in memoria l'ultimo timestamp ricevuto, che il type sia mex o audio
+                                    await Promise.all(snapshot.docs.map(async(docReceived) => {
 
-                                                    let doc = change.doc;
-                                                    ultimaRow.current = ultimaRow.current+1;
-                                                    console.log("E' un nuovo "+doc.data().type+". Lo memorizzo con chiave:"+ultimaRow.current);
-                                                    console.log(doc.data());
-                                                    //se il messaggio è un audio, indico qual'è l'ultimo timestamp o nome del file
-                                                    if(doc.data().type=="audio")
-                                                        lastAudioTimestamp = doc.data().timestamp;
-                                                    lastMessageTimestamp = doc.data().timestamp;
-                                                    promises.push(addNewReceivedMessage(doc, ultimaRow.current));
-                                                    console.log("procedo al successivo di "+ultimaRow.current);
-                                                    
-                                    });
-                                    console.log("fine ultima");
-                                    try{
-                                        let lastMessages = [];
-                                        for(let i=0; i<promises.length; i++)
-                                            lastMessages.push(await promises[i]);
-                                        //solo quando tutti i messaggi sono stati salvati in locale verranno mostrati cosi da evitare di 
-                                        //scaricarli solo quando si preme il bottone play
-                                        
-                                        //elimino messaggi testuali
-                                        if(lastMessages.length>0){
-                                            //prendo l'ultimo timestamp e lo do alla funzione che elimina tutti i messaggi precedenti sul mio canale
-                                            await removeMessages(chatId,lastMessageTimestamp);
-                                        }
-                                        //se tra i messaggi ci sono stati audio, allora avrò che lastAudioTimestamp != null, quindi se avrò
-                                        //5 audio scaricati, lastAudioTimestamp è il nome dell'ultimo audio. Posso procedere a eliminare tutti i precedenti
-                                        if(lastAudioTimestamp!=null)
-                                            await removeGroupOfAudiosBeforeTimestamp(chatId,lastAudioTimestamp);
-                                        
-                                        
-                                        console.log("tutti i nuovi doc sono stati caricati");
-                                        console.log(lastMessages);
-                                        let newChat = [...lastMessages.reverse(),...listTmp.current];
-                                        setChat(newChat);
-                                        setIsChatLoaded(true);
-
-                                        if(initialState==true)
-                                            setInitialState(false);
-
-                                    }catch(err){
-                                        console.log("Si è verificato un problema sulla promise.all dell'ascoltatore:"+err);
+                                                if (docReceived.metadata.hasPendingWrites == false && docReceived.data().timestamp > ultimoTimestampDiSnapshot ) {
+                                                if(blockListeners.current==true){
+                                                    console.log("Non posso ascoltare,sono in fase di lavoro...");
+                                                    return;
+                                                }
+                                                ultimoTimestampDiSnapshot = docReceived.data().timestamp;
+                                                let doc = docReceived;
+                                                ultimaRow.current = ultimaRow.current+1;
+                                                console.log("E' un nuovo "+doc.data().type+". Lo memorizzo con chiave:"+ultimaRow.current);
+                                                console.log(doc.data());
+                                                //se il messaggio è un audio, indico qual'è l'ultimo timestamp o nome del file
+                                                if(doc.data().type=="audio")
+                                                    lastAudioTimestamp = doc.data().timestamp;
+                                                lastMessageTimestamp = doc.data().timestamp;
+                                                promises.push(addNewReceivedMessage(doc, ultimaRow.current));
+                                                console.log("procedo al successivo di "+ultimaRow.current);
+                                            }
+                                                
+                                }));
+                                console.log("fine ultima");
+                                try{
+                                    let lastMessages = [];
+                                    for(let i=0; i<promises.length; i++)
+                                        lastMessages.push(await promises[i]);
+                                    //solo quando tutti i messaggi sono stati salvati in locale verranno mostrati cosi da evitare di 
+                                    //scaricarli solo quando si preme il bottone play
+                                    
+                                    //elimino messaggi testuali
+                                    if(lastMessages.length>0){
+                                        //prendo l'ultimo timestamp e lo do alla funzione che elimina tutti i messaggi precedenti sul mio canale
+                                        await removeMessages(chatId,lastMessageTimestamp, contactUid);
                                     }
-                                        
-                                });
+                                    //se tra i messaggi ci sono stati audio, allora avrò che lastAudioTimestamp != null, quindi se avrò
+                                    //5 audio scaricati, lastAudioTimestamp è il nome dell'ultimo audio. Posso procedere a eliminare tutti i precedenti
+                                    if(lastAudioTimestamp!=null)
+                                        await removeGroupOfAudiosBeforeTimestamp(chatId,lastAudioTimestamp);
+                                    
+                                    
+                                    console.log("tutti i nuovi doc sono stati caricati");
+                                    console.log(lastMessages);
+                                    let newChat = [...lastMessages.reverse(),...listTmp.current];
+                                    setChat(newChat);
+                                    setIsChatLoaded(true);
+
+                                    if(initialState==true)
+                                        setInitialState(false);
+
+                                }catch(err){
+                                    console.log("Si è verificato un problema sulla promise.all dell'ascoltatore:"+err);
+                                }
+                                    
+                            });
     }
 
 
@@ -648,6 +668,11 @@ export default function ChatDetail({ navigation,route}){
 
 
     function apriRecordingKeyboard(){
+        if(statistics.current==undefined) return;
+        if(statistics.current.statistics.number_of_messages>=THRESHOLD){
+            setSnackBarMessage(i18n.t('waitChoice'));
+            return;
+        } 
         setOpenRecordingKeyboard(true);
         isOpenRecordingKeyboardOpened.current = true;
     }
